@@ -16,8 +16,10 @@ const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
+    // 하이드레이션 불일치 방지를 위한 클라이언트 전용 마운트 플래그로,
+    // 외부 상태 동기화가 아니므로 react-hooks/set-state-in-effect 규칙에서 제외한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
