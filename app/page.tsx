@@ -1,13 +1,23 @@
 import { DeployButton } from "@/components/deploy-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { AuthButton } from "@/components/auth-button";
+import { GuestAuthNotice } from "@/components/guest-auth-notice";
 import { Hero } from "@/components/hero";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
 import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
+import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
+
+// 미로그인 상태에서만 선택 안내를 보여준다
+async function GuestAuthNoticeGate() {
+  if (!hasEnvVars) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  return data?.claims ? null : <GuestAuthNotice />;
+}
 
 export default function Home() {
   return (
@@ -32,6 +42,10 @@ export default function Home() {
         </nav>
         <div className="flex max-w-5xl flex-1 flex-col gap-20 p-5">
           <Hero />
+          {/* U1 임시 배치: 실제 위치는 U3의 /i/[token] 초대 페이지 */}
+          <Suspense>
+            <GuestAuthNoticeGate />
+          </Suspense>
           <main className="flex flex-1 flex-col gap-6 px-4">
             <h2 className="mb-4 text-xl font-medium">Next steps</h2>
             {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
