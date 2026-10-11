@@ -17,14 +17,11 @@ interface TabItem {
 // 실제 존재하는 라우트만 탭으로 노출한다
 const TABS: TabItem[] = [
   {
-    href: "/protected",
+    href: "/",
     label: "홈",
     icon: House,
-    // 내 모임 목록 + 모임/회차 상세는 모두 홈 탭에 속한다
-    match: (p) =>
-      p === "/protected" ||
-      p.startsWith("/protected/events") ||
-      (p.startsWith("/protected/groups") && p !== "/protected/groups/new"),
+    // 홈(/)에서만 활성화한다. 모든 경로가 "/"로 시작하므로 정확 일치로 비교한다
+    match: (p) => p === "/",
   },
   {
     href: "/protected/groups/new",

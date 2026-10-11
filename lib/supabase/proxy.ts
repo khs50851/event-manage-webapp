@@ -2,6 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
 
+// 로그인 사용자에게는 필요 없는 인증 진입 화면(로그인 상태면 홈으로 리다이렉트)
+const AUTH_ENTRY_PATHS = ["/auth/login", "/auth/sign-up"];
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -71,6 +74,22 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
+  }
+
+  // 이미 로그인한 사용자가 로그인/회원가입 화면에 오면 홈으로 보낸다.
+  // 정확히 일치하는 경로만 대상으로 한다(/auth/sign-up-success, /auth/update-password,
+  // /auth/confirm 등 다른 auth 경로는 영향 없음).
+  if (user && AUTH_ENTRY_PATHS.includes(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.search = "";
+    const redirectResponse = NextResponse.redirect(url);
+    // getClaims()가 갱신한 세션 쿠키를 리다이렉트 응답에도 그대로 옮긴다(아래 IMPORTANT 주석 2번).
+    // 쿠키 값/옵션은 변경하지 않는다.
+    supabaseResponse.cookies
+      .getAll()
+      .forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

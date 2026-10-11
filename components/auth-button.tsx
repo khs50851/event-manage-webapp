@@ -13,7 +13,7 @@ export async function AuthButton() {
 
   return user ? (
     <Button asChild size="sm" className="min-h-11">
-      <Link href="/protected">내 모임</Link>
+      <Link href="/">내 모임</Link>
     </Button>
   ) : (
     <Button asChild size="sm" variant="outline" className="min-h-11">

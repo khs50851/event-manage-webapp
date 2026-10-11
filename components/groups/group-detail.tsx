@@ -59,7 +59,8 @@ export function GroupDetail({
 
   function confirmDelete() {
     toast.success("모임을 삭제했습니다. (더미: 실제로 삭제되지 않습니다)");
-    router.push("/protected");
+    // 모임 목록은 홈(/)에 있다
+    router.push("/");
   }
 
   return (

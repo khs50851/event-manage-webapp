@@ -49,7 +49,9 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 - `proxy.ts`(루트)가 모든 요청에 대해 `lib/supabase/proxy.ts`의 `updateSession()`을 호출한다. **Next.js 16부터 미들웨어 파일명이 `middleware.ts`/`middleware()`에서 `proxy.ts`/`proxy()`로 변경**되었다 — 과거 Next.js 문서나 예제에서 `middleware`를 언급해도 이 저장소에서는 `proxy`로 대응된다.
 - `updateSession()`은 `supabase.auth.getClaims()` 호출 전후로 응답 객체를 다루는 순서가 매우 엄격하다(쿠키 동기화가 깨지면 사용자가 무작위로 로그아웃됨). 이 함수를 수정할 때는 파일 내 주석의 경고를 그대로 따른다.
 - 인증되지 않은 사용자가 `/`, `/login*`, `/auth*` 외의 경로에 접근하면 `/auth/login`으로 리다이렉트된다.
-- `app/protected/`는 인증이 필요한 라우트 그룹이다. 각 서버 컴포넌트는 `createClient()`(server) 후 `supabase.auth.getClaims()`로 세션을 확인하고, 없으면 `redirect("/auth/login")`을 호출한다(`app/protected/page.tsx` 참고).
+- `app/protected/`는 인증이 필요한 라우트 그룹이다. 각 서버 컴포넌트는 `createClient()`(server) 후 `supabase.auth.getClaims()`로 세션을 확인하고, 없으면 `redirect("/auth/login")`을 호출한다.
+- 로그인 후 진입점은 홈(`/`)이다. 홈은 로그인 상태면 내 모임/참여한 모임 목록(`components/groups/home-groups.tsx`)과 하단 탭바를, 비로그인 상태면 히어로 + `GuestAuthNotice`를 보여준다(세션 확인을 포함한 셸 전체를 `<Suspense>` 안에서 구성, `app/page.tsx` 참고). `/protected`는 북마크 호환용으로 `/`에 리다이렉트만 한다.
+- 로그인한 사용자가 `/auth/login`·`/auth/sign-up`에 접근하면 proxy가 `/`로 리다이렉트한다(그 외 auth 경로는 영향 없음). 이메일 확인 콜백(`app/auth/confirm/route.ts`)의 `next`는 `/`로 시작하는 상대 경로만 허용하며 기본값은 `/`이다.
 
 ### 라우트 구조
 

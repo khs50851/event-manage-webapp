@@ -148,7 +148,9 @@ async function onSubmit(values: EventFormValues) {
 try {
   const { error } = await supabase.auth.signInWithPassword(values);
   if (error) throw error;
-  router.push("/protected");
+  // 로그인 후에는 홈(/)으로 이동하고, 서버 컴포넌트의 세션 상태를 다시 읽는다
+  router.push("/");
+  router.refresh();
 } catch (error) {
   form.setError("root", {
     message: error instanceof Error ? error.message : "오류가 발생했습니다.",
