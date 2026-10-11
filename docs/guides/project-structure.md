@@ -7,7 +7,7 @@
 - **프레임워크**: Next.js 16 (App Router, Turbopack)
 - **런타임/UI**: React 19
 - **언어**: TypeScript (strict 모드)
-- **스타일링**: Tailwind CSS 3.4 + shadcn/ui (`new-york` 스타일)
+- **스타일링**: Tailwind CSS v4 + shadcn/ui (`new-york` 스타일)
 - **백엔드/인증**: Supabase (`@supabase/ssr`, `@supabase/supabase-js`)
 - **테마**: next-themes (다크모드)
 - **아이콘**: lucide-react
@@ -31,7 +31,7 @@ event-manage-webapp/
 ├── docs/                   # 프로젝트 문서
 │   └── guides/             # 기술 스택별 가이드 (현재 문서가 속한 폴더)
 ├── components.json         # shadcn/ui CLI 설정
-├── tailwind.config.ts      # Tailwind 테마/플러그인 설정
+├── postcss.config.mjs      # PostCSS 설정 (@tailwindcss/postcss, 테마는 app/globals.css)
 ├── next.config.ts          # Next.js 설정
 └── tsconfig.json           # TypeScript 설정 (경로 별칭 포함)
 ```

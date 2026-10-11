@@ -56,7 +56,7 @@ async function EventDetailLoader({
           {group?.name ?? "모임"}
         </Link>
         <div className="flex items-start justify-between gap-2">
-          <h1 className="break-words text-2xl font-bold">{event.title}</h1>
+          <h1 className="text-2xl font-bold wrap-break-word">{event.title}</h1>
           <Badge
             variant={event.status === "scheduled" ? "default" : "secondary"}
           >

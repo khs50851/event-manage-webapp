@@ -157,7 +157,7 @@ export function RsvpForm({
                   {RSVP_STATUS_ORDER.map((status) => (
                     <label
                       key={status}
-                      className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-md border px-2 text-sm font-medium transition-colors hover:bg-accent has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/10"
+                      className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-md border px-2 text-sm font-medium transition-colors hover:bg-accent has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/10"
                     >
                       <RadioGroupItem value={status} />
                       {RSVP_STATUS_LABEL[status]}

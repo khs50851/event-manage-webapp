@@ -1,6 +1,6 @@
 # 스타일링 가이드 (Tailwind CSS + shadcn/ui)
 
-이 프로젝트는 **Tailwind CSS 3.4**와 **shadcn/ui**(`new-york` 스타일, `neutral` 베이스 컬러)를 사용합니다.
+이 프로젝트는 **Tailwind CSS v4**와 **shadcn/ui**(`new-york` 스타일, `neutral` 베이스 컬러)를 사용합니다.
 
 ## 설정 개요
 
@@ -25,42 +25,43 @@
 
 ### 디자인 토큰 (`app/globals.css`)
 
-라이트/다크 테마 값은 `:root`와 `.dark`에 HSL 변수로 정의되어 있다.
+라이트/다크 테마 값은 `:root`와 `.dark`에 OKLCH 변수로 정의되어 있고, shadcn/ui 기본 neutral 테마를 그대로 사용한다.
 
 ```css
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
-  --radius: 0.5rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --radius: 0.625rem;
   /* ... */
 }
 .dark {
-  --background: 0 0% 3.9%;
-  --foreground: 0 0% 98%;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
   /* ... */
 }
 ```
 
-`tailwind.config.ts`는 이 변수들을 Tailwind 색상 유틸로 연결한다.
+Tailwind v4는 `tailwind.config` 파일 없이 CSS 안의 `@theme inline`으로 변수를 색상 유틸에 연결한다.
 
-```ts
-colors: {
-  background: "hsl(var(--background))",
-  primary: {
-    DEFAULT: "hsl(var(--primary))",
-    foreground: "hsl(var(--primary-foreground))",
-  },
-  // ...
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  /* ... */
 }
 ```
 
-**새로운 색상이 필요하면 Tailwind 클래스에 직접 색을 넣지 말고, `globals.css`에 CSS 변수를 추가한 뒤 `tailwind.config.ts`에 매핑한다.**
+**새로운 색상이 필요하면 Tailwind 클래스에 직접 색을 넣지 말고, `globals.css`의 `:root`/`.dark`에 CSS 변수를 추가한 뒤 `@theme inline`에 `--color-*`로 매핑한다.**
 
 ## 다크모드
 
-- `darkMode: ["class"]` 설정 + `next-themes`의 `ThemeProvider`(`attribute="class"`)를 `app/layout.tsx`에서 사용한다.
+- `@custom-variant dark (&:is(.dark *));`(globals.css) + `next-themes`의 `ThemeProvider`(`attribute="class"`)를 `app/layout.tsx`에서 사용한다.
 - 다크모드 분기 처리가 필요하면 `dark:` 접두사를 사용한다. 토큰 기반 색상(`bg-background`, `text-foreground`)을 쓰면 대부분 `dark:` 없이 자동으로 전환된다.
 
 ```tsx

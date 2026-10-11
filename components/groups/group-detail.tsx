@@ -67,7 +67,7 @@ export function GroupDetail({
       <header className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h1 className="break-words text-2xl font-bold">{group.name}</h1>
+            <h1 className="text-2xl font-bold wrap-break-word">{group.name}</h1>
             {group.description && (
               <p className="mt-1 text-sm text-muted-foreground">
                 {group.description}

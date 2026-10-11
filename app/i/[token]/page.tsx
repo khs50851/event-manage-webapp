@@ -23,7 +23,7 @@ function EventSummary({
       {groupName && (
         <p className="text-sm text-muted-foreground">{groupName}</p>
       )}
-      <h1 className="break-words text-2xl font-bold">{event.title}</h1>
+      <h1 className="text-2xl font-bold wrap-break-word">{event.title}</h1>
       <p className="text-sm">{formatDateTime(event.startsAt)}</p>
       <p className="flex items-center gap-1 text-sm">
         <MapPinIcon className="size-4 shrink-0" />

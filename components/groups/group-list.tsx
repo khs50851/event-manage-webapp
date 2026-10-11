@@ -46,7 +46,7 @@ export function GroupSectionHeader({
         >
           <span className="truncate">{title}</span>
           {count !== null && (
-            <span className="text-base font-medium tabular-nums text-muted-foreground">
+            <span className="text-base font-medium text-muted-foreground tabular-nums">
               {count}개
             </span>
           )}
@@ -121,7 +121,7 @@ export function GroupList({
               href={`/protected/groups/${group.id}`}
               className={cn(
                 ITEM_CLASS,
-                "bg-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-accent",
+                "bg-background transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-accent",
               )}
             >
               <GroupItemContent group={group} linked />

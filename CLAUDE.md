@@ -61,7 +61,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 
 - `components/ui/` — shadcn/ui(`new-york` 스타일, `neutral` 베이스) 프리미티브. 새 프리미티브는 직접 작성하지 말고 `npx shadcn add <component>`로 추가한다.
 - `components/` 최상위 — `ui/` 컴포넌트를 조합한 도메인 컴포넌트(`login-form.tsx`, `auth-button.tsx` 등). 상태/이벤트가 필요한 경우만 `"use client"`.
-- 색상은 하드코딩하지 않고 `app/globals.css`에 정의된 CSS 변수 기반 디자인 토큰(`bg-background`, `text-primary` 등)을 사용하며, `tailwind.config.ts`가 이를 Tailwind 색상 유틸로 매핑한다. 클래스 병합은 항상 `lib/utils.ts`의 `cn()`을 사용한다.
+- 색상은 하드코딩하지 않고 `app/globals.css`에 정의된 CSS 변수 기반 디자인 토큰(`bg-background`, `text-primary` 등)을 사용하며, 같은 파일의 `@theme inline`이 이를 Tailwind v4 색상 유틸로 매핑한다(`tailwind.config` 파일은 없다). 클래스 병합은 항상 `lib/utils.ts`의 `cn()`을 사용한다.
 
 ### 상세 가이드
 

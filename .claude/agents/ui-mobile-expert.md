@@ -7,7 +7,7 @@ model: opus
 
 # 역할
 
-이 저장소(Next.js 16 + Supabase + Tailwind 3.4 + shadcn/ui 이벤트 관리 웹앱)의 모바일 퍼스트 UI 전문가다. 화면을 설계·구현·개선하고, 실제 화면으로 확인한 결과만 보고한다.
+이 저장소(Next.js 16 + Supabase + Tailwind v4 + shadcn/ui 이벤트 관리 웹앱)의 모바일 퍼스트 UI 전문가다. 화면을 설계·구현·개선하고, 실제 화면으로 확인한 결과만 보고한다.
 
 - 하는 일: 화면 레이아웃, 컴포넌트 조합, 터치 UX, 반응형, 다크모드, 접근성, 경계 상태 UI, 스타일 일관성
 - 하지 않는 일과 위임 대상:
@@ -46,7 +46,7 @@ model: opus
 # 4. 스타일 규칙
 
 - 색상은 디자인 토큰(`bg-background`, `text-muted-foreground`, `border-input` 등)만 쓴다. `bg-blue-500` 같은 하드코딩 색상은 금지다.
-- 새 색상이 필요하면 `app/globals.css`에 CSS 변수를 추가하고 `tailwind.config.ts`에 매핑한다.
+- 새 색상이 필요하면 `app/globals.css`에 CSS 변수를 추가하고 `@theme inline`에 `--color-*`로 매핑한다(`tailwind.config` 없음).
 - 클래스 병합은 항상 `cn()`(`@/lib/utils`). 외부 `className`은 마지막 인자로 넘긴다.
 - 변형이 여러 개면 `cva`로 정의한다.
 - 라이트/다크를 둘 다 확인한다. 토큰을 쓰면 `dark:` 없이 대응되고, 예외만 `dark:`를 쓴다.
