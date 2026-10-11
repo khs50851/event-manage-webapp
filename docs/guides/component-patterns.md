@@ -129,5 +129,5 @@ type InputProps = React.ComponentPropsWithoutRef<"input">;
 ## 5. 네이밍 & 파일 조직 요약
 
 - 컴포넌트 파일 1개 = 컴포넌트 1개(+ 밀접하게 연관된 작은 서브 컴포넌트는 같은 파일에 둘 수 있음, 예: `Card`, `CardHeader`, `CardContent`를 `card.tsx`에 함께 export).
-- 도메인이 커지면 `components/<도메인>/` 하위 폴더로 묶는다 (예: `components/tutorial/`).
+- 도메인이 커지면 `components/<도메인>/` 하위 폴더로 묶는다 (예: `components/groups/`).
 - 자세한 폴더 배치 규칙은 [[project-structure]], 스타일 규칙은 [[styling-guide]]를 참고한다.

@@ -72,6 +72,40 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 - `docs/guides/component-patterns.md` — UI 프리미티브/조합 컴포넌트 작성 규칙
 - `docs/guides/forms-react-hook-form.md` — 폼 작성 표준 패턴(React Hook Form, 현재 미설치 상태이며 신규 폼부터 적용 예정)
 - `docs/guides/project-structure.md` — 폴더 구조와 경로 별칭(`@/*`)
+- `docs/guides/supabase-mcp.md` — Supabase MCP 도구 활용 워크플로, 현재 DB 상태와 알려진 보안/성능 이슈
+- `docs/guides/mcp-servers.md` — 연결된 전체 MCP 서버(`supabase`/`context7`/`shadcn`/`playwright`/`sequential-thinking`) 활용 지침
+
+## Next.js 16 작업 규칙
+
+코드를 작성할 때 다음을 기본 규칙으로 따른다(배경은 [[nextjs-16]] 참고).
+
+1. `cookies()`, `headers()`, 동적 라우트의 `params`/`searchParams`는 모두 Promise다 — 항상 `await` 한다. 동기 접근 코드를 작성하지 않는다.
+2. `next.config.ts`의 `cacheComponents: true`로 인해, 요청마다 달라지는 데이터(쿠키/세션/요청 시점 fetch)를 읽는 컴포넌트는 반드시 `<Suspense>`로 감싼다. 감싸지 않으면 빌드 에러가 난다.
+3. 기본은 서버 컴포넌트다. `useState`/이벤트 핸들러/브라우저 API가 필요한 최소 단위에만 `"use client"`를 붙인다.
+4. 폼 제출·데이터 변경(mutation)은 Server Action을 우선 검토한다. 기존 `login-form.tsx`류의 `onSubmit` + `useState` 패턴은 레거시이며, 새 폼은 [[forms-react-hook-form]] 패턴(React Hook Form + Zod + Server Action)을 따른다.
+5. 정적으로 캐시 가능한 데이터 조회 함수에는 `"use cache"`를 쓰고, 그렇지 않은 동적 조회는 캐시하지 않는다(섣불리 `force-cache`를 걸지 않는다).
+6. 이 저장소에서 미들웨어는 `middleware.ts`가 아니라 `proxy.ts`(`proxy()` 함수)다 — 과거 Next.js 지식으로 `middleware.ts`를 새로 만들지 않는다.
+
+## Supabase 데이터베이스 현황
+
+실제 상태는 `mcp__supabase__list_tables`/`get_advisors`로 직접 확인한다(아래는 2026-10-03 기준 스냅샷이므로 시간이 지나면 재확인 필요). 자세한 워크플로는 [[supabase-mcp]] 참고.
+
+- **기존 스키마가 이벤트 관리 도메인과 무관하다.** `public.accounts`(Notion 연동 정보 포함), `public.quotes`/`public.quote_items`(견적서), `public.instruments`(튜토리얼 데모)가 이미 존재하며, 이벤트/참가자/일정 관련 테이블은 아직 없다. 새 스키마를 설계하기 전 반드시 `list_tables(verbose: true)`로 현재 구조를 먼저 확인하고, 기존 테이블과의 관계가 불명확하면 작업 전 사용자에게 확인한다.
+- `list_migrations`가 비어 있다 — 지금까지의 스키마는 마이그레이션 이력 없이 생성되었다. **이 시점 이후의 모든 DDL 변경은 `apply_migration`으로 적용**해 이력을 남긴다.
+- 알려진 보안 경고(WARN): `public.handle_new_user()`가 `SECURITY DEFINER`로 `anon`/`authenticated`에 공개 RPC로 노출되어 있고, Auth의 유출 비밀번호 차단(Leaked Password Protection)이 꺼져 있다.
+- 알려진 성능 경고(WARN, 10건): `accounts`/`quotes`/`quote_items`의 RLS 정책이 `auth.uid()`를 행마다 재평가한다. **새 RLS 정책은 반드시 `(select auth.uid())` 형태로 작성**한다.
+- `lib/supabase/database.types.ts`(Supabase 생성 타입)가 아직 없다 — 스키마를 다루는 작업을 하면 `generate_typescript_types`로 생성해 세 클라이언트에 연결하는 것을 권장한다.
+- 이 저장소 범위를 벗어나는 스키마 수정(기존 `accounts`/`quotes` 쪽 버그 수정 등)은 명시적으로 요청받기 전에는 수행하지 않는다.
+
+## MCP 서버 활용 지침
+
+이 프로젝트(`.mcp.json`)에는 `supabase`, `context7`, `shadcn`, `playwright`, `sequential-thinking` MCP 서버가 연결되어 있다. **추측 가능한 것도 추측하지 말고 해당 MCP 도구로 먼저 확인한다.** 상세 매핑은 [[mcp-servers]] 참고.
+
+- DB 스키마/마이그레이션/보안·성능 점검/로그/타입 생성 → `supabase` MCP ([[supabase-mcp]] 워크플로 그대로 따른다)
+- Next.js 16, React 19, `@supabase/ssr`, shadcn/Radix, Tailwind 등 빠르게 변하는 라이브러리의 최신 API/문서 확인 → `context7` (추측하지 말고 조회)
+- 새 UI 프리미티브 추가 → 직접 작성 전에 `shadcn` MCP로 레지스트리 검색 후 설치 명령 사용
+- 인증/폼 플로우처럼 실제 브라우저 동작 확인이 필요한 변경 → `playwright`로 직접 조작해 검증(빌드 성공만으로 완료 처리하지 않는다)
+- 되돌리기 어려운 스키마 설계, 원인이 바로 안 보이는 버그처럼 여러 단계 트레이드오프를 구조화해야 하는 경우 → `sequential-thinking`
 
 ## 개발 도구 설정
 
@@ -89,3 +123,13 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 npm run check-all   # lint + type-check + format:check 통과 확인
 npm run build       # 빌드 성공 확인
 ```
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

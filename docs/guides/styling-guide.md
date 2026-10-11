@@ -138,3 +138,13 @@ import { Loader2 } from "lucide-react";
 3. 변형이 여러 개인 컴포넌트는 `cva`로 정의
 4. 새 shadcn 컴포넌트는 CLI로 추가 (`npx shadcn add <component>`)
 5. 다크모드는 토큰 기반으로 자동 대응, 예외적인 경우만 `dark:` 명시
+
+## 모바일 퍼스트 셸
+
+앱 전체는 데스크톱에서도 중앙 480px 단일 컬럼으로 보인다(좌우는 `bg-muted` 여백, 컬럼에 `shadow-xl`).
+
+- `components/layout/mobile-shell.tsx` — 컬럼 프레임. `header`(헤더 슬롯)와 `tabBar`(하단 탭바 표시) props를 받는다. 탭바가 있으면 콘텐츠에 하단 패딩(`pb-[calc(env(safe-area-inset-bottom)+6rem)]`)을 준다.
+- `components/layout/app-header.tsx` — 상단 헤더(좌측 로고, 우측 `right` 슬롯). `minimal`이면 인증/초대 화면용 낮은 헤더.
+- `components/layout/bottom-tab-bar.tsx` — 하단 플로팅 탭바(`usePathname`으로 활성 탭 판별하는 client component). 실제 존재하는 라우트만 탭으로 둔다(홈 `/protected`, 새 모임 `/protected/groups/new`, 내 정보 `/protected/me`). `cacheComponents` 때문에 `MobileShell`이 `<Suspense>`로 감싼다.
+- 적용: `app/page.tsx`(헤더만), `app/auth/layout.tsx`·`app/i/layout.tsx`(최소 헤더, 탭바 없음), `app/protected/layout.tsx`(헤더 + 탭바).
+- 터치 영역은 최소 44px(`min-h-11`), 페이지 콘텐츠는 `w-full`로 컬럼 폭을 따른다. 테마 전환은 헤더 우측에 둔다.

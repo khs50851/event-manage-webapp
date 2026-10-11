@@ -24,7 +24,8 @@ event-manage-webapp/
 │   └── globals.css         # Tailwind 지시문 + CSS 변수(테마 토큰) 정의
 ├── components/             # 재사용 가능한 React 컴포넌트
 │   ├── ui/                 # shadcn/ui 기반 저수준 프리미티브 컴포넌트
-│   └── tutorial/           # 튜토리얼 전용 컴포넌트 (도메인 특화)
+│   ├── layout/             # 모바일 셸(mobile-shell, app-header, bottom-tab-bar)
+│   └── groups/ rsvp/       # 도메인 컴포넌트
 ├── lib/                    # 유틸리티, 외부 서비스 클라이언트
 │   └── supabase/           # Supabase 클라이언트 생성 함수 (client/server/proxy)
 ├── docs/                   # 프로젝트 문서
@@ -62,8 +63,8 @@ import { cn } from "@/lib/utils";
 
 ### `components/`
 - **`components/ui/`**: shadcn CLI(`npx shadcn add <component>`)로 생성된 파일만 둔다. 직접 커스터마이징은 허용되지만, 구조(variant 패턴, `forwardRef` 등)는 유지한다.
-- **`components/`(최상위)**: 도메인 로직이 섞인 조합 컴포넌트(`login-form.tsx`, `hero.tsx` 등)를 둔다. 여러 `ui/` 컴포넌트를 조합해 기능 단위로 만든다.
-- 기능이 커지면 `components/<도메인>/` 형태로 하위 폴더를 만든다 (예: `components/tutorial/`).
+- **`components/`(최상위)**: 도메인 로직이 섞인 조합 컴포넌트(`login-form.tsx`, `auth-button.tsx` 등)를 둔다. 여러 `ui/` 컴포넌트를 조합해 기능 단위로 만든다.
+- 기능이 커지면 `components/<도메인>/` 형태로 하위 폴더를 만든다 (예: `components/groups/`).
 
 ### `lib/`
 - 외부 서비스 클라이언트(`lib/supabase/client.ts`, `server.ts`)와 순수 유틸 함수(`lib/utils.ts`)를 둔다.
