@@ -18,7 +18,9 @@ export function GuestAuthNotice({
     <div className={cn("w-full max-w-sm", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">로그인은 선택이에요</CardTitle>
+          <CardTitle className="text-base">
+            로그인해서 참여하는 게 어떠세요?
+          </CardTitle>
           <CardDescription>
             로그인하면 다른 기기에서도 내 응답을 확인하고 수정할 수 있어요.
             로그인하지 않아도 참석 응답은 그대로 할 수 있어요.
