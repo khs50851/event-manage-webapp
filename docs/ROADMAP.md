@@ -9,7 +9,7 @@
 
 | Phase | 목표 | 핵심 산출물 | 상태 |
 |---|---|---|---|
-| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (UI 단계 완료·U5-7 검토 게이트 승인, U3-1 로그인 유지 회귀 확인 1건 남음(I2-6에서 함께 확인), 연동 단계 I0 완료(2026-10-12), I1 대기) |
+| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (UI 단계 완료·U5-7 검토 게이트 승인, U3-1 로그인 유지 회귀 확인 1건 남음(I2-6에서 함께 확인), 연동 단계 I0 완료·I1 코드 완료(2026-10-12, 로그인 상태 화면 검증은 사용자 확인 대기), I2 대기) |
 | Phase 2 | 응답 독려 자동화와 정산·모집 기능 확장 | 알림톡, 오픈 모집, 품목별 정산, 월 회비, 대기자, 공동 주최자 | 대기 |
 | Phase 3 | 결제 자동화 | PG 결제, 자동 입금 확인, 환불, 통계 | 대기 |
 
@@ -37,6 +37,9 @@ app/
 ├── s/                              # 비회원 정산 조회 (U4, noindex 레이아웃)
 │   └── [token]/                    # page·loading·error (유효/무효/만료)
 ├── actions/
+│   ├── groups.ts                   # Server Action: 모임 생성·수정·삭제, 1회성 이벤트 생성 (I1)
+│   ├── members.ts                  # Server Action: 멤버 추가·삭제 (I1)
+│   ├── events.ts                   # Server Action: 회차 생성(복제 포함)·수정·취소 (I1)
 │   ├── settlements.ts              # Server Action: 이름 선택 시 본인 금액·입금 상태만 조회(읽기 전용)
 │   └── profile.ts                  # Server Action: 프로필 사진 변경·삭제(검증·sharp 재인코딩·Storage 업로드, U6)
 └── protected/                      # 주최자 영역 (더미 데이터)
@@ -90,7 +93,12 @@ lib/
 ├── data/groups.ts                  # 조회 함수 — 화면은 여기만 호출 (I1에서 구현 교체)
 ├── data/invites.ts                 # 초대 토큰·응답 조회 (I3에서 구현 교체)
 ├── data/settlements.ts             # 정산·정산 토큰 조회 (I4에서 구현 교체)
-├── data/dashboard.ts               # getDashboard: 대시보드 원본 조회 + 집계 호출 (I1~I4에서 구현 교체)
+├── data/dashboard.ts               # getDashboard: 세션 있으면 DB 조회 + 집계 호출, 없으면 더미(개발) (I3·I4에서 응답·정산 쓰기 연동)
+├── data/source.ts                  # resolveDataSource: 실데이터/개발 더미/없음 판단, isUuid, mockDelay
+├── data/mappers.ts                 # DB 행 ↔ 도메인 타입 매핑, KST 문자열 변환
+├── actions/shared.ts               # Server Action 공통: 세션 확인, Zod→fieldErrors, DB 오류 분류
+├── types/action.ts                 # ActionResult 계약
+├── supabase/database.types.ts      # 생성 타입(스키마 변경 시 재생성)
 ├── data/me.ts                      # getMyProfile: 세션이 있으면 profiles 실데이터, 없으면 더미(개발 미리보기)
 ├── data/avatars.ts                 # 프로필 사진 서명 URL 생성 헬퍼
 ├── avatar-image.ts                 # 사진 매직 바이트 판별·sharp 512x512 WebP 재인코딩(서버 전용)
@@ -271,7 +279,17 @@ U5-7 승인 이후 추가된 범위다(PRD Q13). 서버·데이터 계층은 연
 | I0-9 | 점검 ✅ 완료 | `get_advisors` security/performance 신규 경고 0건. 결과: security 0건, performance WARN 0건(INFO `unused_index` 1건: 빈 테이블의 FK 커버 인덱스 `rsvps_user_id_idx`, 의도적으로 유지). 프로필·Storage 마이그레이션 적용 후 재확인에서는 security·performance 모두 0건 | 신규 경고 0건 |
 | I0-10 | 프로필 사진 스토리지 ✅ 완료 | `profiles.avatar_path`, 비공개 버킷 `avatars`(3MB, jpeg/png/webp), 본인 폴더 정책(`add_profile_avatar_and_storage`), 주최자가 자기 회차 응답자 사진을 읽는 정책·RPC(`avatar_host_read`, `private.can_read_avatar`, `get_event_respondent_avatars`). 롤백 테스트: 타 사용자 접두 거부, 주최자는 자기 회차 응답자 사진만 읽기 가능, 타 주최자·anon 거부. 앱 구현은 아래 "게이트 이후 추가 UI" 참고 | 정책·RPC 검증 통과, 신규 경고 0건 |
 
-#### I1. 데이터 계층 교체
+#### I1. 데이터 계층 교체 — 코드 완료 (2026-10-12), 로그인 상태 화면 검증 대기
+
+구현 결과:
+- **데이터 출처 규칙**(`lib/data/source.ts`의 `resolveDataSource`): 세션이 있으면 Supabase(RLS가 소유자 데이터만 반환), 세션이 없으면 개발 환경은 더미(`/protected` 미리보기), 프로덕션은 빈 결과/null. 더미 경로는 I2-6·I5-3에서 제거한다.
+- **쓰기**: `app/actions/{groups,members,events}.ts` Server Action(계약 `lib/types/action.ts`의 `ActionResult`). 회차 복제는 `createEvent`로 처리. 1회성 이벤트는 SECURITY INVOKER RPC `create_one_off_event`(마이그레이션 `create_one_off_event_rpc`)로 모임+회차를 한 트랜잭션에서 생성(모임 이름 = 회차 제목 50자, 설명은 빈 문자열).
+- **비로그인 개발 미리보기**: 화면 쓰기는 `unauthenticated` 결과일 때만 기존 로컬 시뮬레이션 폴백(`components/groups/action-feedback.ts`).
+- **타입**: `lib/supabase/database.types.ts` 생성(스키마 변경 시 `generate_typescript_types`로 수동 재생성), 세 클라이언트에 `Database` 연결, 행↔도메인 매핑은 `lib/data/mappers.ts`(KST는 UTC+9 고정 산술, 저장은 `...:00+09:00`).
+- **상태 규칙**: 취소된 회차는 수정 불가, 종료된 회차는 수정 가능, 취소는 예정 회차만. 이미 취소된 회차의 재취소는 성공으로 응답.
+- **재검증**: `deleteGroup`은 삭제 직후 이동하므로 현재 상세·레이아웃을 재검증하지 않는다(재검증하면 이동 전 404 화면이 잠깐 보일 수 있음).
+- **검증**: 롤백 SQL(소유자만 CRUD, 타 사용자 0행·42501, 원자성, cascade 후 잔존 0, 이름 스냅샷 유지, KST 왕복), Server Action 단위 검증 32건·조회 6건, `check-all`·`build` 통과, advisors 0건. **미검증**: 로그인 상태에서 앱을 거친 저장·갱신·404·대시보드(계정 없음). 사용자 확인 체크리스트: 모임 생성→회차 추가→수정→복제→취소→멤버 추가/삭제→모임 수정·삭제(삭제 후 이동 시 깜빡임 없음), 1회성 이벤트 생성, 타 계정 URL 접근 404, 대시보드 카드 3개, 저장 중 버튼 비활성·실패 토스트.
+- **남은 한계(I3·I4)**: 초대 링크(`getActiveInviteToken`)·응답 목록·정산은 로그인 상태에서도 아직 더미라 실제 회차에서는 비어 보인다. 더미 URL(`/protected/groups/g-swim`)은 로그인 상태에서 404. `getMyProfile`은 반환 타입 때문에 프로덕션 비로그인에서도 더미를 반환(I5-3 정리).
 
 | ID | 작업 | 내용 | 완료 기준 |
 |---|---|---|---|

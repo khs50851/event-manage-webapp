@@ -94,13 +94,14 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 실제 상태는 `mcp__supabase__list_tables`/`get_advisors`로 직접 확인한다(아래는 2026-10-12 I0 완료 시점 스냅샷이므로 시간이 지나면 재확인 필요). 자세한 워크플로는 [[supabase-mcp]], 스키마 설계 결정은 `docs/guides/db-schema.md` 참고.
 
 - **현재 연결된 프로젝트**(`.mcp.json`, 2026-10-12 기준 `ecandzpftfinazfonvcl`)는 이전 프로젝트와 다른 새 프로젝트다. 기존 `accounts`/`quotes`/`quote_items`/`instruments`와 `handle_new_user()`는 이 프로젝트에 **존재하지 않는다**. 이전 프로젝트를 다시 연결하면 그쪽 객체는 수정하지 않는다.
-- **이벤트 도메인 스키마(I0 완료)**: `groups`, `group_members`, `events`, `event_invite_tokens`, `rsvps`, `settlements`, `settlement_tokens`, `settlement_shares` 8개 테이블과 사용자 프로필 `profiles`, 전부 RLS 활성. 마이그레이션 이력 8건(`list_migrations`)이 기준이며 **이후 모든 DDL은 `apply_migration`으로 적용**한다.
+- **이벤트 도메인 스키마(I0 완료)**: `groups`, `group_members`, `events`, `event_invite_tokens`, `rsvps`, `settlements`, `settlement_tokens`, `settlement_shares` 8개 테이블과 사용자 프로필 `profiles`, 전부 RLS 활성. 마이그레이션 이력 9건(`list_migrations`, 마지막은 1회성 이벤트 생성 RPC `create_one_off_event_rpc`)이 기준이며 **이후 모든 DDL은 `apply_migration`으로 적용**한다.
 - **프로필·사진**: `profiles`는 가입 트리거로 생성되며 행이 없을 수 있으므로 앱은 대체 이름 규칙을 둔다. 프로필 사진은 비공개 버킷 `avatars`(3MB, jpeg/png/webp)에 저장하고 DB에는 경로만 둔다. 상세는 `docs/guides/db-schema.md`.
 - **권한 모델**: 기본 권한(default privileges)을 회수했다. `public`에 새 테이블·함수를 만들면 필요한 롤에 GRANT를 명시해야 API에 보인다. RLS 정책은 반드시 `(select auth.uid())` 형태로 작성한다.
 - **비회원 접근**: anon은 테이블 권한이 없고, 토큰을 인자로 받는 RPC(`get_invite`, `submit_rsvp`, `get_settlement`, `get_settlement_share`, `report_settlement_payment`)만 호출한다. 구현은 비노출 `private` 스키마의 SECURITY DEFINER 함수, `public`에는 SECURITY INVOKER 래퍼만 둔다. `service_role`/secret 키는 클라이언트 번들에 넣지 않는다.
 - advisors(2026-10-12, 프로필·Storage 반영 후): security 0건, performance 0건. Leaked Password Protection은 사용하지 않기로 결정했다.
 - 후속 과제: DB 레이트리밋(I3, publishable 키로 RPC를 직접 호출하면 Server Action의 제한을 우회할 수 있음), 타인 항목 조회 방지(I4-3), "참여한 모임" 목록 RPC(I3-6a, 기준은 PRD Q12: 로그인 상태로 응답한 모임, 읽기 전용).
-- `lib/supabase/database.types.ts`(Supabase 생성 타입)가 아직 없다 — I1-1에서 `generate_typescript_types`로 생성해 세 클라이언트에 연결한다.
+- `lib/supabase/database.types.ts`(Supabase 생성 타입)는 I1에서 생성해 세 클라이언트에 `Database` 제네릭으로 연결했다. 스키마를 바꾸면 `generate_typescript_types`로 수동 재생성한다.
+- **데이터 계층 규칙(I1)**: 화면은 `lib/data/*`만 호출한다. 세션이 있으면 Supabase(RLS), 세션이 없으면 개발 환경은 더미·프로덕션은 빈 결과(`lib/data/source.ts`의 `resolveDataSource`). 쓰기는 `app/actions/*`의 Server Action(`ActionResult` 계약)이며, 응답·초대 링크·정산은 I3·I4 전까지 로그인 상태에서도 더미다.
 
 ## MCP 서버 활용 지침
 

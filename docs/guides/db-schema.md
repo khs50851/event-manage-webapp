@@ -15,6 +15,7 @@
 | 6 | `create_profiles` | `profiles` + RLS(본인 select/update), 가입 트리거 `private.handle_new_user_profile`(실패해도 가입은 통과) |
 | 7 | `add_profile_avatar_and_storage` | `profiles.avatar_path`, 비공개 버킷 `avatars`(3MB, jpeg/png/webp), 본인 폴더 storage 정책 3개 |
 | 8 | `avatar_host_read` | `private.can_read_avatar`, 주최자 읽기 storage 정책, RPC `get_event_respondent_avatars` |
+| 9 | `create_one_off_event_rpc` | `public.create_one_off_event(...)`: SECURITY INVOKER(RLS 적용), 모임(`is_one_off`)과 회차 1개를 한 트랜잭션에서 생성. authenticated만 실행 |
 
 ## 테이블 요약
 

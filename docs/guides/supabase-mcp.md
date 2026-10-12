@@ -20,7 +20,7 @@
 | `public.settlement_tokens` | 정산 토큰 이력 |
 | `public.settlement_shares` | 정산 항목(참가자별 분담) |
 
-`list_migrations`에는 마이그레이션 8건이 있다(I0: `harden_default_privileges_and_private_schema`, `create_groups_and_group_members`, `create_events_invite_tokens_and_rsvps`, `create_settlements_tokens_and_shares`, `create_token_access_rpcs` / 프로필: `create_profiles`, `add_profile_avatar_and_storage`, `avatar_host_read`). **이후의 모든 스키마 변경은 반드시 `apply_migration`으로 적용해 이력을 남긴다.** 새 기능을 설계할 때는 먼저 `list_tables(verbose: true)`로 현재 구조를 확인하고, 스키마와의 관계가 불분명하면 작업 전에 사용자에게 확인한다.
+`list_migrations`에는 마이그레이션 9건이 있다(I1: `create_one_off_event_rpc` / I0: `harden_default_privileges_and_private_schema`, `create_groups_and_group_members`, `create_events_invite_tokens_and_rsvps`, `create_settlements_tokens_and_shares`, `create_token_access_rpcs` / 프로필: `create_profiles`, `add_profile_avatar_and_storage`, `avatar_host_read`). **이후의 모든 스키마 변경은 반드시 `apply_migration`으로 적용해 이력을 남긴다.** 새 기능을 설계할 때는 먼저 `list_tables(verbose: true)`로 현재 구조를 확인하고, 스키마와의 관계가 불분명하면 작업 전에 사용자에게 확인한다.
 
 ### 권한 모델 (새 객체를 만들 때 반드시 알아야 한다)
 
