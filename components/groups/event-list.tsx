@@ -2,9 +2,22 @@
 
 import { CopyIcon, MapPinIcon, PlusIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import {
+  type Dispatch,
+  type MouseEvent,
+  type SetStateAction,
+  useState,
+} from "react";
 import { toast } from "sonner";
 
+import { cancelEvent, createEvent, updateEvent } from "@/app/actions/events";
+import {
+  type FormSubmitOutcome,
+  isDevPreviewFallback,
+  reportActionException,
+  reportActionFailure,
+  upsertById,
+} from "@/components/groups/action-feedback";
 import { EMPTY_EVENT_VALUES, EventForm } from "@/components/groups/event-form";
 import {
   AlertDialog,
@@ -60,17 +73,20 @@ export function EventList({
 }: {
   groupId: string;
   events: GroupEvent[];
-  onChange: (events: GroupEvent[]) => void;
+  // 함수형 갱신을 쓰므로 상위의 setState를 그대로 받는다(재검증 재렌더와 순서가 엇갈려도 최신 목록 기준으로 반영)
+  onChange: Dispatch<SetStateAction<GroupEvent[]>>;
 }) {
   const [formState, setFormState] = useState<FormState>(null);
   const [cancelling, setCancelling] = useState<GroupEvent | null>(null);
+  const [cancelPending, setCancelPending] = useState(false);
 
   // 시작 시각 순으로 표시한다.
   const sorted = [...events].sort((a, b) =>
     a.startsAt.localeCompare(b.startsAt),
   );
 
-  function handleSubmit(values: EventFormValues) {
+  // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
+  function simulateSubmit(values: EventFormValues) {
     const fields = {
       title: values.title.trim(),
       startsAt: values.startsAt,
@@ -107,7 +123,42 @@ export function EventList({
     setFormState(null);
   }
 
-  function confirmCancel() {
+  async function handleSubmit(
+    values: EventFormValues,
+  ): Promise<FormSubmitOutcome> {
+    if (!formState) return;
+    const kind = formState.kind;
+    try {
+      // 복제도 새 회차 생성과 같은 액션을 쓴다(입력값이 복사돼 있을 뿐)
+      const result =
+        kind === "edit"
+          ? await updateEvent(formState.event.id, values)
+          : await createEvent(groupId, values);
+      if (result.ok) {
+        const saved = result.data.event;
+        onChange((current) => upsertById(current, saved));
+        toast.success(
+          kind === "edit"
+            ? "회차를 수정했어요."
+            : kind === "duplicate"
+              ? "회차를 복제했어요."
+              : "회차를 추가했어요.",
+        );
+        setFormState(null);
+        return;
+      }
+      if (isDevPreviewFallback(result)) {
+        simulateSubmit(values);
+        return;
+      }
+      return reportActionFailure(result);
+    } catch (error) {
+      reportActionException(error);
+    }
+  }
+
+  // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
+  function simulateCancel() {
     if (!cancelling) return;
     const targetId = cancelling.id;
     onChange(
@@ -117,6 +168,33 @@ export function EventList({
     );
     toast.success("회차를 취소했어요. 초대 링크에는 취소 안내가 표시돼요.");
     setCancelling(null);
+  }
+
+  async function confirmCancel(event: MouseEvent<HTMLButtonElement>) {
+    // 저장이 끝날 때까지 대화상자를 열어 두고(실패 시 바로 재시도), 성공하면 닫는다.
+    event.preventDefault();
+    if (!cancelling || cancelPending) return;
+    setCancelPending(true);
+    try {
+      const result = await cancelEvent(cancelling.id);
+      if (result.ok) {
+        const saved = result.data.event;
+        onChange((current) => upsertById(current, saved));
+        toast.success("회차를 취소했어요. 초대 링크에는 취소 안내가 표시돼요.");
+        setCancelling(null);
+        return;
+      }
+      if (isDevPreviewFallback(result)) {
+        simulateCancel();
+        return;
+      }
+      // 취소 확인에는 입력 필드가 없으므로 메시지만 안내한다.
+      toast.error(result.message);
+    } catch (error) {
+      reportActionException(error);
+    } finally {
+      setCancelPending(false);
+    }
   }
 
   const dialogTitle =
@@ -272,7 +350,8 @@ export function EventList({
 
       <AlertDialog
         open={cancelling !== null}
-        onOpenChange={(open) => !open && setCancelling(null)}
+        // 취소 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
+        onOpenChange={(open) => !open && !cancelPending && setCancelling(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -283,9 +362,11 @@ export function EventList({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>돌아가기</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancel}>
-              회차 취소
+            <AlertDialogCancel disabled={cancelPending}>
+              돌아가기
+            </AlertDialogCancel>
+            <AlertDialogAction disabled={cancelPending} onClick={confirmCancel}>
+              {cancelPending ? "취소하는 중..." : "회차 취소"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

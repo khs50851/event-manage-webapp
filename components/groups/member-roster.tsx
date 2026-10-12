@@ -2,9 +2,23 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TriangleAlertIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import {
+  type Dispatch,
+  type MouseEvent,
+  type SetStateAction,
+  useState,
+} from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+
+import { addMember, deleteMember } from "@/app/actions/members";
+import {
+  applyFieldErrors,
+  isDevPreviewFallback,
+  reportActionException,
+  reportActionFailure,
+  upsertById,
+} from "@/components/groups/action-feedback";
 
 import {
   AlertDialog,
@@ -29,6 +43,10 @@ import { Input } from "@/components/ui/input";
 import { memberSchema, type MemberFormValues } from "@/lib/schemas/member";
 import type { GroupMember } from "@/lib/types/domain";
 
+const MEMBER_FIELDS = ["name", "memo"] as const satisfies ReadonlyArray<
+  keyof MemberFormValues
+>;
+
 export function MemberRoster({
   groupId,
   members,
@@ -36,9 +54,11 @@ export function MemberRoster({
 }: {
   groupId: string;
   members: GroupMember[];
-  onChange: (members: GroupMember[]) => void;
+  // 함수형 갱신을 쓰므로 상위의 setState를 그대로 받는다(재검증 재렌더와 순서가 엇갈려도 최신 목록 기준으로 반영)
+  onChange: Dispatch<SetStateAction<GroupMember[]>>;
 }) {
   const [deleting, setDeleting] = useState<GroupMember | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
@@ -50,7 +70,8 @@ export function MemberRoster({
   const isDuplicate =
     typedName !== "" && members.some((member) => member.name === typedName);
 
-  function addMember(values: MemberFormValues) {
+  // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
+  function simulateAdd(values: MemberFormValues) {
     onChange([
       ...members,
       {
@@ -64,11 +85,67 @@ export function MemberRoster({
     toast.success(`${values.name.trim()} 님을 추가했어요.`);
   }
 
-  function confirmDelete() {
+  // await 동안 isSubmitting이 유지돼 버튼 비활성·진행 문구가 표시된다. 실패하면 입력값을 그대로 둔다.
+  async function submitMember(values: MemberFormValues) {
+    try {
+      const result = await addMember(groupId, values);
+      if (result.ok) {
+        const saved = result.data.member;
+        onChange((current) => upsertById(current, saved));
+        form.reset();
+        toast.success(`${saved.name} 님을 추가했어요.`);
+        return;
+      }
+      if (isDevPreviewFallback(result)) {
+        simulateAdd(values);
+        return;
+      }
+      applyFieldErrors(
+        reportActionFailure(result),
+        MEMBER_FIELDS,
+        (field, message) =>
+          form.setError(field, { message }, { shouldFocus: true }),
+      );
+    } catch (error) {
+      reportActionException(error);
+    }
+  }
+
+  // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
+  function simulateDelete() {
     if (!deleting) return;
     onChange(members.filter((member) => member.id !== deleting.id));
     toast.success(`${deleting.name} 님을 명부에서 삭제했어요.`);
     setDeleting(null);
+  }
+
+  async function confirmDelete(event: MouseEvent<HTMLButtonElement>) {
+    // 저장이 끝날 때까지 대화상자를 열어 두고(실패 시 바로 재시도), 성공하면 닫는다.
+    event.preventDefault();
+    if (!deleting || deletePending) return;
+    const target = deleting;
+    setDeletePending(true);
+    try {
+      const result = await deleteMember(groupId, target.id);
+      if (result.ok) {
+        onChange((current) =>
+          current.filter((member) => member.id !== target.id),
+        );
+        toast.success(`${target.name} 님을 명부에서 삭제했어요.`);
+        setDeleting(null);
+        return;
+      }
+      if (isDevPreviewFallback(result)) {
+        simulateDelete();
+        return;
+      }
+      // 삭제 확인에는 입력 필드가 없으므로 메시지만 안내한다.
+      toast.error(result.message);
+    } catch (error) {
+      reportActionException(error);
+    } finally {
+      setDeletePending(false);
+    }
   }
 
   return (
@@ -113,7 +190,7 @@ export function MemberRoster({
 
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(addMember)}
+          onSubmit={form.handleSubmit(submitMember)}
           className="flex flex-col gap-3 rounded-md border p-3"
           noValidate
         >
@@ -156,15 +233,20 @@ export function MemberRoster({
               </FormItem>
             )}
           />
-          <Button type="submit" variant="secondary">
-            멤버 추가
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? "추가하는 중..." : "멤버 추가"}
           </Button>
         </form>
       </Form>
 
       <AlertDialog
         open={deleting !== null}
-        onOpenChange={(open) => !open && setDeleting(null)}
+        // 삭제 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
+        onOpenChange={(open) => !open && !deletePending && setDeleting(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -177,8 +259,10 @@ export function MemberRoster({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>삭제</AlertDialogAction>
+            <AlertDialogCancel disabled={deletePending}>취소</AlertDialogCancel>
+            <AlertDialogAction disabled={deletePending} onClick={confirmDelete}>
+              {deletePending ? "삭제하는 중..." : "삭제"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

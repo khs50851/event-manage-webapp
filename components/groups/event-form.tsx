@@ -4,6 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TriangleAlertIcon } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 
+import {
+  applyFieldErrors,
+  type FormSubmitOutcome,
+} from "@/components/groups/action-feedback";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -28,6 +32,15 @@ export const EMPTY_EVENT_VALUES: EventFormValues = {
   rsvpDeadline: "",
 };
 
+const EVENT_FIELDS = [
+  "title",
+  "startsAt",
+  "location",
+  "capacity",
+  "description",
+  "rsvpDeadline",
+] as const satisfies ReadonlyArray<keyof EventFormValues>;
+
 export function EventForm({
   defaultValues = EMPTY_EVENT_VALUES,
   submitLabel,
@@ -35,12 +48,23 @@ export function EventForm({
 }: {
   defaultValues?: EventFormValues;
   submitLabel: string;
-  onSubmit: (values: EventFormValues) => void | Promise<void>;
+  // 서버 검증 오류가 있으면 { fieldErrors, message }를 돌려준다(필드 오류로 표시).
+  onSubmit: (
+    values: EventFormValues,
+  ) => FormSubmitOutcome | Promise<FormSubmitOutcome>;
 }) {
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues,
   });
+
+  // await 동안 isSubmitting이 유지돼 버튼 비활성·진행 문구가 표시된다.
+  async function submit(values: EventFormValues) {
+    const outcome = await onSubmit(values);
+    applyFieldErrors(outcome, EVENT_FIELDS, (field, message) =>
+      form.setError(field, { message }, { shouldFocus: true }),
+    );
+  }
 
   const startsAt = useWatch({ control: form.control, name: "startsAt" });
   // 과거 시각은 막지 않고 경고만 한다. 입력 중에만 평가되므로 서버 렌더와 어긋나지 않는다.
@@ -49,7 +73,7 @@ export function EventForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(submit)}
         className="flex flex-col gap-4"
         noValidate
       >
