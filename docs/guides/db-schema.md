@@ -12,11 +12,15 @@
 | 3 | `create_events_invite_tokens_and_rsvps` | `events`, `event_invite_tokens`, `rsvps` + 트리거·RLS·권한 |
 | 4 | `create_settlements_tokens_and_shares` | `settlements`, `settlement_tokens`, `settlement_shares` + 트리거·RLS·권한 |
 | 5 | `create_token_access_rpcs` | 비회원 RPC 5종, 토큰 재발급 RPC 2종 |
+| 6 | `create_profiles` | `profiles` + RLS(본인 select/update), 가입 트리거 `private.handle_new_user_profile`(실패해도 가입은 통과) |
+| 7 | `add_profile_avatar_and_storage` | `profiles.avatar_path`, 비공개 버킷 `avatars`(3MB, jpeg/png/webp), 본인 폴더 storage 정책 3개 |
+| 8 | `avatar_host_read` | `private.can_read_avatar`, 주최자 읽기 storage 정책, RPC `get_event_respondent_avatars` |
 
 ## 테이블 요약
 
 | 테이블 | 주요 컬럼 | 제약 |
 |---|---|---|
+| `profiles` | `id`(→`auth.users`, cascade), `display_name`(1~30), `avatar_path`(null 가능), `created_at`, `updated_at` | `avatar_path`는 `{id}/` 접두·≤200자. 이메일은 복제하지 않음 |
 | `groups` | `owner_id`(→`auth.users`, 기본값 `auth.uid()`), `name`(1~50), `description`(≤200), `is_one_off` | 사용자 삭제 시 cascade |
 | `group_members` | `group_id`, `name`(1~30), `memo`(≤100) | 모임 삭제 시 cascade |
 | `events` | `group_id`, `title`(1~50), `starts_at`, `location`(1~100), `capacity`(1~9999 또는 null), `description`(≤500), `rsvp_deadline`, `status`(scheduled/cancelled/ended) | `rsvp_deadline <= starts_at`, 모임 삭제 시 cascade |
@@ -57,16 +61,32 @@
 
 **토큰 이력**: 토큰을 `events`/`settlements` 컬럼이 아닌 이력 테이블(`event_invite_tokens`, `settlement_tokens`)에 둔다. 행 없음 = 무효, `revoked_at` 있음 = 만료(재발급된 이전 링크), 활성은 부모당 1개(부분 unique). 토큰 값은 DB 내부 함수만 생성하며(192비트), 클라이언트는 값을 지정할 수 없다.
 
-## I0-8 결정: 주최자 프로필
+## I0-8 결정: 사용자 프로필 (2026-10-12 개정)
 
-**별도 `profiles` 테이블을 만들지 않고 `auth.users`를 직접 참조한다**(`groups.owner_id`, `rsvps.user_id`).
+당초 "`profiles` 없이 `auth.users` 직접 참조"로 결정했으나, 사용자 정보(표시 이름·프로필 사진) 저장 위치가 필요해 **`profiles` 테이블을 추가**했다. `groups.owner_id`, `rsvps.user_id`는 계속 `auth.users`를 직접 참조한다(FK 변경 없음).
 
-- 프로필 정보(이름·이메일·가입일)는 본인 화면(`/protected/me`)에서만 쓰며, 타인에게 주최자 이름을 보여주는 화면이 없다. 이름은 Auth 사용자 메타데이터(Google `full_name`/`name`), 없으면 이메일 앞부분으로 표시한다(I1).
-- `auth.users` 가입 트리거를 추가하지 않아 트리거 오류로 회원가입이 실패하는 위험을 피한다.
-- Q7의 취지(기존 `accounts` 재사용 안 함)는 유지된다. 표시 이름 편집이나 타인 노출이 필요해지면 `profiles`를 추가 마이그레이션으로 붙인다(기존 FK 변경 불필요).
+- 기존 `accounts`는 사용하지 않는다(Q7).
+- **가입 트리거**: `private.handle_new_user_profile()`(SECURITY DEFINER, `search_path = ''`)이 `auth.users` insert 후 프로필을 만든다. 내부 오류는 경고만 남기고 가입을 통과시키므로 **프로필 행이 없을 수 있다.** 앱은 행이 없으면 Auth 메타데이터(`full_name`/`name`) → 이메일 앞부분 → "사용자" 순으로 이름을 대체한다. 트리거 함수는 외부 롤이 실행할 수 없다.
+- **이름 규칙**: 가입 시 `full_name` → `name` → 이메일 앞부분 → "사용자" 순으로 채우고 30자로 자른다.
+- **권한**: authenticated는 본인 행 `select`와 `update(display_name, avatar_path)`만 가능. insert/delete는 트리거와 cascade가 담당한다. anon은 권한 없음.
+- 타인에게 이름·사진을 보여줄 때는 테이블을 열지 않고 소유자 확인을 거치는 RPC의 반환 필드로만 노출한다.
+
+## 프로필 사진 (Storage)
+
+- **버킷** `avatars`: 비공개, `file_size_limit` 3,145,728바이트(3MB), `allowed_mime_types` = image/jpeg, image/png, image/webp.
+- **저장 경로**: `{userId}/{uuid}.webp`. DB에는 경로(`profiles.avatar_path`)만 저장하고 화면용 URL은 서버가 서명 URL로 만든다. 서버가 512x512 WebP로 재인코딩하므로 EXIF가 제거되고 형식이 통일된다. 파일명을 매번 새로 만들어 update 정책은 두지 않는다.
+- **storage.objects 정책**(`authenticated`):
+  - `avatars_select_own` / `avatars_insert_own` / `avatars_delete_own`: 본인 폴더(`(storage.foldername(name))[1] = auth.uid()`)만.
+  - `avatars_select_event_owner`: `private.can_read_avatar(name)`가 true일 때 조회 허용 — 호출자가 소유한 모임의 회차에 응답한 로그인 참가자의 사진만. profiles RLS가 본인 행만 허용하므로 판별은 DEFINER 함수로 한다.
+- **RPC** `get_event_respondent_avatars(p_event_id)`: 소유자만 호출 가능, `(rsvp_id, avatar_path)`만 반환. 비소유자·없는 회차는 빈 결과(존재 여부 비노출).
+- **후속 과제**:
+  - 계정 삭제 기능을 만들 때 `auth.users` cascade는 Storage 파일을 지우지 않으므로 Storage API로 파일을 함께 삭제해야 한다(SQL로 `storage.objects`를 직접 삭제하지 않는다).
+  - 초대 페이지 공개 응답 목록과 "참여한 모임" 화면에는 사진을 노출하지 않는다(필요하면 별도 RPC 설계).
+  - 파일 크기 제한 변경 시 버킷 설정, `lib/schemas/profile.ts`의 상수, `next.config.ts`의 Server Action 본문 한도를 함께 바꾼다.
 
 ## 후속 단계에서 지켜야 할 것
 
 - I1: `generate_typescript_types` → `lib/supabase/database.types.ts`, RPC 반환값(jsonb)은 Zod로 파싱해 도메인 타입으로 변환. 1/N 저장 시 파생값을 `calculateSplit`과 같은 규칙으로 함께 보낸다(check 위반 방지).
 - I3: 속도 제한은 Server Action만으로는 부족하다(publishable 키로 `/rest/v1/rpc/submit_rsvp`를 직접 호출 가능). DB 측 제한(예: `private.rate_limits` + `submit_rsvp` 안 검사, 또는 `pgrst.db_pre_request`)을 함께 둔다.
+- I1: `getMyProfile`은 `profiles`가 없을 때의 대체 이름 규칙을 지킨다(위 I0-8 결정). 응답 현황 아바타는 `get_event_respondent_avatars`로 경로를 받아 서명 URL을 붙인다.
 - I4-3: `get_settlement_share`는 토큰 소지자가 항목 id를 바꿔 다른 사람의 금액·상태를 볼 수 있다(이름 선택 UI가 본래 그렇게 동작). 필요하면 본인 확인 수단을 추가한다.

@@ -16,7 +16,7 @@
 ## 현재 상태 (출발점)
 
 - Next.js 16 + Supabase Auth 스타터 킷, 개발 도구(ESLint, Prettier, Husky, commitlint, CI) 설정 완료.
-- 이벤트 도메인 테이블 없음. 기존 `accounts`/`quotes`/`quote_items`/`instruments`는 무관하며 수정하지 않는다(Q7: `accounts` 미사용, `profiles` 없이 `auth.users` 직접 참조 — PRD v0.5). 이 항목은 출발점 기준이며 I0 완료 후 현황은 `docs/guides/db-schema.md`와 CLAUDE.md를 따른다.
+- 이벤트 도메인 테이블 없음. 기존 `accounts`/`quotes`/`quote_items`/`instruments`는 무관하며 수정하지 않는다(Q7: `accounts` 미사용, 신규 `profiles` 테이블 사용 — PRD v0.6). 이 항목은 출발점 기준이며 I0 완료 후 현황은 `docs/guides/db-schema.md`와 CLAUDE.md를 따른다.
 - `list_migrations`가 비어 있으므로 이후 모든 DDL은 `apply_migration`으로 적용한다.
 - `lib/supabase/database.types.ts`가 없다. 스키마 적용 후 `generate_typescript_types`로 생성한다.
 - 테스트 프레임워크 없음. 검증은 `check-all`, `build`, playwright 수동 검증으로 한다.
@@ -37,7 +37,8 @@ app/
 ├── s/                              # 비회원 정산 조회 (U4, noindex 레이아웃)
 │   └── [token]/                    # page·loading·error (유효/무효/만료)
 ├── actions/
-│   └── settlements.ts              # Server Action: 이름 선택 시 본인 금액·입금 상태만 조회(읽기 전용)
+│   ├── settlements.ts              # Server Action: 이름 선택 시 본인 금액·입금 상태만 조회(읽기 전용)
+│   └── profile.ts                  # Server Action: 프로필 사진 변경·삭제(검증·sharp 재인코딩·Storage 업로드, U6)
 └── protected/                      # 주최자 영역 (더미 데이터)
     ├── layout.tsx                  # 공통 내비게이션/푸터
     ├── (dashboard)/                # 대시보드 /protected (U5-1). 라우트 그룹으로 error.tsx 적용 범위를 대시보드로 한정
@@ -48,7 +49,11 @@ app/
     ├── events/[eventId]/           # 회차 상세 page·not-found·error (초대 링크, 응답 마감, 응답 현황, 정산 진입)
     └── events/[eventId]/settlement/ # 정산 관리 page·loading·not-found·error (U4)
 components/
-├── ui/                             # shadcn 프리미티브 (npx shadcn add)
+├── ui/                             # shadcn 프리미티브 (npx shadcn add, avatar 포함)
+├── user-avatar.tsx                 # 공용 아바타(사진 또는 이니셜, 응답 현황·내 정보 공용) (U6)
+├── me/
+│   ├── profile-card.tsx            # 프로필 카드(서버 컴포넌트)
+│   └── avatar-uploader.tsx         # 사진 변경·삭제, 브라우저 자동 축소 후 업로드 (U6)
 ├── dashboard/
 │   └── dashboard-cards.tsx         # 대시보드 카드 3개·빈 상태 CTA·카드 스켈레톤 (U5-1)
 ├── groups/                         # 모임 도메인 컴포넌트 (U2)
@@ -86,7 +91,11 @@ lib/
 ├── data/invites.ts                 # 초대 토큰·응답 조회 (I3에서 구현 교체)
 ├── data/settlements.ts             # 정산·정산 토큰 조회 (I4에서 구현 교체)
 ├── data/dashboard.ts               # getDashboard: 대시보드 원본 조회 + 집계 호출 (I1~I4에서 구현 교체)
-├── schemas/                        # Zod 스키마 (group, member, event, rsvp, settlement)
+├── data/me.ts                      # getMyProfile: 세션이 있으면 profiles 실데이터, 없으면 더미(개발 미리보기)
+├── data/avatars.ts                 # 프로필 사진 서명 URL 생성 헬퍼
+├── avatar-image.ts                 # 사진 매직 바이트 판별·sharp 512x512 WebP 재인코딩(서버 전용)
+├── image-resize.ts                 # 브라우저 사진 축소(canvas, 클라이언트 전용)
+├── schemas/                        # Zod 스키마 (group, member, event, rsvp, settlement, profile)
 ├── rsvp.ts                         # 응답 집계·정원 초과·마감 판정 순수 함수
 ├── settlement.ts                   # 1/N 계산·경계값 검증·재계산·입금 상태 전이·요약 문구 순수 함수
 ├── dashboard.ts                    # 대시보드 집계 순수 함수(7일 이내·응답 미완료·미입금 정산, rsvp/settlement 재사용)
@@ -226,6 +235,19 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 | U5-6 | 시나리오 시연 ✅ 완료 | S1~S4를 더미 데이터로 끝까지 시연(playwright). 결과(2026-10-12, 360x800, 38단계 전부 통과, 콘솔 오류·가로 스크롤 0건): S1 모임 생성·명부(동명이인 경고)·회차 등록·초대 링크 복사·응답 현황/대리 입력, 하단 탭 "홈"(/protected) 이동·활성 표시 / S2 1회성 이벤트 생성·명부 숨김 / S3 비회원 응답·같은 화면 재수정·명부 없음 직접 입력·정원 초과·취소/마감/종료/만료 안내 / S4 1/N 미리보기(나머지 주최자 부담)·정산 생성·링크 복사·입금 확인→완료·참가자 "입금했어요"→확인 필요→주최자 확정. 수정: 1회성 이벤트 생성 후 일반 빈 모임(g-empty)으로 가던 것을 1회성 더미(g-oneoff)로, 모임 삭제 후 이동을 `/` → `/protected`. 남은 한계: 화면에서 추가한 회차는 저장되지 않아 상세 링크가 404(I3에서 해소) | 4개 시나리오 통과 |
 | U5-7 | **UI 검토 게이트** ✅ 승인 | 사용자 확인을 받고 화면 변경 요청을 반영한 뒤 승인을 기록. 승인 전에는 연동 단계에 착수하지 않는다. 결과(2026-10-12): 사용자가 U5 화면을 직접 확인하고 변경 요청 없이 승인. 연동 단계(I0) 착수 가능 | 사용자 승인 |
 
+#### 게이트 이후 추가 UI: 프로필 사진 (사용자 요청, 2026-10-12)
+
+U5-7 승인 이후 추가된 범위다(PRD Q13). 서버·데이터 계층은 연동 단계 일부를 선반영한다(`/me`만 `profiles` 실데이터).
+
+| ID | 작업 | 내용 | 완료 기준 |
+|---|---|---|---|
+| U6-1 | 프로필 사진 설정 | `/protected/me`에서 사진 변경·삭제. 3MB 이하 JPG/PNG/WebP, 확인 대화상자, 해요체 안내, 업로드 중 상태 | 업로드·변경·삭제 동작 |
+| U6-2 | 이미지 자동 축소·재인코딩 | 브라우저에서 긴 변 1024px 이하로 먼저 축소(원본 최대 20MB), 서버(sharp)가 512x512 WebP로 재인코딩하며 EXIF 제거 | 3MB 초과 원본도 통과, 서버 검증(크기·형식·매직 바이트) 동작 |
+| U6-3 | 응답 현황 아바타 | `/protected/events/[eventId]` 응답 현황 목록의 이름 왼쪽에 아바타 표시. 로그인 상태로 응답한 참가자는 사진, 그 외(비회원·명부 멤버·대리 입력)는 이니셜 | 360px에서 정렬·가로 스크롤 없음 |
+| U6-4 | 검증 | 라이트/다크, 터치 대상 44px, 콘솔 오류 0건, 실제 업로드는 로그인 계정으로 확인 | 체크 완료(또는 미검증 사유 기록) |
+
+결과(2026-10-12): U6-1~U6-3 구현 완료, `check-all`·`build` 통과. 360x800 라이트/다크에서 `/protected/me`와 응답 현황(`/protected/events/e-swim-1`)의 정렬·가로 스크롤 0건·터치 대상 44px·콘솔 오류 0건 확인, 형식·용량 오류 안내 경로 확인. 서버 로직은 가짜 Supabase 클라이언트 단위 검증 17건 통과(3MB 초과, 위장 파일, 해상도 초과, 재인코딩 512x512 WebP·EXIF 제거 등). **미검증**: 로그인 계정이 없어 실제 업로드·서명 URL·사진 표시·삭제 성공 경로와 Storage RLS 동작(앱 경유), 배포 환경의 sharp 동작은 확인하지 못했다. 고화소·저용량 사진이 서버 해상도 제한에 걸리지 않도록 3MB 이하 파일도 브라우저에서 항상 한 번 재인코딩한다.
+
 ### 연동 단계 (UI 검토 통과 후)
 
 태스크 ID는 `I{마일스톤}-{순번}`이다. DDL은 모두 `apply_migration`으로 적용하고, 적용 직후 `get_advisors`를 확인한다.
@@ -245,8 +267,9 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 | I0-5 | 제약 ✅ 완료 | 이름 스냅샷 유지(멤버 삭제 시 FK `set null`), 회차당 비회원 식별자 응답 1건 유니크, 금액 정수 check, 모임 삭제 시 연쇄 삭제. 결과: 타 모임 멤버 연결·마감>시작·총액 0·1/N 파생값 불일치·소수 금액·음수 금액·식별자 중복 모두 거부, 멤버 삭제 후 응답·정산 항목 이름 유지, 모임 삭제 후 하위 잔존 0건(테스트 데이터는 롤백) | 제약 위반 SQL이 거부됨 |
 | I0-6 | RLS 정책 ✅ 완료 | 전 테이블 RLS 활성화, `(select auth.uid())` 형태, 익명 역할 전체 SELECT 금지. 결과: 8개 테이블 소유자 정책(토큰 2개는 조회만), anon 테이블 권한 0, 컬럼 단위 권한으로 토큰·비회원 식별자·정산 상태 직접 쓰기 차단. 두 사용자 시나리오에서 타인 데이터 조회·수정·삽입 0건 | 정책 목록 확인 |
 | I0-7 | 비회원 접근 설계 ✅ 완료 | 토큰 검증 후 단일 회차 RSVP만 허용하는 서버 처리 방식 결정(`service_role` 번들 금지). 결정: `private` 스키마의 SECURITY DEFINER 구현 + `public` SECURITY INVOKER 래퍼 RPC(`get_invite`, `submit_rsvp`, `get_settlement`, `get_settlement_share`, `report_settlement_payment`, 주최자용 `rotate_*_token`). 토큰은 이력 테이블로 관리(행 없음=무효, `revoked_at`=만료) | 설계 결정 기록 |
-| I0-8 | 주최자 프로필 ✅ 완료 | 신규 프로필 테이블 또는 대안 결정(Q7), 기존 `accounts` 미수정. 결정: `profiles` 테이블 없이 `auth.users` 직접 참조(본인 화면만 사용, 가입 트리거 위험 회피). 필요 시 추가 마이그레이션으로 확장 | 결정 반영 |
-| I0-9 | 점검 ✅ 완료 | `get_advisors` security/performance 신규 경고 0건. 결과: security 0건, performance WARN 0건(INFO `unused_index` 1건: 빈 테이블의 FK 커버 인덱스 `rsvps_user_id_idx`, 의도적으로 유지) | 신규 경고 0건 |
+| I0-8 | 주최자 프로필 ✅ 완료 | 신규 프로필 테이블 또는 대안 결정(Q7), 기존 `accounts` 미수정. 결정(2026-10-12 개정): 처음에는 `profiles` 없이 `auth.users` 직접 참조로 정했으나 사용자 정보 저장 위치가 필요해 **`profiles` 테이블 추가**(`create_profiles`). 가입 트리거는 실패해도 회원가입을 막지 않고, 행이 없으면 앱이 대체 이름(Auth 메타데이터 → 이메일 앞부분 → "사용자")을 쓴다. 롤백 테스트: 자동 생성·이름 규칙·본인만 조회/수정·31자/빈 이름 거부·cascade 삭제·트리거 실패 시 가입 통과 | 결정 반영 |
+| I0-9 | 점검 ✅ 완료 | `get_advisors` security/performance 신규 경고 0건. 결과: security 0건, performance WARN 0건(INFO `unused_index` 1건: 빈 테이블의 FK 커버 인덱스 `rsvps_user_id_idx`, 의도적으로 유지). 프로필·Storage 마이그레이션 적용 후 재확인에서는 security·performance 모두 0건 | 신규 경고 0건 |
+| I0-10 | 프로필 사진 스토리지 ✅ 완료 | `profiles.avatar_path`, 비공개 버킷 `avatars`(3MB, jpeg/png/webp), 본인 폴더 정책(`add_profile_avatar_and_storage`), 주최자가 자기 회차 응답자 사진을 읽는 정책·RPC(`avatar_host_read`, `private.can_read_avatar`, `get_event_respondent_avatars`). 롤백 테스트: 타 사용자 접두 거부, 주최자는 자기 회차 응답자 사진만 읽기 가능, 타 주최자·anon 거부. 앱 구현은 아래 "게이트 이후 추가 UI" 참고 | 정책·RPC 검증 통과, 신규 경고 0건 |
 
 #### I1. 데이터 계층 교체
 
@@ -255,6 +278,7 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 | I1-1 | 타입 생성·연결 | `generate_typescript_types` → `lib/supabase/database.types.ts`, 세 클라이언트에 연결 | `type-check` 통과 |
 | I1-2 | 수동 타입 교체 | U0-2의 수동 도메인 타입을 생성 타입 기반으로 교체, 불일치 수정(R8) | 화면 코드 변경 최소 |
 | I1-3 | 모임·멤버 연동 | `lib/data/` 조회와 쓰기(Server Action)를 Supabase 호출로 교체. `listJoinedGroups`는 I3-6 전까지 빈 목록을 반환(기존 "아직 참여한 모임이 없어요" 빈 상태 사용, Q12) | U2 화면이 실데이터로 동작 |
+| I1-3a | 프로필·응답 아바타 | `getMyProfile`은 `/me`에서 `profiles` 실데이터로 선반영(행이 없으면 대체 이름 규칙). 응답 현황 아바타는 `get_event_respondent_avatars` + 서명 URL 헬퍼를 I3-7 응답 조회 교체 때 연결 | 프로필 카드·응답 현황에 실데이터 반영 |
 | I1-4 | 회차 연동 | 회차 조회·생성·수정·취소·복제 교체 | 위와 동일 |
 | I1-5 | 대시보드 집계 | 7일 이내 회차, 응답 미완료, 미입금 건수 쿼리(FR-11) | 실데이터 카드 표시 |
 | I1-6 | 렌더링 점검 | `<Suspense>` 경계, 캐시 재검증(`"use cache"` 남용 금지), 소유자 외 접근 시 404 | `build` 통과, 타 계정 접근 차단 확인 |
@@ -357,6 +381,7 @@ Phase 2 착수 조건: Phase 1 출시 후 North Star(월간 정산 완료 회차
 
 - Q1~Q11은 모두 결정되었으나, Q1은 응답 문구("모임 공용 a로 해")가 모호해 (a) 회차별로 해석했다. 모임 공용 링크가 의도였다면 U3·I3 범위가 바뀐다.
 - ~~비회원 접근의 서버 처리 방식(토큰 검증 후 쓰기)은 I0 설계 단계에서 확정해야 한다.~~ → I0-7에서 확정(토큰 인자 RPC, [`db-schema.md`](./guides/db-schema.md)).
-- ~~"참여한 모임" 기준과 W8의 관계~~ → Q12로 확정(로그인 상태로 응답한 모임, 읽기 전용 목록, I3-6a). ~~Q7 표현 차이~~ → PRD v0.5에서 `profiles` 없이 `auth.users` 직접 참조로 정정.
+- ~~"참여한 모임" 기준과 W8의 관계~~ → Q12로 확정(로그인 상태로 응답한 모임, 읽기 전용 목록, I3-6a). ~~Q7 표현 차이~~ → PRD v0.6에서 `profiles` 테이블을 추가하는 것으로 확정(Q7 재정정). 프로필 사진 저장·열람 범위는 Q13으로 확정.
+- 프로필 사진: 계정 삭제 시 Storage 파일 정리(계정 삭제 기능 도입 시), 초대 페이지·"참여한 모임"에 사진을 노출할지는 미결정(현재는 노출하지 않음, `db-schema.md` 후속 과제).
 - I3 속도 제한은 publishable 키로 RPC를 직접 호출하면 Server Action의 제한을 우회할 수 있으므로 DB 쪽 제한(`private.rate_limits` 등)도 함께 설계해야 한다(I3-4).
 - 담당자와 일정은 미정이다.
