@@ -43,6 +43,20 @@ export function nowKstLocalString(): string {
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
 
+// timestamptz 문자열(ISO 8601)을 한국 시간(Asia/Seoul) 기준 "YYYY-MM-DD"로 바꾼다.
+// 해석할 수 없는 값이면 null을 반환한다.
+export function toKstDateString(value: string): string | null {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  // en-CA 형식은 "YYYY-MM-DD"
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 // 현재 시각을 "YYYY-MM-DDTHH:mm" 로컬 문자열로 반환한다(클라이언트 이벤트 핸들러에서만 호출).
 export function nowLocalString(): string {
   const now = new Date();

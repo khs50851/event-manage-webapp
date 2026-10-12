@@ -17,6 +17,8 @@ export type Profile = {
   email: string;
   // 가입일 "YYYY-MM-DD"
   joinedAt: string;
+  // 프로필 사진 서명 URL(비공개 버킷, 서버에서 짧은 만료로 생성). 사진이 없으면 null.
+  avatarUrl: string | null;
 };
 
 // 사용자와 모임의 관계: 직접 만든 모임(host) / 참여한 모임(member)
@@ -69,6 +71,8 @@ export type Rsvp = {
   status: RsvpStatus;
   source: RsvpSource;
   respondedAt: string;
+  // 로그인 응답자의 프로필 사진 서명 URL(주최자 조회에서만 채운다). 없거나 비회원이면 null/생략.
+  avatarUrl?: string | null;
 };
 
 // 회차별 초대 토큰(Q1: 회차 단위). 재발급되면 이전 토큰은 revoked가 된다.

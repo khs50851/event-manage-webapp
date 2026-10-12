@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { UserAvatar } from "@/components/user-avatar";
 import { nowKstLocalString } from "@/lib/format";
 import {
   labelDuplicateNames,
@@ -219,18 +220,24 @@ export function HostRsvpStatus({
                         key={item.id}
                         className="flex items-center justify-between gap-2 px-3 py-1"
                       >
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-2">
-                          <span className="truncate font-medium">
-                            {item.name}
-                          </span>
-                          {memo && (
-                            <span className="truncate text-sm text-muted-foreground">
-                              {memo}
+                        <div className="flex min-w-0 items-center gap-3">
+                          <UserAvatar
+                            name={item.name}
+                            avatarUrl={item.avatarUrl}
+                          />
+                          <div className="flex min-w-0 flex-wrap items-center gap-x-2">
+                            <span className="truncate font-medium">
+                              {item.name}
                             </span>
-                          )}
-                          {item.source === "host" && (
-                            <Badge variant="outline">주최자 입력</Badge>
-                          )}
+                            {memo && (
+                              <span className="truncate text-sm text-muted-foreground">
+                                {memo}
+                              </span>
+                            )}
+                            {item.source === "host" && (
+                              <Badge variant="outline">주최자 입력</Badge>
+                            )}
+                          </div>
                         </div>
                         <div className="flex shrink-0">
                           <Button
@@ -282,13 +289,19 @@ export function HostRsvpStatus({
                   key={member.id}
                   className="flex items-center justify-between gap-2 px-3 py-1"
                 >
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-2">
-                    <span className="truncate font-medium">{member.name}</span>
-                    {member.memo && (
-                      <span className="truncate text-sm text-muted-foreground">
-                        {member.memo}
+                  <div className="flex min-w-0 items-center gap-3">
+                    {/* 미응답 멤버는 계정과 연결되지 않으므로 이니셜만 보여준다 */}
+                    <UserAvatar name={member.name} />
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2">
+                      <span className="truncate font-medium">
+                        {member.name}
                       </span>
-                    )}
+                      {member.memo && (
+                        <span className="truncate text-sm text-muted-foreground">
+                          {member.memo}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <Button
                     type="button"

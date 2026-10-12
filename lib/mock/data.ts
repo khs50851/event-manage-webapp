@@ -19,6 +19,7 @@ export const mockProfile: Profile = {
   name: "김주최",
   email: "host@example.com",
   joinedAt: "2026-09-01",
+  avatarUrl: null,
 };
 
 export const mockGroups: Group[] = [

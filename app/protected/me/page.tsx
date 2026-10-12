@@ -39,6 +39,7 @@ async function MyInfo() {
         name={profile.name}
         email={email}
         joinedAt={profile.joinedAt}
+        avatarUrl={profile.avatarUrl}
       />
       <StatsCards
         hostedCount={stats.hostedCount}
@@ -60,12 +61,19 @@ function MyInfoSkeleton() {
       aria-busy="true"
       aria-label="내 정보를 불러오는 중"
     >
-      <div className="flex items-center gap-4 rounded-md border p-4">
-        <Skeleton className="size-14 shrink-0 rounded-full" />
-        <div className="flex flex-1 flex-col gap-2">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-3 w-28" />
+      <div className="flex flex-col gap-4 rounded-md border p-4">
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-14 shrink-0 rounded-full" />
+          <div className="flex flex-1 flex-col gap-2">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+        </div>
+        {/* 사진 변경 버튼(44px) + 안내 문구 */}
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-4 w-56" />
         </div>
       </div>
       <div className="flex flex-col gap-3">
