@@ -1,6 +1,6 @@
 # ROADMAP: 이벤트 관리 웹앱
 
-- 기반 문서: [`docs/prd/event-management-mvp.md`](./prd/event-management-mvp.md) (v0.3)
+- 기반 문서: [`docs/prd/event-management-mvp.md`](./prd/event-management-mvp.md) (v0.5)
 - 작성일: 2026-10-08
 - 일정 표기: 담당 인력과 착수일이 정해지지 않아 날짜 대신 **마일스톤 순서와 의존 관계**로 표기한다. 착수 시 기간을 채운다.
 - ID 표기: `FR-xx`(기능 요구사항), `W*`(제외 항목), `R*`(리스크), `Q*`(결정 사항)는 모두 PRD의 ID를 따른다.
@@ -9,14 +9,14 @@
 
 | Phase | 목표 | 핵심 산출물 | 상태 |
 |---|---|---|---|
-| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (U1, U2, U4, U5-1~U5-6 완료, U3 검증 1건 남음) |
+| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (UI 단계 완료·U5-7 검토 게이트 승인, U3-1 로그인 유지 회귀 확인 1건 남음(I2-6에서 함께 확인), 연동 단계 I0 완료(2026-10-12), I1 대기) |
 | Phase 2 | 응답 독려 자동화와 정산·모집 기능 확장 | 알림톡, 오픈 모집, 품목별 정산, 월 회비, 대기자, 공동 주최자 | 대기 |
 | Phase 3 | 결제 자동화 | PG 결제, 자동 입금 확인, 환불, 통계 | 대기 |
 
 ## 현재 상태 (출발점)
 
 - Next.js 16 + Supabase Auth 스타터 킷, 개발 도구(ESLint, Prettier, Husky, commitlint, CI) 설정 완료.
-- 이벤트 도메인 테이블 없음. 기존 `accounts`/`quotes`/`quote_items`/`instruments`는 무관하며 수정하지 않는다(Q7: 신규 프로필 사용).
+- 이벤트 도메인 테이블 없음. 기존 `accounts`/`quotes`/`quote_items`/`instruments`는 무관하며 수정하지 않는다(Q7: `accounts` 미사용, `profiles` 없이 `auth.users` 직접 참조 — PRD v0.5). 이 항목은 출발점 기준이며 I0 완료 후 현황은 `docs/guides/db-schema.md`와 CLAUDE.md를 따른다.
 - `list_migrations`가 비어 있으므로 이후 모든 DDL은 `apply_migration`으로 적용한다.
 - `lib/supabase/database.types.ts`가 없다. 스키마 적용 후 `generate_typescript_types`로 생성한다.
 - 테스트 프레임워크 없음. 검증은 `check-all`, `build`, playwright 수동 검증으로 한다.
@@ -224,25 +224,29 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 | U5-4 | 다크모드 점검 ✅ 완료 | 디자인 토큰만 사용, 하드코딩 색상 없음, 색 대비 AA. 결과: `text-amber-*` → `--warning` 토큰 신설, 버튼·배지 destructive `text-white` → `text-destructive-foreground`. 대비 미달 수정 — secondary 배경 흰 글씨(2.5:1, 라이트 `--secondary-foreground` 검정으로), 라이트 `--destructive`(3.6:1 → 명도 하향), 다크 outline 버튼의 빨간 글씨(3.1:1). 라이트/다크 25개 화면 자동 대비 측정 미달 0건. 예외: Google 로고 브랜드 색, 대화상자 배경막 `bg-black/50` | 전 화면 확인 |
 | U5-5 | 접근성 점검 ✅ 완료 | 키보드 조작, 폼 라벨 연결, 상태의 색상 외 텍스트 구분. 결과: 대화상자 포커스 트랩·Esc 닫기·배경 aria-hidden 확인, Trigger 없는 대화상자가 닫힌 뒤 포커스를 잃던 문제 수정(`hooks/use-return-focus.ts`), 링크 포커스 링이 거의 보이지 않던 문제 수정(라이트 `--ring` 진하게 + 링크 2px 포커스 링), 인증·무효 토큰 화면에 h1 추가, 닫기 버튼 영어 문구 → "닫기". 폼 라벨·오류 연결(aria-invalid/aria-describedby)과 상태 텍스트·아이콘 병행은 통과 | 체크리스트 통과 |
 | U5-6 | 시나리오 시연 ✅ 완료 | S1~S4를 더미 데이터로 끝까지 시연(playwright). 결과(2026-10-12, 360x800, 38단계 전부 통과, 콘솔 오류·가로 스크롤 0건): S1 모임 생성·명부(동명이인 경고)·회차 등록·초대 링크 복사·응답 현황/대리 입력, 하단 탭 "홈"(/protected) 이동·활성 표시 / S2 1회성 이벤트 생성·명부 숨김 / S3 비회원 응답·같은 화면 재수정·명부 없음 직접 입력·정원 초과·취소/마감/종료/만료 안내 / S4 1/N 미리보기(나머지 주최자 부담)·정산 생성·링크 복사·입금 확인→완료·참가자 "입금했어요"→확인 필요→주최자 확정. 수정: 1회성 이벤트 생성 후 일반 빈 모임(g-empty)으로 가던 것을 1회성 더미(g-oneoff)로, 모임 삭제 후 이동을 `/` → `/protected`. 남은 한계: 화면에서 추가한 회차는 저장되지 않아 상세 링크가 404(I3에서 해소) | 4개 시나리오 통과 |
-| U5-7 | **UI 검토 게이트** | 사용자 확인을 받고 화면 변경 요청을 반영한 뒤 승인을 기록. 승인 전에는 연동 단계에 착수하지 않는다 | 사용자 승인 |
+| U5-7 | **UI 검토 게이트** ✅ 승인 | 사용자 확인을 받고 화면 변경 요청을 반영한 뒤 승인을 기록. 승인 전에는 연동 단계에 착수하지 않는다. 결과(2026-10-12): 사용자가 U5 화면을 직접 확인하고 변경 요청 없이 승인. 연동 단계(I0) 착수 가능 | 사용자 승인 |
 
 ### 연동 단계 (UI 검토 통과 후)
 
 태스크 ID는 `I{마일스톤}-{순번}`이다. DDL은 모두 `apply_migration`으로 적용하고, 적용 직후 `get_advisors`를 확인한다.
 
-#### I0. 스키마와 RLS
+#### I0. 스키마와 RLS ✅ 완료 (2026-10-12)
+
+설계 원칙: 기존 `accounts`/`quotes`/`quote_items`/`instruments`는 수정하지 않는다. 모든 DDL은 `apply_migration`으로 적용하고 태스크마다 `get_advisors`를 확인한다. 비회원 접근은 `service_role` 키를 쓰지 않고, 토큰을 인자로 받는 최소 권한 RPC(또는 서버 전용 처리)로만 허용한다.
+
+설계 상세·결정 근거: [`docs/guides/db-schema.md`](./guides/db-schema.md)
 
 | ID | 작업 | 내용 | 완료 기준 |
 |---|---|---|---|
-| I0-1 | 현황 재확인 | `list_tables(verbose: true)`, `list_migrations`로 기존 구조 확인 | 확인 완료 |
-| I0-2 | 모임·멤버 테이블 | `groups`, `group_members` 생성 | 마이그레이션 이력 존재 |
-| I0-3 | 회차·응답 테이블 | `events`(초대 토큰 포함), `rsvps` 생성 | 마이그레이션 이력 존재 |
-| I0-4 | 정산 테이블 | `settlements`(정산 토큰 포함), `settlement_shares` 생성 | 마이그레이션 이력 존재 |
-| I0-5 | 제약 | 이름 스냅샷 유지(멤버 삭제 시 FK `set null`), 회차당 비회원 식별자 응답 1건 유니크, 금액 정수 check, 모임 삭제 시 연쇄 삭제 | 제약 위반 SQL이 거부됨 |
-| I0-6 | RLS 정책 | 전 테이블 RLS 활성화, `(select auth.uid())` 형태, 익명 역할 전체 SELECT 금지 | 정책 목록 확인 |
-| I0-7 | 비회원 접근 설계 | 토큰 검증 후 단일 회차 RSVP만 허용하는 서버 처리 방식 결정(`service_role` 번들 금지) | 설계 결정 기록 |
-| I0-8 | 주최자 프로필 | 신규 프로필 테이블 또는 대안 결정(Q7), 기존 `accounts` 미수정 | 결정 반영 |
-| I0-9 | 점검 | `get_advisors` security/performance 신규 경고 0건 | 신규 경고 0건 |
+| I0-1 | 현황 재확인 ✅ 완료 | `list_tables(verbose: true)`, `list_migrations`로 기존 구조 확인. 결과: `.mcp.json`이 새 프로젝트(`ecandzpftfinazfonvcl`)를 가리키며 public 테이블 0개, 마이그레이션 0건, advisors security/performance 0건(기존 `accounts` 등과 `handle_new_user()`는 이 프로젝트에 없음). 기본 권한이 anon에 새 객체 권한을 자동 부여하는 상태였음 | 확인 완료 |
+| I0-2 | 모임·멤버 테이블 ✅ 완료 | `groups`, `group_members` 생성(`create_groups_and_group_members`). 선행으로 기본 권한 회수·`private` 스키마(`harden_default_privileges_and_private_schema`) | 마이그레이션 이력 존재 |
+| I0-3 | 회차·응답 테이블 ✅ 완료 | `events`, 초대 토큰 이력 `event_invite_tokens`, `rsvps` 생성(`create_events_invite_tokens_and_rsvps`) | 마이그레이션 이력 존재 |
+| I0-4 | 정산 테이블 ✅ 완료 | `settlements`, 정산 토큰 이력 `settlement_tokens`, `settlement_shares` 생성(`create_settlements_tokens_and_shares`) | 마이그레이션 이력 존재 |
+| I0-5 | 제약 ✅ 완료 | 이름 스냅샷 유지(멤버 삭제 시 FK `set null`), 회차당 비회원 식별자 응답 1건 유니크, 금액 정수 check, 모임 삭제 시 연쇄 삭제. 결과: 타 모임 멤버 연결·마감>시작·총액 0·1/N 파생값 불일치·소수 금액·음수 금액·식별자 중복 모두 거부, 멤버 삭제 후 응답·정산 항목 이름 유지, 모임 삭제 후 하위 잔존 0건(테스트 데이터는 롤백) | 제약 위반 SQL이 거부됨 |
+| I0-6 | RLS 정책 ✅ 완료 | 전 테이블 RLS 활성화, `(select auth.uid())` 형태, 익명 역할 전체 SELECT 금지. 결과: 8개 테이블 소유자 정책(토큰 2개는 조회만), anon 테이블 권한 0, 컬럼 단위 권한으로 토큰·비회원 식별자·정산 상태 직접 쓰기 차단. 두 사용자 시나리오에서 타인 데이터 조회·수정·삽입 0건 | 정책 목록 확인 |
+| I0-7 | 비회원 접근 설계 ✅ 완료 | 토큰 검증 후 단일 회차 RSVP만 허용하는 서버 처리 방식 결정(`service_role` 번들 금지). 결정: `private` 스키마의 SECURITY DEFINER 구현 + `public` SECURITY INVOKER 래퍼 RPC(`get_invite`, `submit_rsvp`, `get_settlement`, `get_settlement_share`, `report_settlement_payment`, 주최자용 `rotate_*_token`). 토큰은 이력 테이블로 관리(행 없음=무효, `revoked_at`=만료) | 설계 결정 기록 |
+| I0-8 | 주최자 프로필 ✅ 완료 | 신규 프로필 테이블 또는 대안 결정(Q7), 기존 `accounts` 미수정. 결정: `profiles` 테이블 없이 `auth.users` 직접 참조(본인 화면만 사용, 가입 트리거 위험 회피). 필요 시 추가 마이그레이션으로 확장 | 결정 반영 |
+| I0-9 | 점검 ✅ 완료 | `get_advisors` security/performance 신규 경고 0건. 결과: security 0건, performance WARN 0건(INFO `unused_index` 1건: 빈 테이블의 FK 커버 인덱스 `rsvps_user_id_idx`, 의도적으로 유지) | 신규 경고 0건 |
 
 #### I1. 데이터 계층 교체
 
@@ -250,7 +254,7 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 |---|---|---|---|
 | I1-1 | 타입 생성·연결 | `generate_typescript_types` → `lib/supabase/database.types.ts`, 세 클라이언트에 연결 | `type-check` 통과 |
 | I1-2 | 수동 타입 교체 | U0-2의 수동 도메인 타입을 생성 타입 기반으로 교체, 불일치 수정(R8) | 화면 코드 변경 최소 |
-| I1-3 | 모임·멤버 연동 | `lib/data/` 조회와 쓰기(Server Action)를 Supabase 호출로 교체 | U2 화면이 실데이터로 동작 |
+| I1-3 | 모임·멤버 연동 | `lib/data/` 조회와 쓰기(Server Action)를 Supabase 호출로 교체. `listJoinedGroups`는 I3-6 전까지 빈 목록을 반환(기존 "아직 참여한 모임이 없어요" 빈 상태 사용, Q12) | U2 화면이 실데이터로 동작 |
 | I1-4 | 회차 연동 | 회차 조회·생성·수정·취소·복제 교체 | 위와 동일 |
 | I1-5 | 대시보드 집계 | 7일 이내 회차, 응답 미완료, 미입금 건수 쿼리(FR-11) | 실데이터 카드 표시 |
 | I1-6 | 렌더링 점검 | `<Suspense>` 경계, 캐시 재검증(`"use cache"` 남용 금지), 소유자 외 접근 시 404 | `build` 통과, 타 계정 접근 차단 확인 |
@@ -276,6 +280,7 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 | I3-4 | 속도 제한 | 동일 요청 1분 5회 초과 시 제한 안내(R2) | 제한 동작 확인 |
 | I3-5 | 마감·취소 거부 | 마감 후, 취소된 회차 제출 거부(FR-13), 정원 초과는 접수(Q3) | 각 사유 안내 확인 |
 | I3-6 | 로그인 참가자 연결 | 로그인한 참가자의 이후 응답을 계정에 연결, 기존 비회원 응답은 이관하지 않음(Q11) | 다른 기기에서 수정 가능 |
+| I3-6a | 참여한 모임 목록(Q12) | `listJoinedGroups` 실데이터 연결. 읽기 전용 RPC 추가: 본인이 소유하지 않은 모임 중 `rsvps.user_id`가 본인인 모임의 이름·다가오는 회차만 반환(`private` DEFINER 구현 + `public` INVOKER 래퍼, authenticated만 EXECUTE). 멤버 명부·타인 응답·정산 금액은 반환하지 않음. 비회원 응답 후 로그인한 참가자의 목록은 빈 상태 허용 | 로그인 상태로 응답한 모임만 표시, 소유 모임·타인 모임 비노출, 홈·대시보드·`/me` 통계 일치 |
 | I3-7 | 주최자 현황 | 응답 현황 실데이터 조회, 대리 입력·삭제 저장 | U3-7, U3-8 화면 실데이터 동작 |
 | I3-8 | 반영 시간 | 제출 후 주최자 화면 반영 3초 이내 | 측정 확인 |
 
@@ -298,7 +303,7 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 | I5-2 | 시나리오 검증 | 360px에서 S1~S4를 playwright로 수동 검증 | 4개 시나리오 통과 |
 | I5-3 | 더미 제거 | 프로덕션 경로에서 `lib/mock/` import 검색, 제거 또는 개발용 시드로 한정 | 잔존 import 0건 |
 | I5-4 | 빌드 검증 | `npm run check-all`, `npm run build` | 모두 통과 |
-| I5-5 | 기존 경고 기록 | 알려진 DB 경고(R5)는 별도 티켓으로 기록 | 티켓 작성 |
+| I5-5 | 기존 경고 기록 | 이전 프로젝트의 알려진 DB 경고(R5)는 새 프로젝트로 전환되어(2026-10-12) 해당 없음. 이전 프로젝트를 다시 사용하게 되는 경우에만 별도 티켓으로 기록. Leaked Password Protection은 사용하지 않기로 결정 | 해당 없음 확인 |
 | I5-6 | 출시 기준 대조 | 아래 "Phase 1 출시 기준" 전 항목 확인 | 체크 완료 |
 
 ### Phase 1 출시 기준
@@ -343,7 +348,7 @@ Phase 2 착수 조건: Phase 1 출시 후 North Star(월간 정산 완료 회차
 | R2 | 비회원 RSVP 스팸 | I3: 속도 제한, 주최자 응답 삭제 |
 | R3 | 로컬 식별자 유실 | U3: 주최자 대리 수정 UI, I3: 저장 |
 | R4 | `proxy.ts` 변경이 세션 쿠키 동기화를 깨뜨림 | U3(허용 경로 추가), I2: 변경 시마다 playwright 로그인 유지 회귀 확인 |
-| R5 | 기존 DB 경고와 신규 스키마 혼재 | I5: 별도 티켓으로 기록, 이번 범위에서 제외 |
+| R5 | 기존 DB 경고와 신규 스키마 혼재 | 새 프로젝트 전환(2026-10-12)으로 해소. 이전 프로젝트 재사용 시에만 별도 티켓으로 기록 |
 | R6 | 정원 초과 응답을 주최자가 인지 못함 | U3: 초과 표시 UI |
 | R7 | Google OAuth 설정 오류 | I2: 로컬/배포 URL 모두 등록 후 검증 |
 | R8 | 더미 기준으로 만든 UI가 실제 스키마·권한과 어긋남 | U0: 타입을 PRD 6장 엔티티 기준으로 정의, `lib/data/` 경계 유지 / U5: 검토 게이트 / I1: 타입 교체 시 불일치 수정 |
@@ -351,5 +356,7 @@ Phase 2 착수 조건: Phase 1 출시 후 North Star(월간 정산 완료 회차
 ## 미해결 사항
 
 - Q1~Q11은 모두 결정되었으나, Q1은 응답 문구("모임 공용 a로 해")가 모호해 (a) 회차별로 해석했다. 모임 공용 링크가 의도였다면 U3·I3 범위가 바뀐다.
-- 비회원 접근의 서버 처리 방식(토큰 검증 후 쓰기)은 I0 설계 단계에서 확정해야 한다.
+- ~~비회원 접근의 서버 처리 방식(토큰 검증 후 쓰기)은 I0 설계 단계에서 확정해야 한다.~~ → I0-7에서 확정(토큰 인자 RPC, [`db-schema.md`](./guides/db-schema.md)).
+- ~~"참여한 모임" 기준과 W8의 관계~~ → Q12로 확정(로그인 상태로 응답한 모임, 읽기 전용 목록, I3-6a). ~~Q7 표현 차이~~ → PRD v0.5에서 `profiles` 없이 `auth.users` 직접 참조로 정정.
+- I3 속도 제한은 publishable 키로 RPC를 직접 호출하면 Server Action의 제한을 우회할 수 있으므로 DB 쪽 제한(`private.rate_limits` 등)도 함께 설계해야 한다(I3-4).
 - 담당자와 일정은 미정이다.

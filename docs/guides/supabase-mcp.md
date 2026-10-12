@@ -1,32 +1,44 @@
 # Supabase MCP 활용 가이드
 
-이 프로젝트는 Supabase MCP 서버(`.mcp.json`의 `supabase`)가 연결되어 있다. **스키마 확인, 마이그레이션, 타입 생성, 보안/성능 점검, 로그 조회, 문서 검색을 모두 CLI나 대시보드 대신 MCP 도구로 우선 수행한다.** 이 문서는 이 프로젝트의 실제 DB 상태를 기준으로 작성되었다(최종 확인: 2026-10-03).
+이 프로젝트는 Supabase MCP 서버(`.mcp.json`의 `supabase`)가 연결되어 있다. **스키마 확인, 마이그레이션, 타입 생성, 보안/성능 점검, 로그 조회, 문서 검색을 모두 CLI나 대시보드 대신 MCP 도구로 우선 수행한다.** 이 문서는 이 프로젝트의 실제 DB 상태를 기준으로 작성되었다(최종 확인: 2026-10-12, I0 완료 시점).
 
 ## 현재 DB 상태 요약 (중요)
 
-`list_tables`로 확인한 결과, 이 Supabase 프로젝트(`cqabppajmhmlqiexidsn`)에는 **이벤트 관리 도메인과 무관한 기존 스키마**가 이미 존재한다.
+`.mcp.json`이 가리키는 Supabase 프로젝트는 2026-10-12에 **새 프로젝트(`ecandzpftfinazfonvcl`)로 전환**되었다. 이전 프로젝트(`cqabppajmhmlqiexidsn`)에 있던 `accounts`/`quotes`/`quote_items`/`instruments`와 `handle_new_user()`는 이 프로젝트에 **존재하지 않는다**. 이전 프로젝트를 다시 연결하는 경우 그쪽 객체는 이벤트 도메인과 무관하므로 수정하지 않는다.
 
-| 테이블 | 용도 추정 | RLS |
-|---|---|---|
-| `public.instruments` | Supabase Next.js 스타터 튜토리얼 데모 테이블 | 활성화 |
-| `public.accounts` | 사용자 계정 + Notion 연동 정보(`notion_api_key`, `notion_database_id`) | 활성화 |
-| `public.quotes` | 견적서 (고객명, 금액, 상태, 공유 토큰 등) | 활성화 |
-| `public.quote_items` | 견적서 항목 | 활성화 |
+이 프로젝트의 `public` 스키마는 I0에서 만든 이벤트 도메인 테이블 8개다. 모두 RLS가 활성화되어 있다. 컬럼·제약·정책의 상세는 [`db-schema.md`](./db-schema.md)를 따른다.
 
-**이벤트 관리(참가자, 행사, 일정 등) 관련 테이블은 아직 하나도 없다.** 새 기능을 설계할 때 이 사실을 전제하고, 기존 `accounts`/`quotes` 스키마와 네이밍/책임이 겹치지 않도록 먼저 `list_tables(verbose: true)`로 현재 구조를 확인한 뒤 설계한다. 기존 스키마와의 관계가 불분명하면 작업 전에 사용자에게 확인한다.
+| 테이블 | 용도 |
+|---|---|
+| `public.groups` | 모임. 소유자(`owner_id`)만 접근 |
+| `public.group_members` | 멤버 명부 |
+| `public.events` | 회차 |
+| `public.event_invite_tokens` | 초대 토큰 이력(행 없음=무효, `revoked_at`=만료) |
+| `public.rsvps` | 회차 응답 |
+| `public.settlements` | 1/N 정산(회차와 1:1) |
+| `public.settlement_tokens` | 정산 토큰 이력 |
+| `public.settlement_shares` | 정산 항목(참가자별 분담) |
 
-또한 `list_migrations`가 빈 배열을 반환한다 — 즉 현재 테이블들은 Supabase 마이그레이션 이력 없이 생성되었다(대시보드/SQL 에디터로 직접 생성된 것으로 추정). **이 시점 이후의 모든 스키마 변경은 반드시 `apply_migration`으로 적용해 이력을 남긴다.**
+`list_migrations`에는 I0의 마이그레이션 5건이 있다(`harden_default_privileges_and_private_schema`, `create_groups_and_group_members`, `create_events_invite_tokens_and_rsvps`, `create_settlements_tokens_and_shares`, `create_token_access_rpcs`). **이후의 모든 스키마 변경은 반드시 `apply_migration`으로 적용해 이력을 남긴다.** 새 기능을 설계할 때는 먼저 `list_tables(verbose: true)`로 현재 구조를 확인하고, 스키마와의 관계가 불분명하면 작업 전에 사용자에게 확인한다.
+
+### 권한 모델 (새 객체를 만들 때 반드시 알아야 한다)
+
+- **기본 권한을 회수했다.** `public`에 새로 만드는 테이블·함수에는 `anon`/`authenticated` 권한이 자동으로 붙지 않는다. API에서 쓰려면 필요한 롤에 `GRANT`를 명시해야 한다.
+- 비회원(anon)은 어떤 테이블에도 권한이 없다. 토큰을 인자로 받는 RPC(`get_invite`, `submit_rsvp`, `get_settlement`, `get_settlement_share`, `report_settlement_payment`)만 호출한다.
+- RPC 구현은 비노출 `private` 스키마의 `SECURITY DEFINER` 함수(`set search_path = ''`)이고, `public`에는 `SECURITY INVOKER` 래퍼만 둔다. 공개 RPC 경고(lint 0028/0029)를 피하려는 구조일 뿐 노출 범위는 같으므로, 진입점마다 `EXECUTE`를 따로 부여한다.
+- `private` 스키마에 테이블을 만들면 `anon`/`authenticated`의 스키마 `USAGE`가 이미 있으므로 테이블 권한을 별도로 회수해야 한다.
+- `service_role`/secret 키는 클라이언트 번들·`NEXT_PUBLIC_*`에 두지 않는다. 현재 설계는 이 키를 쓰지 않는다.
 
 ## 알려진 보안/성능 이슈 (get_advisors 결과)
 
-아래 항목은 수정 작업을 지시받기 전까지는 임의로 고치지 않는다. 단, 이 영역을 작업하게 되면 반드시 함께 해결한다.
+2026-10-12 기준 이 프로젝트의 advisors 결과다.
 
-**보안 (WARN)**
-- `public.handle_new_user()`가 `SECURITY DEFINER`로 정의되어 있고 `anon`/`authenticated` 롤이 `/rest/v1/rpc/handle_new_user`로 직접 호출 가능하다. 의도치 않은 공개 RPC라면 `EXECUTE` 권한을 회수하거나 `SECURITY INVOKER`로 전환해야 한다.
-- Auth의 Leaked Password Protection(유출된 비밀번호 차단)이 비활성화되어 있다.
+- **보안**: 경고 0건.
+- **성능**: WARN 0건. INFO `unused_index` 1건(`rsvps_user_id_idx`)은 빈 테이블의 FK 커버 인덱스라 아직 쓰이지 않았을 뿐이므로 의도적으로 유지한다.
 
-**성능 (WARN, 총 10건)**
-- `accounts`, `quotes`, `quote_items`의 RLS 정책들이 `auth.<function>()`(예: `auth.uid()`)을 행마다 재평가하고 있다. **새 RLS 정책을 작성할 때는 반드시 `auth.uid()` 대신 `(select auth.uid())` 형태로 감싸서 initplan 캐싱이 적용되도록 한다.**
+이전 프로젝트에 있던 `handle_new_user()` 공개 RPC 경고와 `accounts`/`quotes`의 RLS 성능 경고 10건은 이 프로젝트에는 해당하지 않는다. Auth의 유출 비밀번호 차단(Leaked Password Protection)은 **사용하지 않기로 결정**했다(2026-10-12). 이 설정이 꺼져 있어도 의도된 상태이며, advisors에 해당 경고가 나타나면 무시한다.
+
+**새 RLS 정책을 작성할 때는 반드시 `auth.uid()` 대신 `(select auth.uid())` 형태로 감싸서 initplan 캐싱이 적용되도록 한다.**
 
 ```sql
 -- 나쁜 예 (행마다 재평가됨)
@@ -46,7 +58,7 @@ create policy "select_own" on public.events
 2. **`apply_migration`** 으로 DDL(테이블 생성, RLS 정책, 트리거 등)을 적용한다. `execute_sql`은 조회/디버깅용 일회성 쿼리에만 사용하고, 스키마를 바꾸는 DDL에는 사용하지 않는다.
 3. RLS를 반드시 활성화하고, 정책의 `auth.<function>()` 호출은 `(select ...)`로 감싼다.
 4. **`get_advisors({ type: "security" })`**, **`get_advisors({ type: "performance" })`** 를 변경 직후 실행해 새 경고가 없는지 확인한다.
-5. **`generate_typescript_types`** 로 타입을 재생성해 `lib/supabase/database.types.ts`(신규 파일, 현재 없음)에 반영하고, 세 클라이언트(`lib/supabase/client.ts`, `server.ts`, `proxy.ts`)의 `createBrowserClient`/`createServerClient` 제네릭에 `Database` 타입을 연결한다.
+5. **`generate_typescript_types`** 로 타입을 재생성해 `lib/supabase/database.types.ts`(신규 파일, 현재 없음)에 반영(I1-1에서 생성 예정)하고, 세 클라이언트(`lib/supabase/client.ts`, `server.ts`, `proxy.ts`)의 `createBrowserClient`/`createServerClient` 제네릭에 `Database` 타입을 연결한다.
 
    ```ts
    // lib/supabase/client.ts 예시
@@ -61,7 +73,7 @@ create policy "select_own" on public.events
    }
    ```
 
-6. 필요하면 **`list_extensions`** 로 사용 가능한 확장을 확인한다(이미 `pgcrypto`, `uuid-ossp`, `pg_stat_statements`, `supabase_vault`는 설치되어 있다. `gen_random_uuid()`는 `pgcrypto` 덕분에 추가 설정 없이 사용 가능).
+6. 필요하면 **`list_extensions`** 로 사용 가능한 확장을 확인한다(이 프로젝트에는 `pgcrypto`, `uuid-ossp`, `pg_stat_statements`, `supabase_vault`, `plpgsql`이 설치되어 있다. `gen_random_uuid()`는 별도 설정 없이 사용 가능하며, 토큰 생성은 `private.generate_token`(192비트 base64url)을 쓴다).
 
 ## 디버깅 시 활용
 
@@ -81,5 +93,6 @@ RLS 정책을 작성할 때 이 프로젝트의 인증 흐름(`CLAUDE.md` 참고
 
 ## 관련 문서
 
+- [`db-schema.md`](./db-schema.md) — 이벤트 도메인 스키마·RLS·토큰 RPC 설계 결정(I0)
 - [[project-structure]] — Supabase 클라이언트 3분리 구조
 - [[mcp-servers]] — 이 프로젝트에 연결된 전체 MCP 서버 목록과 활용 지침

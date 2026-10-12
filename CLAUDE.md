@@ -75,6 +75,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 - `docs/guides/forms-react-hook-form.md` — 폼 작성 표준 패턴(React Hook Form, 현재 미설치 상태이며 신규 폼부터 적용 예정)
 - `docs/guides/project-structure.md` — 폴더 구조와 경로 별칭(`@/*`)
 - `docs/guides/supabase-mcp.md` — Supabase MCP 도구 활용 워크플로, 현재 DB 상태와 알려진 보안/성능 이슈
+- `docs/guides/db-schema.md` — 이벤트 도메인 스키마·RLS·토큰 RPC 설계 결정(I0)
 - `docs/guides/mcp-servers.md` — 연결된 전체 MCP 서버(`supabase`/`context7`/`shadcn`/`playwright`/`sequential-thinking`) 활용 지침
 
 ## Next.js 16 작업 규칙
@@ -90,14 +91,15 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 
 ## Supabase 데이터베이스 현황
 
-실제 상태는 `mcp__supabase__list_tables`/`get_advisors`로 직접 확인한다(아래는 2026-10-03 기준 스냅샷이므로 시간이 지나면 재확인 필요). 자세한 워크플로는 [[supabase-mcp]] 참고.
+실제 상태는 `mcp__supabase__list_tables`/`get_advisors`로 직접 확인한다(아래는 2026-10-12 I0 완료 시점 스냅샷이므로 시간이 지나면 재확인 필요). 자세한 워크플로는 [[supabase-mcp]], 스키마 설계 결정은 `docs/guides/db-schema.md` 참고.
 
-- **기존 스키마가 이벤트 관리 도메인과 무관하다.** `public.accounts`(Notion 연동 정보 포함), `public.quotes`/`public.quote_items`(견적서), `public.instruments`(튜토리얼 데모)가 이미 존재하며, 이벤트/참가자/일정 관련 테이블은 아직 없다. 새 스키마를 설계하기 전 반드시 `list_tables(verbose: true)`로 현재 구조를 먼저 확인하고, 기존 테이블과의 관계가 불명확하면 작업 전 사용자에게 확인한다.
-- `list_migrations`가 비어 있다 — 지금까지의 스키마는 마이그레이션 이력 없이 생성되었다. **이 시점 이후의 모든 DDL 변경은 `apply_migration`으로 적용**해 이력을 남긴다.
-- 알려진 보안 경고(WARN): `public.handle_new_user()`가 `SECURITY DEFINER`로 `anon`/`authenticated`에 공개 RPC로 노출되어 있고, Auth의 유출 비밀번호 차단(Leaked Password Protection)이 꺼져 있다.
-- 알려진 성능 경고(WARN, 10건): `accounts`/`quotes`/`quote_items`의 RLS 정책이 `auth.uid()`를 행마다 재평가한다. **새 RLS 정책은 반드시 `(select auth.uid())` 형태로 작성**한다.
-- `lib/supabase/database.types.ts`(Supabase 생성 타입)가 아직 없다 — 스키마를 다루는 작업을 하면 `generate_typescript_types`로 생성해 세 클라이언트에 연결하는 것을 권장한다.
-- 이 저장소 범위를 벗어나는 스키마 수정(기존 `accounts`/`quotes` 쪽 버그 수정 등)은 명시적으로 요청받기 전에는 수행하지 않는다.
+- **현재 연결된 프로젝트**(`.mcp.json`, 2026-10-12 기준 `ecandzpftfinazfonvcl`)는 이전 프로젝트와 다른 새 프로젝트다. 기존 `accounts`/`quotes`/`quote_items`/`instruments`와 `handle_new_user()`는 이 프로젝트에 **존재하지 않는다**. 이전 프로젝트를 다시 연결하면 그쪽 객체는 수정하지 않는다.
+- **이벤트 도메인 스키마(I0 완료)**: `groups`, `group_members`, `events`, `event_invite_tokens`, `rsvps`, `settlements`, `settlement_tokens`, `settlement_shares` 8개 테이블, 전부 RLS 활성. 마이그레이션 이력 5건(`list_migrations`)이 기준이며 **이후 모든 DDL은 `apply_migration`으로 적용**한다.
+- **권한 모델**: 기본 권한(default privileges)을 회수했다. `public`에 새 테이블·함수를 만들면 필요한 롤에 GRANT를 명시해야 API에 보인다. RLS 정책은 반드시 `(select auth.uid())` 형태로 작성한다.
+- **비회원 접근**: anon은 테이블 권한이 없고, 토큰을 인자로 받는 RPC(`get_invite`, `submit_rsvp`, `get_settlement`, `get_settlement_share`, `report_settlement_payment`)만 호출한다. 구현은 비노출 `private` 스키마의 SECURITY DEFINER 함수, `public`에는 SECURITY INVOKER 래퍼만 둔다. `service_role`/secret 키는 클라이언트 번들에 넣지 않는다.
+- advisors(2026-10-12): security 0건, performance WARN 0건(INFO `unused_index` 1건은 의도적으로 유지).
+- 후속 과제: DB 레이트리밋(I3, publishable 키로 RPC를 직접 호출하면 Server Action의 제한을 우회할 수 있음), 타인 항목 조회 방지(I4-3), "참여한 모임" 목록 RPC(I3-6a, 기준은 PRD Q12: 로그인 상태로 응답한 모임, 읽기 전용).
+- `lib/supabase/database.types.ts`(Supabase 생성 타입)가 아직 없다 — I1-1에서 `generate_typescript_types`로 생성해 세 클라이언트에 연결한다.
 
 ## MCP 서버 활용 지침
 
