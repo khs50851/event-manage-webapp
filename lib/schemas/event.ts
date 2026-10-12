@@ -29,7 +29,7 @@ export const eventSchema = z
       values.startsAt === "" ||
       values.rsvpDeadline <= values.startsAt,
     {
-      message: "응답 마감은 시작 시각보다 늦을 수 없습니다.",
+      message: "응답 마감은 시작 시각보다 늦을 수 없어요.",
       path: ["rsvpDeadline"],
     },
   );

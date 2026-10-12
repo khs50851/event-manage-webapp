@@ -37,7 +37,7 @@ export function SignUpForm({
     setError(null);
 
     if (password !== repeatPassword) {
-      setError("비밀번호가 일치하지 않습니다.");
+      setError("비밀번호가 일치하지 않아요.");
       setIsLoading(false);
       return;
     }

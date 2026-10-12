@@ -55,10 +55,10 @@ export function RsvpDeadlineCard({
     form.reset({ rsvpDeadline: value });
     toast.success(
       next === null
-        ? "응답 마감을 해제했습니다."
+        ? "응답 마감을 해제했어요."
         : nextClosed
-          ? "응답을 마감했습니다. 초대 링크에서 새 응답을 받지 않습니다."
-          : `응답 마감을 ${formatDateTime(next)}로 설정했습니다.`,
+          ? "응답을 마감했어요. 초대 링크에서 새 응답을 받지 않아요."
+          : `응답 마감을 ${formatDateTime(next)}로 설정했어요.`,
     );
   }
 
@@ -80,13 +80,13 @@ export function RsvpDeadlineCard({
       <p className="text-sm" role="status">
         {disabled
           ? eventStatus === "cancelled"
-            ? "취소된 회차라 응답을 받지 않습니다."
-            : "종료된 회차라 응답을 받지 않습니다."
+            ? "취소된 회차라 응답을 받지 않아요."
+            : "종료된 회차라 응답을 받지 않아요."
           : deadline === null
-            ? "마감 시각이 없습니다. 회차가 끝날 때까지 응답을 받습니다."
+            ? "마감 시각이 없어요. 회차가 끝날 때까지 응답을 받아요."
             : closed
-              ? `${formatDateTime(deadline)}에 마감되었습니다. 초대 링크에는 마감 안내가 표시됩니다.`
-              : `${formatDateTime(deadline)}까지 응답을 받습니다.`}
+              ? `${formatDateTime(deadline)}에 마감됐어요. 초대 링크에는 마감 안내가 표시돼요.`
+              : `${formatDateTime(deadline)}까지 응답을 받아요.`}
       </p>
 
       {!disabled && (
@@ -113,7 +113,7 @@ export function RsvpDeadlineCard({
                     />
                   </FormControl>
                   <FormDescription>
-                    한국 시간 기준. 비워 두고 저장하면 마감 없이 받습니다.
+                    한국 시간 기준. 비워 두고 저장하면 마감 없이 받아요.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

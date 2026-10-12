@@ -87,7 +87,7 @@ export function EventList({
           event.id === targetId ? { ...event, ...fields } : event,
         ),
       );
-      toast.success("회차를 수정했습니다.");
+      toast.success("회차를 수정했어요.");
     } else {
       onChange([
         ...events,
@@ -100,8 +100,8 @@ export function EventList({
       ]);
       toast.success(
         formState?.kind === "duplicate"
-          ? "회차를 복제했습니다."
-          : "회차를 추가했습니다.",
+          ? "회차를 복제했어요."
+          : "회차를 추가했어요.",
       );
     }
     setFormState(null);
@@ -115,7 +115,7 @@ export function EventList({
         event.id === targetId ? { ...event, status: "cancelled" } : event,
       ),
     );
-    toast.success("회차를 취소했습니다. 초대 링크에는 취소 안내가 표시됩니다.");
+    toast.success("회차를 취소했어요. 초대 링크에는 취소 안내가 표시돼요.");
     setCancelling(null);
   }
 
@@ -153,7 +153,7 @@ export function EventList({
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            아직 등록된 회차가 없습니다.
+            아직 등록된 회차가 없어요.
           </p>
           <Button
             type="button"
@@ -253,8 +253,8 @@ export function EventList({
             <DialogTitle>{dialogTitle}</DialogTitle>
             <DialogDescription>
               {formState?.kind === "duplicate"
-                ? "날짜를 새로 입력하면 나머지 항목은 그대로 복사됩니다."
-                : "일시와 장소는 필수입니다."}
+                ? "날짜를 새로 입력하면 나머지 항목은 그대로 복사돼요."
+                : "일시와 장소는 꼭 입력해 주세요."}
             </DialogDescription>
           </DialogHeader>
           {formState && (
@@ -278,7 +278,7 @@ export function EventList({
             <AlertDialogTitle>회차를 취소할까요?</AlertDialogTitle>
             <AlertDialogDescription>
               &quot;{cancelling?.title}&quot; 회차가 취소됨 상태가 되고, 초대
-              링크에는 취소 안내가 표시되며 새 응답을 받을 수 없습니다.
+              링크에는 취소 안내가 표시되며 새 응답을 받을 수 없어요.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

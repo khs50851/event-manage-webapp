@@ -23,7 +23,7 @@ export function NewGroupPanel() {
   const [mode, setMode] = useState<Mode>("recurring");
 
   function finish() {
-    toast.success("저장되었습니다. (더미: 입력값은 실제로 저장되지 않습니다)");
+    toast.success("저장됐어요. (더미: 입력값은 실제로 저장되지 않아요)");
     router.push(`/protected/groups/${DUMMY_CREATED_GROUP_ID}`);
   }
 
@@ -48,7 +48,7 @@ export function NewGroupPanel() {
       ) : (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">
-            멤버 등록 없이 회차 1개를 바로 만듭니다.
+            멤버 등록 없이 회차 1개를 바로 만들어요.
           </p>
           <EventForm submitLabel="이벤트 만들기" onSubmit={finish} />
         </div>

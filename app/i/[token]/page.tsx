@@ -52,15 +52,15 @@ async function InviteLoader({
   switch (invite.status) {
     case "invalid":
       return (
-        <InviteNotice kind="invalid" title="유효하지 않은 링크입니다">
+        <InviteNotice kind="invalid" title="유효하지 않은 링크예요">
           링크 주소가 정확한지 확인하거나 주최자에게 초대 링크를 다시 요청해
           주세요.
         </InviteNotice>
       );
     case "expired":
       return (
-        <InviteNotice kind="expired" title="만료된 링크입니다">
-          주최자가 초대 링크를 새로 발급했습니다. 주최자에게 새 링크를 요청해
+        <InviteNotice kind="expired" title="만료된 링크예요">
+          주최자가 초대 링크를 새로 발급했어요. 주최자에게 새 링크를 요청해
           주세요.
         </InviteNotice>
       );
@@ -68,8 +68,8 @@ async function InviteLoader({
       return (
         <div className="flex flex-col gap-6">
           <EventSummary event={invite.event} groupName={invite.groupName} />
-          <InviteNotice kind="cancelled" title="취소된 회차입니다">
-            이 회차는 주최자가 취소해 응답을 받지 않습니다.
+          <InviteNotice kind="cancelled" title="취소된 회차예요">
+            이 회차는 주최자가 취소해 응답을 받지 않아요.
           </InviteNotice>
         </div>
       );
@@ -81,13 +81,13 @@ async function InviteLoader({
             kind="closed"
             title={
               invite.reason === "ended"
-                ? "종료된 회차입니다"
-                : "응답이 마감되었습니다"
+                ? "종료된 회차예요"
+                : "응답이 마감됐어요"
             }
           >
             {invite.reason === "ended"
-              ? "이미 진행된 회차라 응답을 받지 않습니다."
-              : "응답 마감 시각이 지나 새 응답이나 수정을 받지 않습니다. 변경이 필요하면 주최자에게 알려 주세요."}
+              ? "이미 진행된 회차라 응답을 받지 않아요."
+              : "응답 마감 시각이 지나 새 응답이나 수정을 받지 않아요. 변경이 필요하면 주최자에게 알려 주세요."}
           </InviteNotice>
           <PublicRsvpList
             rsvps={invite.rsvps}

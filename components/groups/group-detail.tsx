@@ -54,11 +54,11 @@ export function GroupDetail({
       description: values.description.trim(),
     });
     setEditing(false);
-    toast.success("모임 정보를 수정했습니다.");
+    toast.success("모임 정보를 수정했어요.");
   }
 
   function confirmDelete() {
-    toast.success("모임을 삭제했습니다. (더미: 실제로 삭제되지 않습니다)");
+    toast.success("모임을 삭제했어요. (더미: 실제로 삭제되지 않아요)");
     // 모임 목록은 홈(/)에 있다
     router.push("/");
   }
@@ -116,7 +116,9 @@ export function GroupDetail({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>모임 수정</DialogTitle>
-            <DialogDescription>이름은 1~50자로 입력합니다.</DialogDescription>
+            <DialogDescription>
+              이름은 1~50자로 입력해 주세요.
+            </DialogDescription>
           </DialogHeader>
           <GroupForm
             defaultValues={{
@@ -137,7 +139,7 @@ export function GroupDetail({
             </AlertDialogTitle>
             <AlertDialogDescription>
               하위 회차 {events.length}건과 그 응답·정산이 함께 삭제되며 되돌릴
-              수 없습니다.
+              수 없어요.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

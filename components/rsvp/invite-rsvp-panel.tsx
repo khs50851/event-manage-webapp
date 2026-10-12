@@ -22,7 +22,7 @@ import {
 import { DIRECT_INPUT, type RsvpFormValues } from "@/lib/schemas/rsvp";
 import type { PublicMember, Rsvp } from "@/lib/types/domain";
 
-const OVER_CAPACITY_MESSAGE = "정원이 초과되었습니다. 주최자가 확인합니다";
+const OVER_CAPACITY_MESSAGE = "정원이 초과됐어요. 주최자가 확인할 거예요";
 
 // 비회원 RSVP 영역. 제출·수정은 화면 상태로만 시뮬레이션한다(새로고침 시 초기화).
 // "이 기기에서 낸 응답"은 실제로는 브라우저 로컬 식별자로 연결하지만(A2), UI 단계에서는 myRsvpId 상태로 대신한다.
@@ -89,7 +89,7 @@ export function InviteRsvpPanel({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CircleCheckIcon className="size-5 text-primary" />
-              응답이 접수되었습니다
+              응답이 접수됐어요
             </CardTitle>
             <CardDescription>
               {myRsvp.name} 님 · {RSVP_STATUS_LABEL[myRsvp.status]} (
@@ -135,7 +135,7 @@ export function InviteRsvpPanel({
           {isFull && (
             <p className="flex items-start gap-2 text-sm text-muted-foreground">
               <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
-              정원이 찼어요. 참석으로 응답해도 접수되며 주최자가 확인합니다.
+              정원이 찼어요. 참석으로 응답해도 접수되고 주최자가 확인해요.
             </p>
           )}
           <RsvpForm

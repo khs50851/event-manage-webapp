@@ -61,13 +61,13 @@ export function MemberRoster({
       },
     ]);
     form.reset();
-    toast.success(`${values.name.trim()} 님을 추가했습니다.`);
+    toast.success(`${values.name.trim()} 님을 추가했어요.`);
   }
 
   function confirmDelete() {
     if (!deleting) return;
     onChange(members.filter((member) => member.id !== deleting.id));
-    toast.success(`${deleting.name} 님을 명부에서 삭제했습니다.`);
+    toast.success(`${deleting.name} 님을 명부에서 삭제했어요.`);
     setDeleting(null);
   }
 
@@ -79,7 +79,7 @@ export function MemberRoster({
 
       {members.length === 0 ? (
         <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-          멤버를 추가해 보세요. (선택) 비회원도 이름만으로 등록할 수 있습니다.
+          멤버를 추가해 보세요. (선택) 비회원도 이름만으로 등록할 수 있어요.
         </p>
       ) : (
         <ul className="divide-y rounded-md border">
@@ -129,7 +129,7 @@ export function MemberRoster({
                 {isDuplicate && (
                   <p className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400">
                     <TriangleAlertIcon className="size-4" />
-                    같은 이름의 멤버가 이미 있습니다. 동명이인이면 그대로
+                    같은 이름의 멤버가 이미 있어요. 동명이인이면 그대로
                     추가하세요.
                   </p>
                 )}
@@ -166,8 +166,8 @@ export function MemberRoster({
               {deleting?.name} 님을 삭제할까요?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              명부에서만 삭제됩니다. 과거 회차 응답과 정산 기록은 이름
-              스냅샷으로 유지됩니다.
+              명부에서만 삭제돼요. 과거 회차 응답과 정산 기록은 이름 스냅샷으로
+              유지돼요.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

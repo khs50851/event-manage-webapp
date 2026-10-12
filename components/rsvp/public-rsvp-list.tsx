@@ -46,7 +46,7 @@ export function PublicRsvpList({
 
       {rsvps.length === 0 ? (
         <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-          아직 응답이 없습니다. 첫 번째로 응답해 보세요.
+          아직 응답이 없어요. 첫 번째로 응답해 보세요.
         </p>
       ) : (
         <dl className="flex flex-col gap-3">

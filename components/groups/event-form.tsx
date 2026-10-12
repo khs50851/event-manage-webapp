@@ -78,7 +78,7 @@ export function EventForm({
               {isPast && (
                 <p className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400">
                   <TriangleAlertIcon className="size-4" />
-                  과거 시각입니다. 그대로 저장할 수 있습니다.
+                  과거 시각이에요. 그대로 저장할 수 있어요.
                 </p>
               )}
               <FormMessage />

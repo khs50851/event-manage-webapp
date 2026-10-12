@@ -65,9 +65,9 @@ export function InviteLinkCard({
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("초대 링크를 복사했습니다.");
+      toast.success("초대 링크를 복사했어요.");
     } catch {
-      toast.error("복사하지 못했습니다. 링크를 직접 선택해 복사해 주세요.");
+      toast.error("복사하지 못했어요. 링크를 직접 선택해 복사해 주세요.");
     }
   }
 
@@ -77,7 +77,7 @@ export function InviteLinkCard({
     } catch (error) {
       // 사용자가 공유 시트를 닫은 경우는 오류로 안내하지 않는다.
       if (error instanceof DOMException && error.name === "AbortError") return;
-      toast.error("공유하지 못했습니다. 링크 복사를 이용해 주세요.");
+      toast.error("공유하지 못했어요. 링크 복사를 이용해 주세요.");
     }
   }
 
@@ -90,7 +90,7 @@ export function InviteLinkCard({
     setPreviousToken(token);
     setToken(nextToken);
     setConfirming(false);
-    toast.success("새 초대 링크를 발급했습니다. 이전 링크는 만료됩니다.");
+    toast.success("새 초대 링크를 발급했어요. 이전 링크는 만료돼요.");
   }
 
   return (
@@ -103,7 +103,7 @@ export function InviteLinkCard({
       </h2>
       {eventStatus === "cancelled" && (
         <p className="text-sm text-muted-foreground">
-          취소된 회차입니다. 링크로 들어온 참가자에게는 취소 안내가 표시됩니다.
+          취소된 회차예요. 링크로 들어온 참가자에게는 취소 안내가 표시돼요.
         </p>
       )}
 
@@ -148,17 +148,17 @@ export function InviteLinkCard({
           {previousToken && (
             <p className="text-sm text-muted-foreground" role="status">
               이전 링크(/i/{previousToken})는 만료되어 &quot;만료된 링크&quot;
-              안내가 표시됩니다.{" "}
+              안내가 표시돼요.{" "}
               <Link href={EXPIRED_PREVIEW_PATH} className="underline">
                 만료 화면 미리보기
               </Link>{" "}
-              (더미: 새 링크는 연동 단계에서 실제로 열립니다)
+              (더미: 새 링크는 연동 단계에서 실제로 열려요)
             </p>
           )}
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
-          발급된 초대 링크가 없습니다.
+          발급된 초대 링크가 없어요.
         </p>
       )}
 
@@ -167,9 +167,8 @@ export function InviteLinkCard({
           <AlertDialogHeader>
             <AlertDialogTitle>초대 링크를 재발급할까요?</AlertDialogTitle>
             <AlertDialogDescription>
-              지금 링크는 즉시 만료되어 더 이상 열리지 않습니다. 이미 받은
-              응답은 그대로 유지되며, 참가자에게는 새 링크를 다시 공유해야
-              합니다.
+              지금 링크는 즉시 만료되어 더 이상 열리지 않아요. 이미 받은 응답은
+              그대로 유지되며, 참가자에게는 새 링크를 다시 공유해야 해요.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

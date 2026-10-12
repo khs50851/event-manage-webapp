@@ -97,13 +97,13 @@ export function HostRsvpStatus({
           item.id === targetId ? { ...item, ...fields } : item,
         ),
       );
-      toast.success(`${fields.name} 님의 응답을 수정했습니다.`);
+      toast.success(`${fields.name} 님의 응답을 수정했어요.`);
     } else {
       setRsvps([
         ...rsvps,
         { id: `r-${crypto.randomUUID()}`, eventId, ...fields },
       ]);
-      toast.success(`${fields.name} 님의 응답을 추가했습니다.`);
+      toast.success(`${fields.name} 님의 응답을 추가했어요.`);
     }
     setFormState(null);
   }
@@ -111,7 +111,7 @@ export function HostRsvpStatus({
   function confirmDelete() {
     if (!deleting) return;
     setRsvps(rsvps.filter((item) => item.id !== deleting.id));
-    toast.success(`${deleting.name} 님의 응답을 삭제했습니다.`);
+    toast.success(`${deleting.name} 님의 응답을 삭제했어요.`);
     setDeleting(null);
   }
 
@@ -188,15 +188,15 @@ export function HostRsvpStatus({
           className="flex items-start gap-2 text-sm font-medium text-destructive"
         >
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
-          정원보다 {summary.overflow}명 많이 참석 응답했습니다. 참석 인원을
-          확인해 주세요.
+          정원보다 {summary.overflow}명 많이 참석 응답했어요. 참석 인원을 확인해
+          주세요.
         </p>
       )}
 
       {rsvps.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            아직 응답이 없습니다. 초대 링크를 공유해 보세요.
+            아직 응답이 없어요. 초대 링크를 공유해 보세요.
           </p>
         </div>
       ) : (
@@ -273,7 +273,7 @@ export function HostRsvpStatus({
           </h3>
           {pending.length === 0 ? (
             <p className="px-3 py-2 text-sm text-muted-foreground">
-              명부의 모든 멤버가 응답했습니다.
+              명부의 모든 멤버가 응답했어요.
             </p>
           ) : (
             <ul className="divide-y">
@@ -316,8 +316,8 @@ export function HostRsvpStatus({
               {formState?.kind === "edit" ? "응답 수정" : "응답 대리 입력"}
             </DialogTitle>
             <DialogDescription>
-              현장이나 구두로 받은 응답을 입력합니다. 저장하면 출처가
-              &quot;주최자 입력&quot;으로 표시됩니다.
+              현장이나 구두로 받은 응답을 입력해요. 저장하면 출처가 &quot;주최자
+              입력&quot;으로 표시돼요.
             </DialogDescription>
           </DialogHeader>
           {formState && (
@@ -347,7 +347,7 @@ export function HostRsvpStatus({
               {deleting?.name} 님의 응답을 삭제할까요?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              응답 현황에서 사라지고, 명부 멤버라면 미응답으로 돌아갑니다.
+              응답 현황에서 사라지고, 명부 멤버라면 미응답으로 돌아가요.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
