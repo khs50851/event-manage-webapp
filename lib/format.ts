@@ -18,6 +18,13 @@ export function formatDate(value: string): string {
   return `${year}년 ${+month}월 ${+day}일`;
 }
 
+const WON_FORMATTER = new Intl.NumberFormat("ko-KR");
+
+// 원 단위 정수를 "12,000원"으로 바꾼다.
+export function formatWon(amount: number): string {
+  return `${WON_FORMATTER.format(amount)}원`;
+}
+
 // 한국 시간(Asia/Seoul) 기준 현재 시각을 "YYYY-MM-DDTHH:mm"로 반환한다.
 // 서버(UTC)와 브라우저의 타임존이 달라도 같은 값을 내므로 응답 마감 판정에 쓴다.
 // 서버 컴포넌트에서는 connection() 이후에만 호출한다(요청 시점 값).

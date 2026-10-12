@@ -6,6 +6,9 @@ import type {
   InviteToken,
   Profile,
   Rsvp,
+  Settlement,
+  SettlementShare,
+  SettlementToken,
 } from "@/lib/types/domain";
 
 // 더미 데이터. 빈 모임, 1회성 이벤트, 동명이인, 취소/종료/마감 회차, 정원 초과, 만료 토큰 같은 경계 사례를 포함한다.
@@ -149,6 +152,18 @@ export const mockEvents: GroupEvent[] = [
     status: "scheduled",
   },
   {
+    // 정산 전원 완료 경계 사례용 종료 회차
+    id: "e-futsal-3",
+    groupId: "g-futsal",
+    title: "금요 풋살 9월 정기전",
+    startsAt: "2026-09-25T20:00",
+    location: "OO 풋살파크 2구장",
+    capacity: 10,
+    description: "",
+    rsvpDeadline: null,
+    status: "ended",
+  },
+  {
     id: "e-oneoff-1",
     groupId: "g-oneoff",
     title: "연말 송년회",
@@ -171,6 +186,7 @@ export const mockInviteTokens: InviteToken[] = [
   { token: "demo-swim-4", eventId: "e-swim-4", revoked: false },
   { token: "demo-futsal-1", eventId: "e-futsal-1", revoked: false },
   { token: "demo-futsal-2", eventId: "e-futsal-2", revoked: false },
+  { token: "demo-futsal-3", eventId: "e-futsal-3", revoked: false },
   { token: "demo-oneoff-1", eventId: "e-oneoff-1", revoked: false },
 ];
 
@@ -224,4 +240,133 @@ export const mockRsvps: Rsvp[] = [
   rsvp("r-12", "e-futsal-2", "한지민", "declined", { memberId: "m-7" }),
   rsvp("r-13", "e-oneoff-1", "박서준", "attending"),
   rsvp("r-14", "e-oneoff-1", "김지원", "undecided"),
+  rsvp("r-15", "e-futsal-3", "정우성", "attending", { memberId: "m-6" }),
+  rsvp("r-16", "e-futsal-3", "한지민", "attending", { memberId: "m-7" }),
+  rsvp("r-17", "e-futsal-3", "오세훈", "attending", { memberId: "m-8" }),
+  rsvp("r-18", "e-futsal-3", "강동원", "attending"),
+];
+
+// ─── 정산 더미 ──────────────────────────────────────────────────────
+// 경계 사례:
+// - 정산 없음: e-swim-1(참석 3명, "정산 만들기" 흐름), e-swim-2(응답 0건 → 대상 0명 오류 확인)
+// - 나누어떨어지지 않음 + 일부 입금 + 자가 입금 표시: e-swim-3 (25,000원 / 3명(주최자 포함) = 8,333원, 나머지 1원)
+// - 나누어떨어짐 + 일부 입금: e-futsal-1 (110,000원 / 11명 = 10,000원)
+// - 전원 완료: e-futsal-3 (80,000원 / 5명(주최자 포함) = 16,000원)
+// 파생값(N, 1인 금액, 나머지, 상태)은 calculateSplit과 같은 규칙으로 아래 헬퍼가 채운다.
+
+type ShareFixture = {
+  rsvpId: string;
+  status: SettlementShare["status"];
+  statusChangedAt?: string;
+};
+
+function settlementFixture(
+  id: string,
+  eventId: string,
+  options: {
+    totalAmount: number;
+    hostIncluded: boolean;
+    paymentGuide: string;
+    createdAt: string;
+    shares: ShareFixture[];
+  },
+): { settlement: Settlement; shares: SettlementShare[] } {
+  const headCount = options.shares.length + (options.hostIncluded ? 1 : 0);
+  const perPersonAmount = Math.floor(options.totalAmount / headCount);
+  const shares = options.shares.map((item, index): SettlementShare => {
+    const source = mockRsvps.find((r) => r.id === item.rsvpId);
+    return {
+      id: `${id}-share-${index + 1}`,
+      settlementId: id,
+      rsvpId: item.rsvpId,
+      memberId: source?.memberId ?? null,
+      name: source?.name ?? "",
+      amount: perPersonAmount,
+      status: item.status,
+      statusChangedAt: item.statusChangedAt ?? null,
+    };
+  });
+  return {
+    settlement: {
+      id,
+      eventId,
+      totalAmount: options.totalAmount,
+      hostIncluded: options.hostIncluded,
+      headCount,
+      perPersonAmount,
+      hostRemainder: options.totalAmount - perPersonAmount * headCount,
+      paymentGuide: options.paymentGuide,
+      status: shares.every((share) => share.status === "paid")
+        ? "completed"
+        : "in_progress",
+      createdAt: options.createdAt,
+      updatedAt: options.createdAt,
+    },
+    shares,
+  };
+}
+
+const settlementFixtures = [
+  settlementFixture("st-swim-3", "e-swim-3", {
+    totalAmount: 25_000,
+    hostIncluded: true,
+    paymentGuide: "카카오뱅크 3333-01-1234567 김주최 (레인 대여비)",
+    createdAt: "2026-10-07T09:00",
+    shares: [
+      { rsvpId: "r-6", status: "paid", statusChangedAt: "2026-10-07T12:30" },
+      // 참가자가 "입금했어요"를 눌렀지만 주최자가 아직 확정하지 않은 항목(FR-12)
+      {
+        rsvpId: "r-7",
+        status: "self_reported",
+        statusChangedAt: "2026-10-08T21:10",
+      },
+    ],
+  }),
+  settlementFixture("st-futsal-1", "e-futsal-1", {
+    totalAmount: 110_000,
+    hostIncluded: false,
+    paymentGuide:
+      "토스뱅크 1000-1234-5678 김주최\n구장 대여비 선입금 부탁드려요.",
+    createdAt: "2026-10-10T10:00",
+    shares: [
+      { rsvpId: "r-8", status: "paid", statusChangedAt: "2026-10-10T11:00" },
+      { rsvpId: "r-9", status: "paid", statusChangedAt: "2026-10-10T11:05" },
+      {
+        rsvpId: "r-futsal-0",
+        status: "paid",
+        statusChangedAt: "2026-10-10T13:20",
+      },
+      ...Array.from({ length: 8 }, (_, index) => ({
+        rsvpId: `r-futsal-${index + 1}`,
+        status: "unpaid" as const,
+      })),
+    ],
+  }),
+  settlementFixture("st-futsal-3", "e-futsal-3", {
+    totalAmount: 80_000,
+    hostIncluded: true,
+    paymentGuide: "토스뱅크 1000-1234-5678 김주최",
+    createdAt: "2026-09-26T09:00",
+    shares: ["r-15", "r-16", "r-17", "r-18"].map((rsvpId) => ({
+      rsvpId,
+      status: "paid" as const,
+      statusChangedAt: "2026-09-27T20:00",
+    })),
+  }),
+];
+
+export const mockSettlements: Settlement[] = settlementFixtures.map(
+  (item) => item.settlement,
+);
+
+export const mockSettlementShares: SettlementShare[] =
+  settlementFixtures.flatMap((item) => item.shares);
+
+// 정산 토큰 더미. 초대 토큰(demo-*)과 겹치지 않는 별개의 값이다(FR-10).
+export const mockSettlementTokens: SettlementToken[] = [
+  { token: "settle-swim-3", settlementId: "st-swim-3", revoked: false },
+  // 재발급으로 만료된 이전 정산 토큰
+  { token: "settle-swim-3-old", settlementId: "st-swim-3", revoked: true },
+  { token: "settle-futsal-1", settlementId: "st-futsal-1", revoked: false },
+  { token: "settle-futsal-3", settlementId: "st-futsal-3", revoked: false },
 ];

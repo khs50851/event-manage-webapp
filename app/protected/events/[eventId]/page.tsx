@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getEvent, getGroup, listMembers } from "@/lib/data/groups";
 import { getActiveInviteToken, listRsvps } from "@/lib/data/invites";
+import { getHostSettlement } from "@/lib/data/settlements";
 import { formatDateTime, nowKstLocalString } from "@/lib/format";
 import { isDeadlinePassed } from "@/lib/rsvp";
+import { SETTLEMENT_STATUS_LABEL, summarizeShares } from "@/lib/settlement";
 import type { EventStatus } from "@/lib/types/domain";
 
 const STATUS_LABEL: Record<EventStatus, string> = {
@@ -31,12 +33,20 @@ async function EventDetailLoader({
   if (!event) notFound();
 
   // 회차 확인 후 나머지 조회는 서로 독립적이므로 병렬로 가져온다.
-  const [group, members, rsvps, inviteToken] = await Promise.all([
-    getGroup(event.groupId),
-    listMembers(event.groupId),
-    listRsvps(event.id),
-    getActiveInviteToken(event.id),
-  ]);
+  const [group, members, rsvps, inviteToken, settlementData] =
+    await Promise.all([
+      getGroup(event.groupId),
+      listMembers(event.groupId),
+      listRsvps(event.id),
+      getActiveInviteToken(event.id),
+      getHostSettlement(event.id),
+    ]);
+  const settlementProgress = settlementData.settlement
+    ? {
+        statusLabel: SETTLEMENT_STATUS_LABEL[settlementData.settlement.status],
+        ...summarizeShares(settlementData.shares),
+      }
+    : null;
 
   // 마감 여부는 요청 시점 시각으로 판정한다.
   await connection();
@@ -95,17 +105,25 @@ async function EventDetailLoader({
         initialRsvps={rsvps}
       />
 
-      {/* 정산은 U4에서 채운다 */}
+      {/* 정산 요약과 정산 관리 진입점(U4). 상세 편집은 /settlement 화면에서 한다. */}
       <section
         aria-labelledby="settlement-heading"
-        className="rounded-md border border-dashed p-4"
+        className="flex flex-col items-start gap-2 rounded-md border p-4"
       >
         <h2 id="settlement-heading" className="font-semibold">
           정산
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          정산 만들기 (U4에서 구현 예정)
+        <p className="text-sm text-muted-foreground">
+          {settlementProgress
+            ? `${settlementProgress.statusLabel} · 입금 완료 ${settlementProgress.paidCount}/${settlementProgress.targetCount}명`
+            : "아직 정산이 없어요."}
         </p>
+        <Link
+          href={`/protected/events/${event.id}/settlement`}
+          className="flex min-h-11 items-center text-sm font-medium underline"
+        >
+          {settlementProgress ? "정산 관리" : "정산 만들기"}
+        </Link>
       </section>
     </div>
   );
