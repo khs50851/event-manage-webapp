@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
+import type { Database } from "./database.types";
 
 // 로그인 사용자에게는 필요 없는 인증 진입 화면(로그인 상태면 홈으로 리다이렉트)
 const AUTH_ENTRY_PATHS = ["/auth/login", "/auth/sign-up"];
@@ -18,7 +19,7 @@ export async function updateSession(request: NextRequest) {
 
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {

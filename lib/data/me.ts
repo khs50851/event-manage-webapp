@@ -1,27 +1,15 @@
 import { createAvatarSignedUrl } from "@/lib/data/avatars";
+import { mockDelay, resolveDataSource } from "@/lib/data/source";
 import { toKstDateString } from "@/lib/format";
 import { mockMemberships, mockProfile } from "@/lib/mock/data";
-import { createClient } from "@/lib/supabase/server";
 import type { MyStats, Profile } from "@/lib/types/domain";
 
-// 내 정보 조회 함수. getMyProfile은 세션이 있으면 Supabase(profiles)를 조회하고,
-// 세션이 없으면(개발 환경 목업 미리보기) 더미를 반환한다. getMyStats는 아직 더미다(연동 단계 I1에서 교체).
+// 내 정보 조회 함수. 세션이 있으면 Supabase(profiles·groups, RLS)를 조회하고,
+// 세션이 없으면 개발 환경 목업 미리보기용 더미를 반환한다(판단은 lib/data/source.ts).
 // 세션 쿠키를 읽으므로 호출하는 컴포넌트는 <Suspense> 안에 있어야 한다(cacheComponents).
-// 로딩 상태(Suspense 스켈레톤) 확인용 인위적 지연(더미 경로에만 적용).
-const MOCK_DELAY_MS = 300;
-
-function delay() {
-  return new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
-}
 
 // 표시 이름 최대 길이(profiles.display_name 제약과 동일)
 const DISPLAY_NAME_MAX = 30;
-
-type ProfileRow = {
-  display_name: string;
-  avatar_path: string | null;
-  created_at: string;
-};
 
 // 문자열 메타데이터 값만 꺼낸다(공백뿐이면 무시).
 function pickString(value: unknown): string | null {
@@ -46,17 +34,16 @@ function fallbackDisplayName(
 
 // 내 프로필
 export async function getMyProfile(): Promise<Profile> {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const claims = claimsData?.claims;
+  const source = await resolveDataSource();
 
-  // 세션 없음: 개발 환경 목업 미리보기용 더미(운영에서는 페이지가 로그인으로 리다이렉트한다)
-  if (!claims) {
-    await delay();
+  // 세션 없음: 개발 환경 목업 미리보기용 더미. 반환 타입이 Profile(비-null)이라 프로덕션(none)도
+  // 기존처럼 더미를 돌려준다(정상 흐름에서는 페이지가 로그인으로 리다이렉트한다). I5-3에서 정리한다.
+  if (source.kind !== "supabase") {
+    await mockDelay();
     return mockProfile;
   }
 
-  const userId = claims.sub;
+  const { supabase, userId, claims } = source;
   const email = claims.email ?? "";
 
   // RLS로 본인 행만 조회된다. 오류여도 화면은 대체 값으로 보여준다.
@@ -64,7 +51,7 @@ export async function getMyProfile(): Promise<Profile> {
     .from("profiles")
     .select("display_name, avatar_path, created_at")
     .eq("id", userId)
-    .maybeSingle<ProfileRow>();
+    .maybeSingle();
 
   if (row) {
     return {
@@ -92,12 +79,29 @@ export async function getMyProfile(): Promise<Profile> {
   };
 }
 
-// 내가 만든 모임 수 / 참여한 모임 수
+// 내가 만든 모임 수 / 참여한 모임 수.
+// 실데이터: 만든 모임은 groups 건수(RLS로 본인 소유만, listGroups와 같은 기준),
+// 참여한 모임은 listJoinedGroups와 같이 I3-6a 전까지 0이다.
 export async function getMyStats(): Promise<MyStats> {
-  await delay();
-  const mine = mockMemberships.filter((item) => item.userId === mockProfile.id);
-  return {
-    hostedCount: mine.filter((item) => item.role === "host").length,
-    joinedCount: mine.filter((item) => item.role === "member").length,
-  };
+  const source = await resolveDataSource();
+  if (source.kind === "mock") {
+    await mockDelay();
+    const mine = mockMemberships.filter(
+      (item) => item.userId === mockProfile.id,
+    );
+    return {
+      hostedCount: mine.filter((item) => item.role === "host").length,
+      joinedCount: mine.filter((item) => item.role === "member").length,
+    };
+  }
+  if (source.kind === "none") return { hostedCount: 0, joinedCount: 0 };
+
+  const { count, error } = await source.supabase
+    .from("groups")
+    .select("id", { count: "exact", head: true });
+  if (error) {
+    console.error("[getMyStats] 조회 실패:", error.code);
+    throw new Error("데이터를 불러오지 못했어요.");
+  }
+  return { hostedCount: count ?? 0, joinedCount: 0 };
 }

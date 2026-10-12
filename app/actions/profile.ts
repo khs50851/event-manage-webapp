@@ -58,7 +58,7 @@ async function getCurrentAvatarPath(
     .from("profiles")
     .select("avatar_path")
     .eq("id", userId)
-    .maybeSingle<{ avatar_path: string | null }>();
+    .maybeSingle();
   if (error || !data) return undefined;
   return data.avatar_path;
 }
