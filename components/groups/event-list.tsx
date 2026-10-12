@@ -174,7 +174,7 @@ export function EventList({
                 <div className="min-w-0">
                   <Link
                     href={`/protected/events/${event.id}`}
-                    className="font-semibold hover:underline"
+                    className="flex min-h-11 items-center font-semibold wrap-break-word hover:underline"
                   >
                     {event.title}
                   </Link>
@@ -231,7 +231,8 @@ export function EventList({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="min-h-11 text-destructive"
+                    // 다크모드 outline 배경(input/30) 위 빨간 글씨 대비 확보
+                    className="min-h-11 text-destructive dark:bg-background"
                     onClick={() => setCancelling(event)}
                   >
                     <XCircleIcon className="size-4" />

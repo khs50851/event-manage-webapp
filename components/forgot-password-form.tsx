@@ -51,7 +51,9 @@ export function ForgotPasswordForm({
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">이메일을 확인해 주세요</CardTitle>
+            <CardTitle className="text-2xl">
+              <h1>이메일을 확인해 주세요</h1>
+            </CardTitle>
             <CardDescription>
               비밀번호 재설정 안내 메일을 보냈어요.
             </CardDescription>
@@ -66,7 +68,9 @@ export function ForgotPasswordForm({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">비밀번호 재설정</CardTitle>
+            <CardTitle className="text-2xl">
+              <h1>비밀번호 재설정</h1>
+            </CardTitle>
             <CardDescription>
               가입한 이메일을 입력하면 비밀번호를 재설정할 수 있는 링크를
               보내드려요.
@@ -100,7 +104,7 @@ export function ForgotPasswordForm({
                 이미 계정이 있으신가요?{" "}
                 <Link
                   href="/auth/login"
-                  className="underline underline-offset-4"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center underline underline-offset-4"
                 >
                   로그인
                 </Link>

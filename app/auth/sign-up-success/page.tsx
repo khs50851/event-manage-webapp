@@ -14,7 +14,7 @@ export default function Page() {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
-                가입해 주셔서 감사해요!
+                <h1>가입해 주셔서 감사해요!</h1>
               </CardTitle>
               <CardDescription>이메일을 확인해 주세요</CardDescription>
             </CardHeader>

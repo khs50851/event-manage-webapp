@@ -9,8 +9,10 @@ import {
 } from "@/components/groups/group-list";
 import { Button } from "@/components/ui/button";
 import { listGroups, listJoinedGroups } from "@/lib/data/groups";
+import type { Group } from "@/lib/types/domain";
 
-// 로그인 사용자의 홈(/)에 표시하는 내 모임/참여한 모임 목록(대시보드 U5 전까지 사용)
+// 로그인 사용자의 홈(/)에 표시하는 내 모임/참여한 모임 목록.
+// 표시 전용 View·스켈레톤은 대시보드(/protected) 하단 목록에서도 재사용한다.
 
 // "새 모임" 버튼은 로딩 중에도 바로 누를 수 있도록 스켈레톤과 실제 헤더에 모두 넣는다
 function NewGroupButton() {
@@ -23,11 +25,20 @@ function NewGroupButton() {
   );
 }
 
-function HostedHeader({ count }: { count: number | null }) {
+// 제목 수준: 홈에서는 페이지 첫 제목(h1), 대시보드처럼 상위 제목이 있으면 h2
+type HeadingLevel = "h1" | "h2";
+
+function HostedHeader({
+  count,
+  as = "h1",
+}: {
+  count: number | null;
+  as?: HeadingLevel;
+}) {
   return (
     <GroupSectionHeader
       id="hosted-title"
-      as="h1"
+      as={as}
       title="내 모임"
       count={count}
       action={<NewGroupButton />}
@@ -41,11 +52,18 @@ function JoinedHeader({ count }: { count: number | null }) {
   );
 }
 
-async function HostedGroups() {
-  const groups = await listGroups();
+// 내 모임 목록(표시 전용). 조회는 호출하는 쪽에서 한다(홈: listGroups, 대시보드: getDashboard).
+// 감싸는 <section aria-labelledby="hosted-title">은 호출하는 쪽이 둔다(스켈레톤과 같은 섹션 안에서 교체되도록).
+export function HostedGroupsView({
+  groups,
+  headingAs = "h1",
+}: {
+  groups: Group[];
+  headingAs?: HeadingLevel;
+}) {
   return (
     <>
-      <HostedHeader count={groups.length} />
+      <HostedHeader count={groups.length} as={headingAs} />
       <GroupList
         groups={groups}
         empty={
@@ -70,8 +88,8 @@ async function HostedGroups() {
   );
 }
 
-async function JoinedGroups() {
-  const groups = await listJoinedGroups();
+// 참여한 모임 목록(표시 전용). 감싸는 <section aria-labelledby="joined-title">은 호출하는 쪽이 둔다.
+export function JoinedGroupsView({ groups }: { groups: Group[] }) {
   return (
     <>
       <JoinedHeader count={groups.length} />
@@ -95,31 +113,50 @@ async function JoinedGroups() {
   );
 }
 
+async function HostedGroups() {
+  const groups = await listGroups();
+  return <HostedGroupsView groups={groups} />;
+}
+
+async function JoinedGroups() {
+  const groups = await listJoinedGroups();
+  return <JoinedGroupsView groups={groups} />;
+}
+
+// 목록 스켈레톤(홈·대시보드 공용). 제목 수준은 실제 목록과 맞춘다.
+export function HostedGroupsSkeleton({
+  headingAs = "h1",
+}: {
+  headingAs?: HeadingLevel;
+}) {
+  return (
+    <>
+      <HostedHeader count={null} as={headingAs} />
+      <GroupListSkeleton />
+    </>
+  );
+}
+
+export function JoinedGroupsSkeleton() {
+  return (
+    <>
+      <JoinedHeader count={null} />
+      <GroupListSkeleton count={2} />
+    </>
+  );
+}
+
 export function HomeGroups() {
   return (
     <div className="flex w-full flex-1 flex-col gap-8">
       {/* 두 목록은 서로 독립적이므로 Suspense를 나눠 병렬로 스트리밍한다 */}
       <section className="flex flex-col gap-3" aria-labelledby="hosted-title">
-        <Suspense
-          fallback={
-            <>
-              <HostedHeader count={null} />
-              <GroupListSkeleton />
-            </>
-          }
-        >
+        <Suspense fallback={<HostedGroupsSkeleton />}>
           <HostedGroups />
         </Suspense>
       </section>
       <section className="flex flex-col gap-3" aria-labelledby="joined-title">
-        <Suspense
-          fallback={
-            <>
-              <JoinedHeader count={null} />
-              <GroupListSkeleton count={2} />
-            </>
-          }
-        >
+        <Suspense fallback={<JoinedGroupsSkeleton />}>
           <JoinedGroups />
         </Suspense>
       </section>

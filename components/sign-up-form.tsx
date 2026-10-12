@@ -64,7 +64,9 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">회원가입</CardTitle>
+          <CardTitle className="text-2xl">
+            <h1>회원가입</h1>
+          </CardTitle>
           <CardDescription>새 계정을 만들어 주세요.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -121,7 +123,10 @@ export function SignUpForm({
             </div>
             <div className="mt-4 text-center text-sm">
               이미 계정이 있으신가요?{" "}
-              <Link href="/auth/login" className="underline underline-offset-4">
+              <Link
+                href="/auth/login"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center underline underline-offset-4"
+              >
                 로그인
               </Link>
             </div>

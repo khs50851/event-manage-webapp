@@ -44,7 +44,9 @@ export function AuthErrorNotice({
               kind === "failed" ? "text-destructive" : "text-muted-foreground",
             )}
           />
-          <CardTitle className="text-2xl">{title}</CardTitle>
+          <CardTitle className="text-2xl">
+            <h1>{title}</h1>
+          </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">

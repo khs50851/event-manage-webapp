@@ -127,8 +127,14 @@ export function MemberRoster({
                   <Input placeholder="멤버 이름" {...field} />
                 </FormControl>
                 {isDuplicate && (
-                  <p className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400">
-                    <TriangleAlertIcon className="size-4" />
+                  <p
+                    role="status"
+                    className="flex items-center gap-1 text-sm text-warning"
+                  >
+                    <TriangleAlertIcon
+                      aria-hidden
+                      className="size-4 shrink-0"
+                    />
                     같은 이름의 멤버가 이미 있어요. 동명이인이면 그대로
                     추가하세요.
                   </p>

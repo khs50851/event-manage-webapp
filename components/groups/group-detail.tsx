@@ -59,8 +59,8 @@ export function GroupDetail({
 
   function confirmDelete() {
     toast.success("모임을 삭제했어요. (더미: 실제로 삭제되지 않아요)");
-    // 모임 목록은 홈(/)에 있다
-    router.push("/");
+    // 하단 탭바 "홈"과 같은 대시보드(/protected)로 돌아간다. 내 모임 목록도 여기에 있다
+    router.push("/protected");
   }
 
   return (
@@ -92,7 +92,8 @@ export function GroupDetail({
             type="button"
             variant="outline"
             size="sm"
-            className="min-h-11 text-destructive"
+            // 다크모드 outline 배경(input/30) 위에서는 빨간 글씨 대비가 3:1에 그쳐 배경을 유지한다
+            className="min-h-11 text-destructive dark:bg-background"
             onClick={() => setDeleting(true)}
           >
             <Trash2Icon className="size-4" />

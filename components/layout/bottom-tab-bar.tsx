@@ -17,11 +17,11 @@ interface TabItem {
 // 실제 존재하는 라우트만 탭으로 노출한다
 const TABS: TabItem[] = [
   {
-    href: "/",
+    href: "/protected",
     label: "홈",
     icon: House,
-    // 홈(/)에서만 활성화한다. 모든 경로가 "/"로 시작하므로 정확 일치로 비교한다
-    match: (p) => p === "/",
+    // 대시보드(/protected)와 홈(/)에서만 활성화한다. 하위 경로는 제외하도록 정확 일치로 비교한다
+    match: (p) => p === "/" || p === "/protected",
   },
   {
     href: "/protected/groups/new",

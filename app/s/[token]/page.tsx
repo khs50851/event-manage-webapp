@@ -18,14 +18,18 @@ async function SettlementLoader({
   switch (lookup.status) {
     case "invalid":
       return (
-        <InviteNotice kind="invalid" title="유효하지 않은 링크예요">
+        <InviteNotice
+          kind="invalid"
+          titleAs="h1"
+          title="유효하지 않은 링크예요"
+        >
           링크 주소가 정확한지 확인하거나 주최자에게 정산 링크를 다시 요청해
           주세요.
         </InviteNotice>
       );
     case "expired":
       return (
-        <InviteNotice kind="expired" title="만료된 링크예요">
+        <InviteNotice kind="expired" titleAs="h1" title="만료된 링크예요">
           주최자가 정산 링크를 새로 발급했어요. 주최자에게 새 링크를 요청해
           주세요.
         </InviteNotice>

@@ -9,7 +9,7 @@
 
 | Phase | 목표 | 핵심 산출물 | 상태 |
 |---|---|---|---|
-| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (U1, U2, U4 완료, U3 검증 1건 남음) |
+| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (U1, U2, U4, U5-1~U5-6 완료, U3 검증 1건 남음) |
 | Phase 2 | 응답 독려 자동화와 정산·모집 기능 확장 | 알림톡, 오픈 모집, 품목별 정산, 월 회비, 대기자, 공동 주최자 | 대기 |
 | Phase 3 | 결제 자동화 | PG 결제, 자동 입금 확인, 환불, 통계 | 대기 |
 
@@ -24,29 +24,35 @@
 
 ## 프로젝트 구조
 
-UI 단계 진행 중 기준(2026-10-12, U4 반영). 새 파일이 생기면 이 절도 함께 갱신한다.
+UI 단계 진행 중 기준(2026-10-12, U5-1 반영). 새 파일이 생기면 이 절도 함께 갱신한다.
 
 ```
 app/
 ├── layout.tsx                      # 루트 레이아웃 (ThemeProvider, Toaster)
 ├── page.tsx                        # 홈
 ├── auth/                           # 인증 페이지 (스타터 + U1 UI)
+├── not-found.tsx                   # 존재하지 않는 주소 공통 안내 (U5-2)
 ├── i/                              # 비회원 초대 (U3, noindex 레이아웃)
-│   └── [token]/page.tsx            # 초대·RSVP (유효/무효/만료/취소/마감)
+│   └── [token]/                    # 초대·RSVP page(유효/무효/만료/취소/마감)·error
 ├── s/                              # 비회원 정산 조회 (U4, noindex 레이아웃)
 │   └── [token]/                    # page·loading·error (유효/무효/만료)
 ├── actions/
 │   └── settlements.ts              # Server Action: 이름 선택 시 본인 금액·입금 상태만 조회(읽기 전용)
 └── protected/                      # 주최자 영역 (더미 데이터)
     ├── layout.tsx                  # 공통 내비게이션/푸터
-    ├── page.tsx                    # 내 모임 목록 (U5에서 대시보드로 교체)
+    ├── (dashboard)/                # 대시보드 /protected (U5-1). 라우트 그룹으로 error.tsx 적용 범위를 대시보드로 한정
+    │   ├── page.tsx                # 카드 3개 + 내 모임·참여한 모임 목록, Suspense 스켈레톤, 빈 상태 CTA
+    │   └── error.tsx               # 재시도 버튼
     ├── groups/new/page.tsx         # 모임·1회성 이벤트 생성
-    ├── groups/[groupId]/page.tsx   # 모임 상세
-    ├── events/[eventId]/page.tsx   # 회차 상세 (초대 링크, 응답 마감, 응답 현황, 정산 진입)
+    ├── groups/[groupId]/           # 모임 상세 page·not-found·error (U5-2)
+    ├── events/[eventId]/           # 회차 상세 page·not-found·error (초대 링크, 응답 마감, 응답 현황, 정산 진입)
     └── events/[eventId]/settlement/ # 정산 관리 page·loading·not-found·error (U4)
 components/
 ├── ui/                             # shadcn 프리미티브 (npx shadcn add)
+├── dashboard/
+│   └── dashboard-cards.tsx         # 대시보드 카드 3개·빈 상태 CTA·카드 스켈레톤 (U5-1)
 ├── groups/                         # 모임 도메인 컴포넌트 (U2)
+    ├── home-groups.tsx             # 내 모임/참여한 모임 목록 (홈 + 대시보드 하단 공용 View·스켈레톤)
     ├── group-form.tsx              # 모임 생성·수정 폼
     ├── event-form.tsx              # 회차 폼 (생성·수정·복제 공용)
     ├── new-group-panel.tsx         # 정기 모임 / 1회성 이벤트 전환
@@ -71,15 +77,19 @@ components/
     ├── settlement-link-card.tsx    # 정산 링크 복사·재발급·요약 문구 복사
     ├── public-settlement-view.tsx  # 비회원 이름 선택 → 본인 항목만 조회·"입금했어요"
     └── settlement-skeletons.tsx    # 로딩 스켈레톤
+hooks/
+└── use-return-focus.ts             # Trigger 없는 대화상자도 닫힌 뒤 여는 버튼으로 포커스 복귀 (U5-5)
 lib/
 ├── types/domain.ts                 # 도메인 타입 (I1에서 생성 타입으로 교체)
 ├── mock/data.ts                    # 더미 데이터 (경계 사례 포함)
 ├── data/groups.ts                  # 조회 함수 — 화면은 여기만 호출 (I1에서 구현 교체)
 ├── data/invites.ts                 # 초대 토큰·응답 조회 (I3에서 구현 교체)
 ├── data/settlements.ts             # 정산·정산 토큰 조회 (I4에서 구현 교체)
+├── data/dashboard.ts               # getDashboard: 대시보드 원본 조회 + 집계 호출 (I1~I4에서 구현 교체)
 ├── schemas/                        # Zod 스키마 (group, member, event, rsvp, settlement)
 ├── rsvp.ts                         # 응답 집계·정원 초과·마감 판정 순수 함수
 ├── settlement.ts                   # 1/N 계산·경계값 검증·재계산·입금 상태 전이·요약 문구 순수 함수
+├── dashboard.ts                    # 대시보드 집계 순수 함수(7일 이내·응답 미완료·미입금 정산, rsvp/settlement 재사용)
 ├── format.ts                       # 날짜 표시 포맷, 한국 시간 현재 시각
 └── supabase/                       # 클라이언트 3종 (client, server, proxy)
 proxy.ts                            # 세션 갱신·접근 제어 (lib/supabase/proxy.ts 호출)
@@ -96,7 +106,7 @@ proxy.ts                            # 세션 갱신·접근 제어 (lib/supabase
 | 회원가입 | `/auth/sign-up` | 완료 | 〃 |
 | 인증 실패 안내 | `/auth/error` | 완료 | `?error=access_denied` 등으로 취소/실패 문구 확인 |
 | 비밀번호 재설정 | `/auth/forgot-password`, `/auth/update-password` | 스타터 | |
-| 내 모임 목록 | `/protected` | 임시 | U5에서 대시보드로 교체 |
+| 대시보드 | `/protected` | 완료 | 7일 이내 회차·응답 미완료 회차·미입금 정산 카드 + 내 모임/참여한 모임 목록. 빈 대시보드(모임 0건): `/protected?preview=empty`(개발 환경 전용, I2-6에서 제거) |
 | 모임 생성 | `/protected/groups/new` | 완료 | 정기 모임 / 1회성 이벤트 전환 |
 | 모임 상세 (회차 많음, 동명이인) | `/protected/groups/g-swim` | 완료 | 예정·종료·취소 회차 모두 포함 |
 | 모임 상세 (회차 적음) | `/protected/groups/g-futsal` | 완료 | |
@@ -208,12 +218,12 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 
 | ID | 작업 | 내용 | 완료 기준 |
 |---|---|---|---|
-| U5-1 | 대시보드 | `/protected` 7일 이내 회차, 응답 미완료 회차, 미입금 정산 건수 카드. `<Suspense>` + 스켈레톤 | 세 카드 표시 |
-| U5-2 | 상태 화면 점검 | PRD 7장의 로딩/빈/오류 상태가 모든 경로에 있는지 대조(빈 대시보드 CTA, 재시도 버튼 포함) | 경로별 체크 완료 |
-| U5-3 | 모바일 점검 | 360px 너비, 터치 대상 44x44px 이상, 가로 스크롤 없음 | 전 화면 playwright 스냅샷 확인 |
-| U5-4 | 다크모드 점검 | 디자인 토큰만 사용, 하드코딩 색상 없음, 색 대비 AA | 전 화면 확인 |
-| U5-5 | 접근성 점검 | 키보드 조작, 폼 라벨 연결, 상태의 색상 외 텍스트 구분 | 체크리스트 통과 |
-| U5-6 | 시나리오 시연 | S1~S4를 더미 데이터로 끝까지 시연(playwright) | 4개 시나리오 통과 |
+| U5-1 | 대시보드 ✅ 완료 | `/protected` 7일 이내 회차, 응답 미완료 회차, 미입금 정산 건수 카드. `<Suspense>` + 스켈레톤, 오류 시 재시도, 모임 0건 "모임 만들기" CTA, 하단에 내 모임·참여한 모임 목록 유지. 집계 기준: 7일 이내 = 예정·시작 전이고 시작 시각 ≤ 지금+7일(한국 시간) / 응답 미완료 = 예정·시작 전·응답 마감 전이고 명부 멤버 중 미응답자 1명 이상 / 미입금 정산 = 입금 완료로 확정되지 않은 항목(미입금·확인 필요)이 남은 정산 | 세 카드 표시 |
+| U5-2 | 상태 화면 점검 ✅ 완료 | PRD 7장의 로딩/빈/오류 상태가 모든 경로에 있는지 대조(빈 대시보드 CTA, 재시도 버튼 포함). 결과(2026-10-12): 대시보드 스켈레톤·빈 CTA·재시도 확인. 누락 보완 — 모임·회차 상세 `not-found.tsx`(기본 영어 404 대체), 모임·회차 상세·초대 페이지 `error.tsx`(재시도), 루트 `app/not-found.tsx`. 회차 상세 "저장 실패 토스트"는 쓰기가 시뮬레이션이라 실패 경로가 없어 I3에서 연결 | 경로별 체크 완료 |
+| U5-3 | 모바일 점검 ✅ 완료 | 360px 너비, 터치 대상 44x44px 이상, 가로 스크롤 없음. 결과: 표의 전 경로(47개 URL) 360px 가로 스크롤 0건. 44px 미달(입력창·기본 버튼 36px, 인증 화면 텍스트 링크, 회차 제목 링크, 대화상자 닫기 버튼) 수정 — `Button` 기본/sm/icon 크기와 `Input` 높이를 44px로 상향 | 전 화면 playwright 스냅샷 확인 |
+| U5-4 | 다크모드 점검 ✅ 완료 | 디자인 토큰만 사용, 하드코딩 색상 없음, 색 대비 AA. 결과: `text-amber-*` → `--warning` 토큰 신설, 버튼·배지 destructive `text-white` → `text-destructive-foreground`. 대비 미달 수정 — secondary 배경 흰 글씨(2.5:1, 라이트 `--secondary-foreground` 검정으로), 라이트 `--destructive`(3.6:1 → 명도 하향), 다크 outline 버튼의 빨간 글씨(3.1:1). 라이트/다크 25개 화면 자동 대비 측정 미달 0건. 예외: Google 로고 브랜드 색, 대화상자 배경막 `bg-black/50` | 전 화면 확인 |
+| U5-5 | 접근성 점검 ✅ 완료 | 키보드 조작, 폼 라벨 연결, 상태의 색상 외 텍스트 구분. 결과: 대화상자 포커스 트랩·Esc 닫기·배경 aria-hidden 확인, Trigger 없는 대화상자가 닫힌 뒤 포커스를 잃던 문제 수정(`hooks/use-return-focus.ts`), 링크 포커스 링이 거의 보이지 않던 문제 수정(라이트 `--ring` 진하게 + 링크 2px 포커스 링), 인증·무효 토큰 화면에 h1 추가, 닫기 버튼 영어 문구 → "닫기". 폼 라벨·오류 연결(aria-invalid/aria-describedby)과 상태 텍스트·아이콘 병행은 통과 | 체크리스트 통과 |
+| U5-6 | 시나리오 시연 ✅ 완료 | S1~S4를 더미 데이터로 끝까지 시연(playwright). 결과(2026-10-12, 360x800, 38단계 전부 통과, 콘솔 오류·가로 스크롤 0건): S1 모임 생성·명부(동명이인 경고)·회차 등록·초대 링크 복사·응답 현황/대리 입력, 하단 탭 "홈"(/protected) 이동·활성 표시 / S2 1회성 이벤트 생성·명부 숨김 / S3 비회원 응답·같은 화면 재수정·명부 없음 직접 입력·정원 초과·취소/마감/종료/만료 안내 / S4 1/N 미리보기(나머지 주최자 부담)·정산 생성·링크 복사·입금 확인→완료·참가자 "입금했어요"→확인 필요→주최자 확정. 수정: 1회성 이벤트 생성 후 일반 빈 모임(g-empty)으로 가던 것을 1회성 더미(g-oneoff)로, 모임 삭제 후 이동을 `/` → `/protected`. 남은 한계: 화면에서 추가한 회차는 저장되지 않아 상세 링크가 404(I3에서 해소) | 4개 시나리오 통과 |
 | U5-7 | **UI 검토 게이트** | 사용자 확인을 받고 화면 변경 요청을 반영한 뒤 승인을 기록. 승인 전에는 연동 단계에 착수하지 않는다 | 사용자 승인 |
 
 ### 연동 단계 (UI 검토 통과 후)

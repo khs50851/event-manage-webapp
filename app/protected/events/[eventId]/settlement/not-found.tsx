@@ -12,7 +12,7 @@ export default function SettlementNotFound() {
         href="/protected"
         className="inline-flex min-h-11 items-center text-sm underline"
       >
-        내 모임으로 돌아가기
+        대시보드로 돌아가기
       </Link>
     </div>
   );

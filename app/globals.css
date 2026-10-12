@@ -19,6 +19,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -82,15 +83,20 @@
   --primary: oklch(0.5106 0.2301 276.9656);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.7038 0.123 182.5025);
-  --secondary-foreground: oklch(1 0 0);
+  /* 청록 배경 위 흰 글씨는 대비 2.5:1이라 AA 미달 → 검은 글씨(약 8:1) */
+  --secondary-foreground: oklch(0 0 0);
   --muted: oklch(0.9551 0 0);
   --muted-foreground: oklch(0.3211 0 0);
   --accent: oklch(0.7686 0.1647 70.0804);
   --accent-foreground: oklch(0 0 0);
-  --destructive: oklch(0.6368 0.2078 25.3313);
+  /* 글자색(text-destructive)과 흰 글씨 배경 모두 AA(4.5:1)를 넘도록 명도를 낮춤 */
+  --destructive: oklch(0.55 0.2 25.3313);
+  /* 경고(과거 시각, 동명이인 등). 색에만 의존하지 않도록 아이콘·문구와 함께 쓴다 */
+  --warning: oklch(0.52 0.14 55);
   --border: oklch(0 0 0);
   --input: oklch(0.5555 0 0);
-  --ring: oklch(0.7853 0.1041 274.7134);
+  /* 포커스 링이 밝은 배경에서 잘 보이도록 primary와 같은 명도로 낮춤(기존 0.7853은 대비 약 1.6:1) */
+  --ring: oklch(0.5106 0.2301 276.9656);
   --chart-1: oklch(0.5106 0.2301 276.9656);
   --chart-2: oklch(0.7038 0.123 182.5025);
   --chart-3: oklch(0.7686 0.1647 70.0804);
@@ -153,6 +159,7 @@
   --accent: oklch(0.879 0.1534 91.6054);
   --accent-foreground: oklch(0 0 0);
   --destructive: oklch(0.7106 0.1661 22.2162);
+  --warning: oklch(0.83 0.16 84);
   --border: oklch(0.4459 0 0);
   --input: oklch(1 0 0);
   --ring: oklch(0.6801 0.1583 276.9349);
@@ -210,5 +217,12 @@
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
+  }
+
+  /* 키보드 포커스 표시(U5-5): 별도 포커스 스타일이 없는 링크도 2px 링으로 또렷하게 보이게 한다.
+     :where로 우선순위를 0으로 두어 컴포넌트의 focus-visible 유틸리티가 항상 이긴다. */
+  :where(a[href], [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }

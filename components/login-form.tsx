@@ -55,7 +55,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">로그인</CardTitle>
+          <CardTitle className="text-2xl">
+            <h1>로그인</h1>
+          </CardTitle>
           <CardDescription>
             이메일과 비밀번호를 입력해 로그인해 주세요.
           </CardDescription>
@@ -82,7 +84,7 @@ export function LoginForm({
                   <Label htmlFor="password">비밀번호</Label>
                   <Link
                     href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    className="ml-auto inline-flex min-h-11 items-center text-sm underline-offset-4 hover:underline"
                   >
                     비밀번호를 잊으셨나요?
                   </Link>
@@ -109,7 +111,7 @@ export function LoginForm({
               계정이 없으신가요?{" "}
               <Link
                 href="/auth/sign-up"
-                className="underline underline-offset-4"
+                className="inline-flex min-h-11 items-center underline underline-offset-4"
               >
                 회원가입
               </Link>

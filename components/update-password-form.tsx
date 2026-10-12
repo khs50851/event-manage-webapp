@@ -48,7 +48,9 @@ export function UpdatePasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">새 비밀번호 설정</CardTitle>
+          <CardTitle className="text-2xl">
+            <h1>새 비밀번호 설정</h1>
+          </CardTitle>
           <CardDescription>
             새로 사용할 비밀번호를 입력해 주세요.
           </CardDescription>

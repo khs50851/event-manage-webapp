@@ -76,8 +76,11 @@ export function EventForm({
                 <Input type="datetime-local" {...field} />
               </FormControl>
               {isPast && (
-                <p className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400">
-                  <TriangleAlertIcon className="size-4" />
+                <p
+                  role="status"
+                  className="flex items-center gap-1 text-sm text-warning"
+                >
+                  <TriangleAlertIcon aria-hidden className="size-4 shrink-0" />
                   과거 시각이에요. 그대로 저장할 수 있어요.
                 </p>
               )}

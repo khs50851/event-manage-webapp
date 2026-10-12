@@ -32,8 +32,8 @@ export function GuestAuthNotice({
   variant?: keyof typeof COPY;
 }) {
   const copy = COPY[variant];
-  // 정산 페이지는 모바일 터치 대상(44px)을 맞춘다. 기존 화면(홈·초대)의 버튼 크기는 유지한다.
-  const buttonClassName = variant === "settlement" ? "min-h-11" : undefined;
+  // 모든 화면에서 모바일 터치 대상(44px)을 맞춘다(U5-3)
+  const buttonClassName = "min-h-11";
   return (
     <div className={cn("w-full max-w-sm", className)} {...props}>
       <Card>
