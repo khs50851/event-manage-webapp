@@ -7,6 +7,7 @@ import { InviteRsvpPanel } from "@/components/rsvp/invite-rsvp-panel";
 import { PublicRsvpList } from "@/components/rsvp/public-rsvp-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getInviteByToken } from "@/lib/data/invites";
+import { getIsLoggedIn } from "@/lib/data/source";
 import { formatDateTime } from "@/lib/format";
 import type { GroupEvent } from "@/lib/types/domain";
 
@@ -96,22 +97,28 @@ async function InviteLoader({
           <PublicRsvpList
             rsvps={invite.rsvps}
             capacity={invite.event.capacity}
+            myRsvpId={invite.myRsvp?.id ?? null}
           />
         </div>
       );
-    case "open":
+    case "open": {
+      // 로그인한 사용자에게는 로그인 유도 카드를 보여주지 않는다
+      const isLoggedIn = await getIsLoggedIn();
       return (
         <div className="flex flex-col gap-8">
           <EventSummary event={invite.event} groupName={invite.groupName} />
           <InviteRsvpPanel
+            token={token}
             eventId={invite.event.id}
             capacity={invite.event.capacity}
             members={invite.members}
             initialRsvps={invite.rsvps}
+            initialMyRsvp={invite.myRsvp}
           />
-          <GuestAuthNotice className="max-w-none" />
+          {!isLoggedIn && <GuestAuthNotice className="max-w-none" />}
         </div>
       );
+    }
   }
 }
 

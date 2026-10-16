@@ -5,6 +5,7 @@ import { InviteNotice } from "@/components/rsvp/invite-notice";
 import { PublicSettlementView } from "@/components/settlement/public-settlement-view";
 import { PublicSettlementSkeleton } from "@/components/settlement/settlement-skeletons";
 import { getSettlementByToken } from "@/lib/data/settlements";
+import { getIsLoggedIn } from "@/lib/data/source";
 import { formatDateTime } from "@/lib/format";
 
 async function SettlementLoader({
@@ -34,7 +35,9 @@ async function SettlementLoader({
           주세요.
         </InviteNotice>
       );
-    case "active":
+    case "active": {
+      // 로그인한 사용자에게는 로그인 유도 카드를 보여주지 않는다
+      const isLoggedIn = await getIsLoggedIn();
       return (
         <div className="flex flex-col gap-6">
           <header className="flex flex-col gap-1">
@@ -54,9 +57,12 @@ async function SettlementLoader({
             shares={lookup.shares}
             progress={lookup.progress}
           />
-          <GuestAuthNotice variant="settlement" className="max-w-none" />
+          {!isLoggedIn && (
+            <GuestAuthNotice variant="settlement" className="max-w-none" />
+          )}
         </div>
       );
+    }
   }
 }
 

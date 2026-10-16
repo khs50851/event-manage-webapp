@@ -3,6 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 
+import {
+  applyFieldErrors,
+  type FormSubmitOutcome,
+} from "@/components/groups/action-feedback";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -30,6 +34,12 @@ import {
 
 export type MemberOption = { id: string; name: string; label: string };
 
+const RSVP_FIELDS = [
+  "memberId",
+  "name",
+  "status",
+] as const satisfies ReadonlyArray<keyof RsvpFormValues>;
+
 export const EMPTY_RSVP_VALUES: Partial<RsvpFormValues> = {
   memberId: "",
   name: "",
@@ -47,7 +57,10 @@ export function RsvpForm({
   memberOptions: MemberOption[];
   defaultValues?: Partial<RsvpFormValues>;
   submitLabel: string;
-  onSubmit: (values: RsvpFormValues) => void | Promise<void>;
+  // 서버 검증 오류가 있으면 { fieldErrors, message }를 돌려준다(필드 오류로 표시).
+  onSubmit: (
+    values: RsvpFormValues,
+  ) => FormSubmitOutcome | Promise<FormSubmitOutcome>;
 }) {
   const form = useForm<RsvpFormValues>({
     resolver: zodResolver(rsvpSchema),
@@ -67,6 +80,8 @@ export function RsvpForm({
 
   function handleMemberChange(value: string) {
     form.setValue("memberId", value);
+    // 다른 이름을 고르면 이전 서버 오류(이미 응답한 멤버 등)는 지운다.
+    form.clearErrors("memberId");
     const member = memberOptions.find((option) => option.id === value);
     // 명부 멤버를 고르면 이름 스냅샷을 채우고, 직접 입력으로 바꾸면 비운다.
     form.setValue("name", member ? member.name : "", {
@@ -74,10 +89,18 @@ export function RsvpForm({
     });
   }
 
+  // await 동안 isSubmitting이 유지돼 버튼 비활성·진행 문구가 표시된다.
+  async function submit(values: RsvpFormValues) {
+    const outcome = await onSubmit(values);
+    applyFieldErrors(outcome, RSVP_FIELDS, (field, message) =>
+      form.setError(field, { message }, { shouldFocus: true }),
+    );
+  }
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(submit)}
         className="flex flex-col gap-5"
         noValidate
       >
@@ -92,7 +115,10 @@ export function RsvpForm({
                   <FormControl>
                     <SelectTrigger
                       className="min-h-11 w-full"
-                      aria-invalid={!showNameInput && !!nameError}
+                      aria-invalid={
+                        (!showNameInput && !!nameError) ||
+                        !!form.formState.errors.memberId
+                      }
                     >
                       <SelectValue placeholder="명부에서 이름 선택" />
                     </SelectTrigger>
@@ -114,6 +140,8 @@ export function RsvpForm({
                     이름을 선택하거나 &quot;직접 입력&quot;을 골라 주세요.
                   </p>
                 )}
+                {/* 서버 검증 오류(이미 응답한 멤버 등) */}
+                <FormMessage />
               </FormItem>
             )}
           />

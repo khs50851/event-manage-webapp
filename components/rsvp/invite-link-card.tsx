@@ -1,10 +1,14 @@
 "use client";
 
 import { CopyIcon, RefreshCwIcon, Share2Icon } from "lucide-react";
-import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { type MouseEvent, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
+import { rotateInviteToken } from "@/app/actions/invites";
+import {
+  isDevPreviewFallback,
+  reportActionException,
+} from "@/components/groups/action-feedback";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +22,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { EventStatus } from "@/lib/types/domain";
-
-// 재발급 후 이전 링크가 어떻게 보이는지 확인하는 더미 만료 토큰(연동 단계 I3에서 제거)
-const EXPIRED_PREVIEW_PATH = "/i/demo-swim-1-old";
 
 function subscribeNothing() {
   return () => {};
@@ -43,12 +44,16 @@ function useCanShare() {
   );
 }
 
-// 주최자용 초대 링크 복사·공유·재발급(FR-05). 재발급은 화면 상태로만 시뮬레이션한다.
+// 주최자용 초대 링크 복사·공유·재발급(FR-05). 재발급은 rotateInviteToken Server Action으로 하며,
+// 새 토큰은 액션 반환값으로 화면에 반영한다(useState 초기값은 재검증 재렌더에 반응하지 않는다).
+// 비로그인 개발 미리보기에서만 화면 상태로 시뮬레이션한다(isDevPreviewFallback).
 export function InviteLinkCard({
+  eventId,
   eventTitle,
   eventStatus,
   initialToken,
 }: {
+  eventId: string;
   eventTitle: string;
   eventStatus: EventStatus;
   initialToken: string | null;
@@ -56,8 +61,9 @@ export function InviteLinkCard({
   const origin = useOrigin();
   const canShare = useCanShare();
   const [token, setToken] = useState(initialToken);
-  const [previousToken, setPreviousToken] = useState<string | null>(null);
+  const [rotated, setRotated] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
 
   const path = token ? `/i/${token}` : "";
   const url = `${origin}${path}`;
@@ -81,16 +87,42 @@ export function InviteLinkCard({
     }
   }
 
-  function confirmReissue() {
-    // 실제 토큰은 서버에서 발급하는 128비트 이상 무작위 값(FR-05). 여기서는 같은 길이로 흉내만 낸다.
-    const bytes = crypto.getRandomValues(new Uint8Array(16));
-    const nextToken = Array.from(bytes, (byte) =>
-      byte.toString(16).padStart(2, "0"),
-    ).join("");
-    setPreviousToken(token);
+  function applyNewToken(nextToken: string) {
     setToken(nextToken);
+    setRotated(true);
     setConfirming(false);
     toast.success("새 초대 링크를 발급했어요. 이전 링크는 만료돼요.");
+  }
+
+  // 비로그인 개발 미리보기 폴백: 같은 길이의 무작위 값으로 흉내만 낸다(실제 토큰은 서버가 발급).
+  function simulateReissue() {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    applyNewToken(
+      Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(""),
+    );
+  }
+
+  async function confirmReissue(event: MouseEvent<HTMLButtonElement>) {
+    // 발급이 끝날 때까지 대화상자를 열어 두고(실패 시 바로 재시도), 성공하면 닫는다.
+    event.preventDefault();
+    if (pending) return;
+    setPending(true);
+    try {
+      const result = await rotateInviteToken(eventId);
+      if (result.ok) {
+        applyNewToken(result.data.token);
+        return;
+      }
+      if (isDevPreviewFallback(result)) {
+        simulateReissue();
+        return;
+      }
+      toast.error(result.message);
+    } catch (error) {
+      reportActionException(error);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -145,14 +177,10 @@ export function InviteLinkCard({
               재발급
             </Button>
           </div>
-          {previousToken && (
+          {rotated && (
             <p className="text-sm text-muted-foreground" role="status">
-              이전 링크(/i/{previousToken})는 만료되어 &quot;만료된 링크&quot;
-              안내가 표시돼요.{" "}
-              <Link href={EXPIRED_PREVIEW_PATH} className="underline">
-                만료 화면 미리보기
-              </Link>{" "}
-              (더미: 새 링크는 연동 단계에서 실제로 열려요)
+              이전 링크는 만료되어 &quot;만료된 링크&quot; 안내가 표시돼요.
+              참가자에게 새 링크를 다시 공유해 주세요.
             </p>
           )}
         </>
@@ -162,7 +190,11 @@ export function InviteLinkCard({
         </p>
       )}
 
-      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+      <AlertDialog
+        open={confirming}
+        // 발급 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
+        onOpenChange={(open) => !pending && setConfirming(open)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>초대 링크를 재발급할까요?</AlertDialogTitle>
@@ -172,9 +204,9 @@ export function InviteLinkCard({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmReissue}>
-              재발급
+            <AlertDialogCancel disabled={pending}>취소</AlertDialogCancel>
+            <AlertDialogAction disabled={pending} onClick={confirmReissue}>
+              {pending ? "발급하는 중..." : "재발급"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

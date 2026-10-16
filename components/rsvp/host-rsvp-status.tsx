@@ -6,9 +6,17 @@ import {
   Trash2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { type MouseEvent, useState } from "react";
 import { toast } from "sonner";
 
+import { deleteRsvp, upsertHostRsvp } from "@/app/actions/rsvps";
+import {
+  type FormSubmitOutcome,
+  isDevPreviewFallback,
+  reportActionException,
+  reportActionFailure,
+  upsertById,
+} from "@/components/groups/action-feedback";
 import { RsvpForm, type MemberOption } from "@/components/rsvp/rsvp-form";
 import {
   AlertDialog,
@@ -47,7 +55,9 @@ type FormState =
   | { kind: "edit"; rsvp: Rsvp }
   | null;
 
-// 주최자 응답 현황(FR-07). 대리 입력·수정·삭제는 화면 상태로만 시뮬레이션한다.
+// 주최자 응답 현황(FR-07). 대리 입력·수정·삭제는 Server Action(upsertHostRsvp, deleteRsvp)으로 저장한다.
+// useState 초기값은 재검증 재렌더에 반응하지 않으므로 액션 반환값으로 목록을 갱신한다.
+// 비로그인 개발 미리보기에서만 화면 상태로 시뮬레이션한다(isDevPreviewFallback).
 export function HostRsvpStatus({
   eventId,
   capacity,
@@ -62,6 +72,7 @@ export function HostRsvpStatus({
   const [rsvps, setRsvps] = useState(initialRsvps);
   const [formState, setFormState] = useState<FormState>(null);
   const [deleting, setDeleting] = useState<Rsvp | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
 
   const summary = summarizeRsvps(rsvps, capacity);
   const respondedMemberIds = new Set(rsvps.map((item) => item.memberId));
@@ -81,7 +92,8 @@ export function HostRsvpStatus({
   );
   const memoById = new Map(members.map((member) => [member.id, member.memo]));
 
-  function handleSubmit(values: RsvpFormValues) {
+  // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
+  function simulateSubmit(values: RsvpFormValues, editingId: string | null) {
     const fields = {
       memberId: values.memberId === DIRECT_INPUT ? null : values.memberId,
       name: values.name.trim(),
@@ -91,17 +103,16 @@ export function HostRsvpStatus({
       respondedAt: nowKstLocalString(),
     };
 
-    if (formState?.kind === "edit") {
-      const targetId = formState.rsvp.id;
-      setRsvps(
-        rsvps.map((item) =>
-          item.id === targetId ? { ...item, ...fields } : item,
+    if (editingId) {
+      setRsvps((current) =>
+        current.map((item) =>
+          item.id === editingId ? { ...item, ...fields } : item,
         ),
       );
       toast.success(`${fields.name} 님의 응답을 수정했어요.`);
     } else {
-      setRsvps([
-        ...rsvps,
+      setRsvps((current) => [
+        ...current,
         { id: `r-${crypto.randomUUID()}`, eventId, ...fields },
       ]);
       toast.success(`${fields.name} 님의 응답을 추가했어요.`);
@@ -109,17 +120,83 @@ export function HostRsvpStatus({
     setFormState(null);
   }
 
-  function confirmDelete() {
-    if (!deleting) return;
-    setRsvps(rsvps.filter((item) => item.id !== deleting.id));
-    toast.success(`${deleting.name} 님의 응답을 삭제했어요.`);
+  // await 동안 폼의 isSubmitting이 유지돼 저장 버튼이 비활성화된다.
+  // 실패하면 다이얼로그를 열어 둔 채 입력값을 유지한다(이미 응답한 멤버는 이름 필드 오류로 표시).
+  async function handleSubmit(
+    values: RsvpFormValues,
+  ): Promise<FormSubmitOutcome> {
+    const editingId = formState?.kind === "edit" ? formState.rsvp.id : null;
+    try {
+      const result = await upsertHostRsvp(eventId, values, editingId);
+      if (result.ok) {
+        const saved = result.data.rsvp;
+        setRsvps((current) => {
+          // 사진 서명 URL 재발급이 실패해 비어 오면 기존 사진을 유지한다.
+          const previous = current.find((item) => item.id === saved.id);
+          return upsertById(current, {
+            ...saved,
+            avatarUrl: saved.avatarUrl ?? previous?.avatarUrl ?? null,
+          });
+        });
+        toast.success(
+          editingId
+            ? `${saved.name} 님의 응답을 수정했어요.`
+            : `${saved.name} 님의 응답을 추가했어요.`,
+        );
+        setFormState(null);
+        return;
+      }
+      if (isDevPreviewFallback(result)) {
+        simulateSubmit(values, editingId);
+        return;
+      }
+      return reportActionFailure(result);
+    } catch (error) {
+      reportActionException(error);
+    }
+  }
+
+  // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
+  function simulateDelete(target: Rsvp) {
+    setRsvps((current) => current.filter((item) => item.id !== target.id));
+    toast.success(`${target.name} 님의 응답을 삭제했어요.`);
     setDeleting(null);
+  }
+
+  async function confirmDelete(event: MouseEvent<HTMLButtonElement>) {
+    // 삭제가 끝날 때까지 대화상자를 열어 두고(실패 시 바로 재시도), 성공하면 닫는다.
+    event.preventDefault();
+    if (!deleting || deletePending) return;
+    const target = deleting;
+    setDeletePending(true);
+    try {
+      const result = await deleteRsvp(eventId, target.id);
+      if (result.ok) {
+        setRsvps((current) => current.filter((item) => item.id !== target.id));
+        toast.success(`${target.name} 님의 응답을 삭제했어요.`);
+        setDeleting(null);
+        return;
+      }
+      if (isDevPreviewFallback(result)) {
+        simulateDelete(target);
+        return;
+      }
+      toast.error(result.message);
+    } catch (error) {
+      reportActionException(error);
+    } finally {
+      setDeletePending(false);
+    }
   }
 
   const defaultValues: Partial<RsvpFormValues> | undefined =
     formState?.kind === "edit"
       ? {
-          memberId: formState.rsvp.memberId ?? DIRECT_INPUT,
+          // 명부에서 삭제된 멤버의 응답이면 직접 입력으로 이어 쓴다.
+          memberId:
+            formState.rsvp.memberId && memoById.has(formState.rsvp.memberId)
+              ? formState.rsvp.memberId
+              : DIRECT_INPUT,
           name: formState.rsvp.name,
           status: formState.rsvp.status,
         }
@@ -352,7 +429,8 @@ export function HostRsvpStatus({
 
       <AlertDialog
         open={deleting !== null}
-        onOpenChange={(open) => !open && setDeleting(null)}
+        // 삭제 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
+        onOpenChange={(open) => !open && !deletePending && setDeleting(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -364,8 +442,10 @@ export function HostRsvpStatus({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>삭제</AlertDialogAction>
+            <AlertDialogCancel disabled={deletePending}>취소</AlertDialogCancel>
+            <AlertDialogAction disabled={deletePending} onClick={confirmDelete}>
+              {deletePending ? "삭제하는 중..." : "삭제"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

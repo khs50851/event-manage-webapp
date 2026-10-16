@@ -88,11 +88,13 @@ async function EventDetailLoader({
       </header>
 
       <InviteLinkCard
+        eventId={event.id}
         eventTitle={event.title}
         eventStatus={event.status}
         initialToken={inviteToken}
       />
       <RsvpDeadlineCard
+        eventId={event.id}
         startsAt={event.startsAt}
         eventStatus={event.status}
         initialDeadline={event.rsvpDeadline}

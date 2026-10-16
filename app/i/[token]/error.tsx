@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 
 // 초대 페이지의 예기치 못한 오류(오류 경계는 클라이언트 컴포넌트여야 한다).
 // 무효·만료·취소·마감은 페이지 안에서 별도 안내하고 여기까지 오지 않는다.
+// Next.js 16.3부터 retry()가 안정 API다(세그먼트를 다시 가져와 렌더링). reset()은 다시 가져오지 않으므로 쓰지 않는다.
 export default function InviteError({
   error,
   retry,
