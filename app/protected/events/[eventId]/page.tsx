@@ -7,21 +7,14 @@ import { Suspense } from "react";
 import { HostRsvpStatus } from "@/components/rsvp/host-rsvp-status";
 import { InviteLinkCard } from "@/components/rsvp/invite-link-card";
 import { RsvpDeadlineCard } from "@/components/rsvp/rsvp-deadline-card";
-import { Badge } from "@/components/ui/badge";
+import { EventStatusBadge } from "@/components/groups/event-status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getEvent, getGroup, listMembers } from "@/lib/data/groups";
 import { getActiveInviteToken, listRsvps } from "@/lib/data/invites";
 import { getHostSettlement } from "@/lib/data/settlements";
 import { formatDateTime, nowKstLocalString } from "@/lib/format";
-import { isDeadlinePassed } from "@/lib/rsvp";
+import { getEventDisplayStatus, isDeadlinePassed } from "@/lib/rsvp";
 import { SETTLEMENT_STATUS_LABEL, summarizeShares } from "@/lib/settlement";
-import type { EventStatus } from "@/lib/types/domain";
-
-const STATUS_LABEL: Record<EventStatus, string> = {
-  scheduled: "예정",
-  cancelled: "취소됨",
-  ended: "종료",
-};
 
 async function EventDetailLoader({
   params,
@@ -50,10 +43,9 @@ async function EventDetailLoader({
 
   // 마감 여부는 요청 시점 시각으로 판정한다.
   await connection();
-  const initialClosed = isDeadlinePassed(
-    event.rsvpDeadline,
-    nowKstLocalString(),
-  );
+  const now = nowKstLocalString();
+  const initialClosed = isDeadlinePassed(event.rsvpDeadline, now);
+  const displayStatus = getEventDisplayStatus(event, now);
 
   return (
     <div className="flex w-full flex-col gap-8">
@@ -67,11 +59,7 @@ async function EventDetailLoader({
         </Link>
         <div className="flex items-start justify-between gap-2">
           <h1 className="text-2xl font-bold wrap-break-word">{event.title}</h1>
-          <Badge
-            variant={event.status === "scheduled" ? "default" : "secondary"}
-          >
-            {STATUS_LABEL[event.status]}
-          </Badge>
+          <EventStatusBadge status={displayStatus} />
         </div>
         <p className="text-sm">{formatDateTime(event.startsAt)}</p>
         <p className="flex items-center gap-1 text-sm">

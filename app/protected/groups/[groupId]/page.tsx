@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { GroupDetail } from "@/components/groups/group-detail";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getGroup, listEvents, listMembers } from "@/lib/data/groups";
+import { nowKstLocalString } from "@/lib/format";
 
 async function GroupDetailLoader({
   params,
@@ -19,8 +21,13 @@ async function GroupDetailLoader({
     listMembers(groupId),
   ]);
 
+  // 회차 상태 배지는 요청 시점 시각으로 판정한다.
+  await connection();
+  const now = nowKstLocalString();
+
   return (
     <GroupDetail
+      now={now}
       initialGroup={group}
       initialEvents={events}
       initialMembers={members}

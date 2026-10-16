@@ -1,4 +1,4 @@
-import type { Rsvp, RsvpStatus } from "@/lib/types/domain";
+import type { GroupEvent, Rsvp, RsvpStatus } from "@/lib/types/domain";
 
 // 응답 상태 라벨. 색상에만 의존하지 않도록 화면에는 항상 이 텍스트를 함께 표시한다.
 export const RSVP_STATUS_LABEL: Record<RsvpStatus, string> = {
@@ -40,6 +40,27 @@ export function summarizeRsvps(
 // 응답 마감 경과 여부. 두 값 모두 "YYYY-MM-DDTHH:mm" 문자열이라 사전순 비교로 충분하다.
 export function isDeadlinePassed(deadline: string | null, now: string) {
   return deadline !== null && deadline <= now;
+}
+
+export type EventDisplayStatus =
+  "scheduled" | "rsvp-closed" | "closed" | "cancelled";
+
+export const EVENT_DISPLAY_LABEL: Record<EventDisplayStatus, string> = {
+  scheduled: "예정",
+  "rsvp-closed": "응답마감",
+  closed: "마감",
+  cancelled: "취소됨",
+};
+
+// 회차 표시 상태. DB 상태에 응답 마감·시작 시각 경과를 반영한다(표시 전용, now는 "YYYY-MM-DDTHH:mm").
+export function getEventDisplayStatus(
+  event: Pick<GroupEvent, "status" | "startsAt" | "rsvpDeadline">,
+  now: string,
+): EventDisplayStatus {
+  if (event.status === "cancelled") return "cancelled";
+  if (event.status === "ended" || event.startsAt <= now) return "closed";
+  if (isDeadlinePassed(event.rsvpDeadline, now)) return "rsvp-closed";
+  return "scheduled";
 }
 
 // 동명이인을 구분할 수 있도록 같은 이름에 순번을 붙인 표시용 라벨을 만든다.

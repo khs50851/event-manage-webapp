@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { formatDateTime, nowKstLocalString } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { isDeadlinePassed } from "@/lib/rsvp";
 import {
   makeRsvpDeadlineSchema,
@@ -125,7 +126,10 @@ export function RsvpDeadlineCard({
           응답 마감
         </h2>
         {!disabled && (
-          <Badge variant={closed ? "secondary" : "default"}>
+          <Badge
+            variant={closed ? "secondary" : "default"}
+            className={cn(closed && "bg-muted text-muted-foreground")}
+          >
             {closed ? "마감됨" : "응답 받는 중"}
           </Badge>
         )}

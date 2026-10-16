@@ -42,10 +42,13 @@ import type { Group, GroupEvent, GroupMember } from "@/lib/types/domain";
 // 서버 컴포넌트가 다시 렌더링돼 props가 바뀌면 화면 상태를 새 props로 다시 맞춘다(클라이언트 상태는 재렌더 후에도 유지되므로).
 // 비로그인 개발 미리보기에서는 기존처럼 화면 상태로만 시뮬레이션한다(새로고침 시 초기화).
 export function GroupDetail({
+  now,
   initialGroup,
   initialEvents,
   initialMembers,
 }: {
+  // 서버 요청 시점의 KST 시각("YYYY-MM-DDTHH:mm"). 회차 상태 배지 판정용
+  now: string;
   initialGroup: Group;
   initialEvents: GroupEvent[];
   initialMembers: GroupMember[];
@@ -181,7 +184,12 @@ export function GroupDetail({
         </div>
       </header>
 
-      <EventList groupId={group.id} events={events} onChange={setEvents} />
+      <EventList
+        groupId={group.id}
+        events={events}
+        now={now}
+        onChange={setEvents}
+      />
 
       {/* 1회성 이벤트는 멤버 명부를 쓰지 않는다 */}
       {!group.isOneOff && (

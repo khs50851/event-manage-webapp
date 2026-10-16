@@ -19,6 +19,7 @@ import {
   upsertById,
 } from "@/components/groups/action-feedback";
 import { EMPTY_EVENT_VALUES, EventForm } from "@/components/groups/event-form";
+import { EventStatusBadge } from "@/components/groups/event-status-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,13 +40,8 @@ import {
 } from "@/components/ui/dialog";
 import { formatDateTime } from "@/lib/format";
 import type { EventFormValues } from "@/lib/schemas/event";
-import type { EventStatus, GroupEvent } from "@/lib/types/domain";
-
-const STATUS_LABEL: Record<EventStatus, string> = {
-  scheduled: "예정",
-  cancelled: "취소됨",
-  ended: "종료",
-};
+import { getEventDisplayStatus } from "@/lib/rsvp";
+import type { GroupEvent } from "@/lib/types/domain";
 
 // 폼 다이얼로그 상태: 새 회차 / 수정 / 복제
 type FormState =
@@ -69,10 +64,13 @@ function toFormValues(event: GroupEvent, clearDates: boolean): EventFormValues {
 export function EventList({
   groupId,
   events,
+  now,
   onChange,
 }: {
   groupId: string;
   events: GroupEvent[];
+  // 서버 요청 시점의 KST 시각. 상태 배지 판정용(하이드레이션 불일치 방지를 위해 서버 값을 받는다)
+  now: string;
   // 함수형 갱신을 쓰므로 상위의 setState를 그대로 받는다(재검증 재렌더와 순서가 엇갈려도 최신 목록 기준으로 반영)
   onChange: Dispatch<SetStateAction<GroupEvent[]>>;
 }) {
@@ -260,13 +258,7 @@ export function EventList({
                     {formatDateTime(event.startsAt)}
                   </p>
                 </div>
-                <Badge
-                  variant={
-                    event.status === "scheduled" ? "default" : "secondary"
-                  }
-                >
-                  {STATUS_LABEL[event.status]}
-                </Badge>
+                <EventStatusBadge status={getEventDisplayStatus(event, now)} />
               </div>
               <p className="flex items-center gap-1 text-sm">
                 <MapPinIcon className="size-4 shrink-0" />

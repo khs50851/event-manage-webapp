@@ -1,20 +1,15 @@
 import { CalendarClockIcon, ChevronLeftIcon, MapPinIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { EventStatusBadge } from "@/components/groups/event-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getJoinedEvent } from "@/lib/data/groups";
-import { formatDateTime } from "@/lib/format";
-import { RSVP_STATUS_LABEL } from "@/lib/rsvp";
-import type { EventStatus } from "@/lib/types/domain";
-
-const STATUS_LABEL: Record<EventStatus, string> = {
-  scheduled: "예정",
-  cancelled: "취소됨",
-  ended: "종료",
-};
+import { formatDateTime, nowKstLocalString } from "@/lib/format";
+import { getEventDisplayStatus, RSVP_STATUS_LABEL } from "@/lib/rsvp";
 
 // 참여한 모임의 내 응답 회차 상세(읽기 전용, Q12). 명부·타인 응답·정산은 보여주지 않는다.
 async function JoinedEventLoader({
@@ -26,6 +21,10 @@ async function JoinedEventLoader({
   const detail = await getJoinedEvent(eventId);
   if (!detail) notFound();
   const { event, myRsvp } = detail;
+
+  // 상태 배지는 요청 시점 시각으로 판정한다.
+  await connection();
+  const displayStatus = getEventDisplayStatus(event, nowKstLocalString());
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -39,11 +38,7 @@ async function JoinedEventLoader({
         <p className="text-sm text-muted-foreground">{detail.groupName}</p>
         <div className="flex items-start justify-between gap-2">
           <h1 className="text-2xl font-bold wrap-break-word">{event.title}</h1>
-          <Badge
-            variant={event.status === "scheduled" ? "default" : "secondary"}
-          >
-            {STATUS_LABEL[event.status]}
-          </Badge>
+          <EventStatusBadge status={displayStatus} />
         </div>
         <p className="text-sm">{formatDateTime(event.startsAt)}</p>
         <p className="flex items-center gap-1 text-sm">
