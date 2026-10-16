@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 
-import { AuthButton } from "@/components/auth-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { HomeGroups } from "@/components/groups/home-groups";
 import { GuestAuthNotice } from "@/components/guest-auth-notice";
@@ -17,13 +16,7 @@ function HomeHeader() {
       right={
         <>
           <ThemeSwitcher />
-          {!hasEnvVars ? (
-            <EnvVarWarning />
-          ) : (
-            <Suspense>
-              <AuthButton />
-            </Suspense>
-          )}
+          {!hasEnvVars && <EnvVarWarning />}
         </>
       }
     />

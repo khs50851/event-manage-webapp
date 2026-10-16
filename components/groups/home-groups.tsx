@@ -9,7 +9,7 @@ import {
 } from "@/components/groups/group-list";
 import { Button } from "@/components/ui/button";
 import { listGroups, listJoinedGroups } from "@/lib/data/groups";
-import type { Group } from "@/lib/types/domain";
+import type { Group, JoinedGroup } from "@/lib/types/domain";
 
 // 로그인 사용자의 홈(/)에 표시하는 내 모임/참여한 모임 목록.
 // 표시 전용 View·스켈레톤은 대시보드(/protected) 하단 목록에서도 재사용한다.
@@ -41,7 +41,8 @@ function HostedHeader({
       as={as}
       title="내 모임"
       count={count}
-      action={<NewGroupButton />}
+      // 모임이 없을 땐 빈 상태의 "모임 만들기"와 중복이므로 숨긴다
+      action={count === 0 ? undefined : <NewGroupButton />}
     />
   );
 }
@@ -89,14 +90,20 @@ export function HostedGroupsView({
 }
 
 // 참여한 모임 목록(표시 전용). 감싸는 <section aria-labelledby="joined-title">은 호출하는 쪽이 둔다.
-export function JoinedGroupsView({ groups }: { groups: Group[] }) {
+export function JoinedGroupsView({ groups }: { groups: JoinedGroup[] }) {
+  // 모임 단위 참여자 화면은 없으므로, 내가 응답한 다가오는 회차가 있을 때만 그 회차 상세로 연결한다
+  const nextEventById = new Map(
+    groups.map((group) => [group.id, group.nextEvent]),
+  );
   return (
     <>
       <JoinedHeader count={groups.length} />
       <GroupList
         groups={groups}
-        // 참여자용 모임 화면이 아직 없어 주최자용 상세로 연결하지 않는다
-        linkToDetail={false}
+        getHref={(group) => {
+          const nextEvent = nextEventById.get(group.id);
+          return nextEvent ? `/protected/joined/${nextEvent.id}` : null;
+        }}
         empty={
           <>
             <UsersIcon aria-hidden className="size-8 text-muted-foreground" />

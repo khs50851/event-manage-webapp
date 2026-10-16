@@ -43,7 +43,7 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -52,6 +52,12 @@ export function SignUpForm({
         },
       });
       if (error) throw error;
+      // 이메일 확인을 끈 프로젝트는 가입 즉시 세션이 발급되므로 바로 홈으로 이동한다
+      if (data.session) {
+        router.push("/");
+        router.refresh();
+        return;
+      }
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       setError(toKoreanAuthError(error));

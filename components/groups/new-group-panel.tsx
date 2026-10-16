@@ -20,13 +20,6 @@ import type { ActionResult } from "@/lib/types/action";
 
 type Mode = "recurring" | "one-off";
 
-// 비로그인 개발 미리보기 폴백 전용: 저장하지 않으므로 유형에 맞는 더미 상세로 보낸다.
-// 정기 모임은 빈 모임, 1회성 이벤트는 명부가 숨겨진 1회성 모임. 실제 저장 경로는 새 모임 id로 이동한다.
-const DUMMY_CREATED_GROUP_ID: Record<Mode, string> = {
-  recurring: "g-empty",
-  "one-off": "g-oneoff",
-};
-
 const MODES: ReadonlyArray<readonly [Mode, string]> = [
   ["recurring", "정기 모임"],
   ["one-off", "1회성 이벤트"],
@@ -35,14 +28,22 @@ const MODES: ReadonlyArray<readonly [Mode, string]> = [
 export function NewGroupPanel() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("recurring");
+  // cacheComponents로 이 화면의 상태가 유지되므로, 저장 후 key를 바꿔 다음 진입 때 빈 폼으로 시작한다.
+  const [formKey, setFormKey] = useState(0);
+
+  function resetForm() {
+    setFormKey((key) => key + 1);
+    setMode("recurring");
+  }
 
   // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션(실제로 저장하지 않음)
   function simulateFinish() {
     toast.success("저장됐어요. (더미: 입력값은 실제로 저장되지 않아요)");
-    router.push(`/protected/groups/${DUMMY_CREATED_GROUP_ID[mode]}`);
+    resetForm();
+    router.push("/protected");
   }
 
-  // 생성 결과 공통 처리: 성공하면 새 모임 상세로 이동한다.
+  // 생성 결과 공통 처리: 성공하면 홈(모임 목록)으로 이동한다.
   async function handleCreate(
     run: () => Promise<ActionResult<{ groupId: string }>>,
   ): Promise<FormSubmitOutcome> {
@@ -50,7 +51,8 @@ export function NewGroupPanel() {
       const result = await run();
       if (result.ok) {
         toast.success("저장됐어요.");
-        router.push(`/protected/groups/${result.data.groupId}`);
+        resetForm();
+        router.push("/protected");
         return;
       }
       if (isDevPreviewFallback(result)) {
@@ -88,13 +90,21 @@ export function NewGroupPanel() {
         ))}
       </div>
       {mode === "recurring" ? (
-        <GroupForm submitLabel="모임 만들기" onSubmit={submitGroup} />
+        <GroupForm
+          key={formKey}
+          submitLabel="모임 만들기"
+          onSubmit={submitGroup}
+        />
       ) : (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">
             멤버 등록 없이 회차 1개를 바로 만들어요.
           </p>
-          <EventForm submitLabel="이벤트 만들기" onSubmit={submitOneOff} />
+          <EventForm
+            key={formKey}
+            submitLabel="이벤트 만들기"
+            onSubmit={submitOneOff}
+          />
         </div>
       )}
     </div>

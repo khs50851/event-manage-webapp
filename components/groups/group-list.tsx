@@ -10,8 +10,13 @@ interface GroupListProps {
   groups: Group[];
   // 목록이 비었을 때 보여줄 내용(안내 문구, CTA 등)
   empty: React.ReactNode;
-  // true면 각 항목을 주최자용 모임 상세(/protected/groups/[id])로 연결한다
-  linkToDetail?: boolean;
+  // 항목의 이동 경로. null이면 이동하지 않는 카드로 표시한다.
+  // 기본값은 주최자용 모임 상세(/protected/groups/[id])
+  getHref?: (group: Group) => string | null;
+}
+
+function hostedGroupHref(group: Group) {
+  return `/protected/groups/${group.id}`;
 }
 
 interface GroupSectionHeaderProps {
@@ -102,7 +107,7 @@ const ITEM_CLASS =
 export function GroupList({
   groups,
   empty,
-  linkToDetail = true,
+  getHref = hostedGroupHref,
 }: GroupListProps) {
   if (groups.length === 0) {
     return (
@@ -114,26 +119,29 @@ export function GroupList({
 
   return (
     <ul className="flex flex-col gap-3">
-      {groups.map((group) => (
-        <li key={group.id}>
-          {linkToDetail ? (
-            <Link
-              href={`/protected/groups/${group.id}`}
-              className={cn(
-                ITEM_CLASS,
-                "bg-background transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-accent",
-              )}
-            >
-              <GroupItemContent group={group} linked />
-            </Link>
-          ) : (
-            // 링크가 없는 카드는 배경을 흐리게 해 누를 수 있는 카드와 구분한다
-            <div className={cn(ITEM_CLASS, "bg-muted/40")}>
-              <GroupItemContent group={group} linked={false} />
-            </div>
-          )}
-        </li>
-      ))}
+      {groups.map((group) => {
+        const href = getHref(group);
+        return (
+          <li key={group.id}>
+            {href ? (
+              <Link
+                href={href}
+                className={cn(
+                  ITEM_CLASS,
+                  "bg-background transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-accent",
+                )}
+              >
+                <GroupItemContent group={group} linked />
+              </Link>
+            ) : (
+              // 링크가 없는 카드는 배경을 흐리게 해 누를 수 있는 카드와 구분한다
+              <div className={cn(ITEM_CLASS, "bg-muted/40")}>
+                <GroupItemContent group={group} linked={false} />
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
