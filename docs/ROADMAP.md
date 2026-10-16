@@ -1,7 +1,7 @@
 # ROADMAP: 이벤트 관리 웹앱
 
-- 기반 문서: [`docs/prd/event-management-mvp.md`](./prd/event-management-mvp.md) (v0.5)
-- 작성일: 2026-10-08
+- 기반 문서: [`docs/prd/event-management-mvp.md`](./prd/event-management-mvp.md) (v0.7)
+- 작성일: 2026-10-08 (최종 갱신 2026-10-16)
 - 일정 표기: 담당 인력과 착수일이 정해지지 않아 날짜 대신 **마일스톤 순서와 의존 관계**로 표기한다. 착수 시 기간을 채운다.
 - ID 표기: `FR-xx`(기능 요구사항), `W*`(제외 항목), `R*`(리스크), `Q*`(결정 사항)는 모두 PRD의 ID를 따른다.
 
@@ -9,7 +9,7 @@
 
 | Phase | 목표 | 핵심 산출물 | 상태 |
 |---|---|---|---|
-| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (UI 단계 완료·U5-7 검토 게이트 승인, U3-1 로그인 유지 회귀 확인 1건 남음(I2-6에서 함께 확인), 연동 단계 I0 완료·I1 코드 완료(2026-10-12, 로그인 상태 화면 검증은 사용자 확인 대기), I2 대기) |
+| Phase 1 (MVP) | 주최자가 모임·회차를 만들고, 비회원이 링크로 RSVP하고, 1/N 정산을 수동 입금 확인까지 마친다. **UI(더미 데이터) → Supabase 연동 순서로 진행** | FR-01~FR-14 | 진행 중 (I3 코드 완료·실데이터 브라우저 검증 대기(2026-10-16 기준 변경분 미커밋), I2 Google 연동은 아직 미착수(버튼은 모양만), UI 단계 완료·U5-7 검토 게이트 승인, U3-1 로그인 유지 회귀 확인 1건 남음(I2-6에서 함께 확인), 연동 단계 I0 완료·I1 코드 완료(2026-10-12, 로그인 상태 화면 검증은 사용자 확인 대기), I2 대기) |
 | Phase 2 | 응답 독려 자동화와 정산·모집 기능 확장 | 알림톡, 오픈 모집, 품목별 정산, 월 회비, 대기자, 공동 주최자 | 대기 |
 | Phase 3 | 결제 자동화 | PG 결제, 자동 입금 확인, 환불, 통계 | 대기 |
 
@@ -33,12 +33,14 @@ app/
 ├── auth/                           # 인증 페이지 (스타터 + U1 UI)
 ├── not-found.tsx                   # 존재하지 않는 주소 공통 안내 (U5-2)
 ├── i/                              # 비회원 초대 (U3, noindex 레이아웃)
-│   └── [token]/                    # 초대·RSVP page(유효/무효/만료/취소/마감)·error
+│   └── [token]/                    # 초대·RSVP page(유효/무효/만료/취소/마감)·error. 로그인 사용자에겐 로그인 유도 카드 숨김
 ├── s/                              # 비회원 정산 조회 (U4, noindex 레이아웃)
 │   └── [token]/                    # page·loading·error (유효/무효/만료)
 ├── actions/
 │   ├── groups.ts                   # Server Action: 모임 생성·수정·삭제, 1회성 이벤트 생성 (I1)
 │   ├── members.ts                  # Server Action: 멤버 추가·삭제 (I1)
+│   ├── invites.ts                  # Server Action: 비회원 RSVP 제출·초대 링크 재발급 (I3)
+│   ├── rsvps.ts                    # Server Action: 주최자 대리 입력·응답 삭제 (I3)
 │   ├── events.ts                   # Server Action: 회차 생성(복제 포함)·수정·취소 (I1)
 │   ├── settlements.ts              # Server Action: 이름 선택 시 본인 금액·입금 상태만 조회(읽기 전용)
 │   └── profile.ts                  # Server Action: 프로필 사진 변경·삭제(검증·sharp 재인코딩·Storage 업로드, U6)
@@ -47,12 +49,14 @@ app/
     ├── (dashboard)/                # 대시보드 /protected (U5-1). 라우트 그룹으로 error.tsx 적용 범위를 대시보드로 한정
     │   ├── page.tsx                # 카드 3개 + 내 모임·참여한 모임 목록, Suspense 스켈레톤, 빈 상태 CTA
     │   └── error.tsx               # 재시도 버튼
-    ├── groups/new/page.tsx         # 모임·1회성 이벤트 생성
+    ├── groups/new/page.tsx         # 모임·1회성 이벤트 생성 (저장 후 /protected로 이동, 폼 초기화)
+    ├── joined/[eventId]/           # 참여한 모임 회차 읽기 전용 상세 page·not-found·error (I3-6b)
+    ├── me/page.tsx                 # 내 정보·프로필 사진 (U6)
     ├── groups/[groupId]/           # 모임 상세 page·not-found·error (U5-2)
     ├── events/[eventId]/           # 회차 상세 page·not-found·error (초대 링크, 응답 마감, 응답 현황, 정산 진입)
     └── events/[eventId]/settlement/ # 정산 관리 page·loading·not-found·error (U4)
 components/
-├── ui/                             # shadcn 프리미티브 (npx shadcn add, avatar 포함)
+├── ui/                             # shadcn 프리미티브 (npx shadcn add, avatar·calendar·popover 포함) + date-time-picker(달력+시간 선택기, react-day-picker·date-fns)
 ├── user-avatar.tsx                 # 공용 아바타(사진 또는 이니셜, 응답 현황·내 정보 공용) (U6)
 ├── me/
 │   ├── profile-card.tsx            # 프로필 카드(서버 컴포넌트)
@@ -91,9 +95,10 @@ lib/
 ├── types/domain.ts                 # 도메인 타입 (I1에서 생성 타입으로 교체)
 ├── mock/data.ts                    # 더미 데이터 (경계 사례 포함)
 ├── data/groups.ts                  # 조회 함수 — 화면은 여기만 호출 (I1에서 구현 교체)
-├── data/invites.ts                 # 초대 토큰·응답 조회 (I3에서 구현 교체)
+├── data/invites.ts                 # 초대 토큰·응답 조회 (I3: get_invite RPC·rsvps 조회, 개발 demo-* 토큰만 더미)
+├── data/respondent-key.ts          # 비회원 식별자 httpOnly 쿠키 발급·조회 (I3)
 ├── data/settlements.ts             # 정산·정산 토큰 조회 (I4에서 구현 교체)
-├── data/dashboard.ts               # getDashboard: 세션 있으면 DB 조회 + 집계 호출, 없으면 더미(개발) (I3·I4에서 응답·정산 쓰기 연동)
+├── data/dashboard.ts               # getDashboard: 세션 있으면 DB 조회 + 집계 호출, 없으면 더미(개발) (I4에서 정산 연동)
 ├── data/source.ts                  # resolveDataSource: 실데이터/개발 더미/없음 판단, isUuid, mockDelay
 ├── data/mappers.ts                 # DB 행 ↔ 도메인 타입 매핑, KST 문자열 변환
 ├── actions/shared.ts               # Server Action 공통: 세션 확인, Zod→fieldErrors, DB 오류 분류
@@ -103,7 +108,7 @@ lib/
 ├── data/avatars.ts                 # 프로필 사진 서명 URL 생성 헬퍼
 ├── avatar-image.ts                 # 사진 매직 바이트 판별·sharp 512x512 WebP 재인코딩(서버 전용)
 ├── image-resize.ts                 # 브라우저 사진 축소(canvas, 클라이언트 전용)
-├── schemas/                        # Zod 스키마 (group, member, event, rsvp, settlement, profile)
+├── schemas/                        # Zod 스키마 (group, member, event, rsvp, invite, settlement, profile)
 ├── rsvp.ts                         # 응답 집계·정원 초과·마감 판정 순수 함수
 ├── settlement.ts                   # 1/N 계산·경계값 검증·재계산·입금 상태 전이·요약 문구 순수 함수
 ├── dashboard.ts                    # 대시보드 집계 순수 함수(7일 이내·응답 미완료·미입금 정산, rsvp/settlement 재사용)
@@ -119,12 +124,13 @@ proxy.ts                            # 세션 갱신·접근 제어 (lib/supabase
 | 페이지 | URL | 상태 | 비고 |
 |---|---|---|---|
 | 홈 | `/` | 완료 | 비회원 안내 표시 |
-| 로그인 | `/auth/login` | 완료 | Google 버튼은 모양만(I2에서 연결) |
-| 회원가입 | `/auth/sign-up` | 완료 | 〃 |
+| 로그인 | `/auth/login` | 완료 | Google 버튼은 모양만(I2에서 연결). 로그인 상태면 `/`로 이동 |
+| 회원가입 | `/auth/sign-up` | 완료 | 〃. 이메일 확인을 끈 프로젝트는 가입 즉시 `/`로 이동 |
 | 인증 실패 안내 | `/auth/error` | 완료 | `?error=access_denied` 등으로 취소/실패 문구 확인 |
 | 비밀번호 재설정 | `/auth/forgot-password`, `/auth/update-password` | 스타터 | |
 | 대시보드 | `/protected` | 완료 | 7일 이내 회차·응답 미완료 회차·미입금 정산 카드 + 내 모임/참여한 모임 목록. 빈 대시보드(모임 0건): `/protected?preview=empty`(개발 환경 전용, I2-6에서 제거) |
 | 모임 생성 | `/protected/groups/new` | 완료 | 정기 모임 / 1회성 이벤트 전환 |
+| 참여한 모임 회차 상세 | `/protected/joined/[eventId]` | 완료(I3-6b) | 로그인 상태로 응답한 다가오는 회차만 열람, 아니면 404. 실데이터 전용 |
 | 모임 상세 (회차 많음, 동명이인) | `/protected/groups/g-swim` | 완료 | 예정·종료·취소 회차 모두 포함 |
 | 모임 상세 (회차 적음) | `/protected/groups/g-futsal` | 완료 | |
 | 모임 상세 (1회성 이벤트) | `/protected/groups/g-oneoff` | 완료 | 멤버 명부 숨김 |
@@ -197,7 +203,7 @@ I0 스키마·RLS ─▶ I1 데이터 계층 교체 ─▶ I2 인증 연동(Goog
 | U2-3 | 모임 상세 ✅ 완료 | `/protected/groups/[groupId]`, 회차 목록(시작 시각 순), 빈 상태 CTA(회차 0건·멤버 0건), 목록 스켈레톤 | 빈/일반 모임 모두 표시 |
 | U2-4 | 모임 수정·삭제 ✅ 완료 | 수정 폼, 삭제 시 하위 회차·응답·정산 연쇄 삭제를 안내하는 확인 대화상자 | 확인 후 목록에서 사라짐(상태 시뮬레이션) |
 | U2-5 | 멤버 명부 ✅ 완료 | 이름(필수)·연락처 메모(선택) 추가, 삭제 안내(과거 기록은 스냅샷 유지), 동명 추가 시 중복 경고 후 저장 허용 | 중복 경고 표시 |
-| U2-6 | 회차 폼 ✅ 완료 | 일시, 장소, 정원, 설명, 응답 마감 시각. 과거 시각은 경고 후 저장 가능 | 검증·경고 동작 |
+| U2-6 | 회차 폼 ✅ 완료 | 일시, 장소, 정원, 설명, 응답 마감 시각(2026-10-16: `datetime-local` 입력을 달력+시간 선택기 `DateTimePicker`로 교체, 마감은 시작 시각 이후 선택 불가). 과거 시각은 경고 후 저장 가능 | 검증·경고 동작 |
 | U2-7 | 회차 취소·복제 ✅ 완료 | 취소 확인 후 "취소됨" 상태, 복제 시 날짜만 바꿔 나머지 필드 복사 | 상태 배지·복제 폼 확인 |
 | U2-8 | 회차 상세 골격 ✅ 완료 | `/protected/events/[eventId]` 헤더(정보, 상태 배지), 응답 현황·정산 영역 자리, 404 처리 | 존재하지 않는 id에서 404 |
 
@@ -289,17 +295,17 @@ U5-7 승인 이후 추가된 범위다(PRD Q13). 서버·데이터 계층은 연
 - **상태 규칙**: 취소된 회차는 수정 불가, 종료된 회차는 수정 가능, 취소는 예정 회차만. 이미 취소된 회차의 재취소는 성공으로 응답.
 - **재검증**: `deleteGroup`은 삭제 직후 이동하므로 현재 상세·레이아웃을 재검증하지 않는다(재검증하면 이동 전 404 화면이 잠깐 보일 수 있음).
 - **검증**: 롤백 SQL(소유자만 CRUD, 타 사용자 0행·42501, 원자성, cascade 후 잔존 0, 이름 스냅샷 유지, KST 왕복), Server Action 단위 검증 32건·조회 6건, `check-all`·`build` 통과, advisors 0건. **미검증**: 로그인 상태에서 앱을 거친 저장·갱신·404·대시보드(계정 없음). 사용자 확인 체크리스트: 모임 생성→회차 추가→수정→복제→취소→멤버 추가/삭제→모임 수정·삭제(삭제 후 이동 시 깜빡임 없음), 1회성 이벤트 생성, 타 계정 URL 접근 404, 대시보드 카드 3개, 저장 중 버튼 비활성·실패 토스트.
-- **남은 한계(I3·I4)**: 초대 링크(`getActiveInviteToken`)·응답 목록·정산은 로그인 상태에서도 아직 더미라 실제 회차에서는 비어 보인다. 더미 URL(`/protected/groups/g-swim`)은 로그인 상태에서 404. `getMyProfile`은 반환 타입 때문에 프로덕션 비로그인에서도 더미를 반환(I5-3 정리).
+- **남은 한계(I4)**: 정산은 로그인 상태에서도 아직 더미다(초대 링크·응답 목록은 I3에서 실데이터로 연결). 더미 URL(`/protected/groups/g-swim`)은 로그인 상태에서 404. `getMyProfile`은 반환 타입 때문에 프로덕션 비로그인에서도 더미를 반환(I5-3 정리).
 
 | ID | 작업 | 내용 | 완료 기준 |
 |---|---|---|---|
-| I1-1 | 타입 생성·연결 | `generate_typescript_types` → `lib/supabase/database.types.ts`, 세 클라이언트에 연결 | `type-check` 통과 |
-| I1-2 | 수동 타입 교체 | U0-2의 수동 도메인 타입을 생성 타입 기반으로 교체, 불일치 수정(R8) | 화면 코드 변경 최소 |
-| I1-3 | 모임·멤버 연동 | `lib/data/` 조회와 쓰기(Server Action)를 Supabase 호출로 교체. `listJoinedGroups`는 I3-6 전까지 빈 목록을 반환(기존 "아직 참여한 모임이 없어요" 빈 상태 사용, Q12) | U2 화면이 실데이터로 동작 |
-| I1-3a | 프로필·응답 아바타 | `getMyProfile`은 `/me`에서 `profiles` 실데이터로 선반영(행이 없으면 대체 이름 규칙). 응답 현황 아바타는 `get_event_respondent_avatars` + 서명 URL 헬퍼를 I3-7 응답 조회 교체 때 연결 | 프로필 카드·응답 현황에 실데이터 반영 |
-| I1-4 | 회차 연동 | 회차 조회·생성·수정·취소·복제 교체 | 위와 동일 |
-| I1-5 | 대시보드 집계 | 7일 이내 회차, 응답 미완료, 미입금 건수 쿼리(FR-11) | 실데이터 카드 표시 |
-| I1-6 | 렌더링 점검 | `<Suspense>` 경계, 캐시 재검증(`"use cache"` 남용 금지), 소유자 외 접근 시 404 | `build` 통과, 타 계정 접근 차단 확인 |
+| I1-1 | 타입 생성·연결 ✅ 완료 | `generate_typescript_types` → `lib/supabase/database.types.ts`, 세 클라이언트에 연결 | `type-check` 통과 |
+| I1-2 | 수동 타입 교체 ✅ 완료 | U0-2의 수동 도메인 타입을 생성 타입 기반으로 교체, 불일치 수정(R8) | 화면 코드 변경 최소 |
+| I1-3 | 모임·멤버 연동 ✅ 코드 완료 | `lib/data/` 조회와 쓰기(Server Action)를 Supabase 호출로 교체. `listJoinedGroups`는 I3-6 전까지 빈 목록을 반환(기존 "아직 참여한 모임이 없어요" 빈 상태 사용, Q12) | U2 화면이 실데이터로 동작 |
+| I1-3a | 프로필·응답 아바타 ⏳ 부분 완료(프로필 ✅, 응답 아바타는 I3-7) | `getMyProfile`은 `/me`에서 `profiles` 실데이터로 선반영(행이 없으면 대체 이름 규칙). 응답 현황 아바타는 `get_event_respondent_avatars` + 서명 URL 헬퍼를 I3-7 응답 조회 교체 때 연결 | 프로필 카드·응답 현황에 실데이터 반영 |
+| I1-4 | 회차 연동 ✅ 코드 완료 | 회차 조회·생성·수정·취소·복제 교체 | 위와 동일 |
+| I1-5 | 대시보드 집계 ✅ 코드 완료 | 7일 이내 회차, 응답 미완료, 미입금 건수 쿼리(FR-11) | 실데이터 카드 표시 |
+| I1-6 | 렌더링 점검 ⏳ 부분 완료(`build`·RLS SQL 검증 ✅, 로그인 상태 앱 경유 404 확인 대기) | `<Suspense>` 경계, 캐시 재검증(`"use cache"` 남용 금지), 소유자 외 접근 시 404 | `build` 통과, 타 계정 접근 차단 확인 |
 
 #### I2. 인증 연동 (FR-01)
 
@@ -312,7 +318,16 @@ U5-7 승인 이후 추가된 범위다(PRD Q13). 서버·데이터 계층은 연
 | I2-5 | 실패·취소 처리 | U1-3 화면 연결 | 취소 시 안내 후 로그인 화면 복귀 |
 | I2-6 | 회귀 검증 | playwright로 이메일 로그인, Google 로그인, 세션 유지, `/protected/*` 차단(R4, R7). UI 단계용 열람 우회(`isMockPreview`) 제거 | 모든 항목 통과 |
 
-#### I3. 초대·RSVP 연동 (FR-05, FR-06, FR-07, FR-13)
+#### I3. 초대·RSVP 연동 (FR-05, FR-06, FR-07, FR-13) — 코드 완료 (2026-10-14), 실데이터 브라우저 검증 대기
+
+구현 결과:
+- **DB**: 마이그레이션 `i3_rsvp_rate_limit_and_q11_matching`, `i3_list_joined_groups_rpc`(이력 11건). 속도 제한은 `private.rate_limits`(응답자 1분 5회·회차 1분 60회, 초과 시 `reason: rate_limited`), Q11에 따라 로그인 사용자는 `user_id`로만 매칭(`get_invite.my_rsvp`도 동일), 참여한 모임은 RPC `list_joined_groups`(본인이 응답한 가장 가까운 예정 회차만 반환).
+- **비회원 식별자**: httpOnly 쿠키 `rsvp_respondent_key`(경로 `/i`, 1년). 서버가 RPC에 전달하므로 첫 렌더부터 내 응답이 보인다.
+- **앱**: `app/actions/invites.ts`(`submitRsvp`, `rotateInviteToken`), `app/actions/rsvps.ts`(`upsertHostRsvp`, `deleteRsvp`), `app/actions/events.ts`(`setRsvpDeadline`). 개발 환경의 `demo-*` 토큰과 비로그인 `/protected` 미리보기는 기존 시뮬레이션 폴백.
+- **검증**: 롤백 SQL(속도 제한, 매칭, 마감·취소·종료 거부, 정원 초과 접수, 무효·만료 토큰, 참여한 모임 노출 범위), `check-all`·`build` 통과, advisors security 0건(performance INFO 1건: 빈 테이블의 `rate_limits_window_start_idx`), 개발 더미 경로 playwright 확인(콘솔 오류 0건).
+- **미검증**: 로그인 계정과 실제 토큰으로 앱을 거친 흐름(쿠키 발급, 새로고침 후 내 응답 유지, 6번째 제출 안내, 재발급 후 이전 URL 만료, 대리 입력·중복 멤버 오류, 마감 저장, 3초 이내 반영(I3-8)), 360px 가로 스크롤(이번 세션에 창 크기 변경 도구 없음), 토큰이 없는 회차의 "링크 만들기" UI 부재.
+- **2026-10-16 보강**: 홈 헤더의 `AuthButton` 제거(`components/auth-button.tsx` 삭제), 내 모임이 0건이면 헤더의 중복 "모임 만들기" 숨김, 모임 생성 후 `/protected`로 이동하고 폼 초기화(`cacheComponents`로 화면 상태가 유지되는 문제 대응), 가입 즉시 세션이 있으면 `/`로 이동, 초대 링크 재발급·마감 저장·대리 입력을 Server Action으로 연결.
+- **알려진 한계**: 회차 전체 한도를 소진하면 그 1분간 정상 응답도 제한된다. 로그인 후에는 기존 비회원 응답을 수정할 수 없고 새 응답이 생긴다(Q11). 대리 입력 행은 본인 응답과 중복될 수 있어 주최자가 정리한다. `get_invite` 조회에는 속도 제한이 없다.
 
 | ID | 작업 | 내용 | 완료 기준 |
 |---|---|---|---|
@@ -322,6 +337,7 @@ U5-7 승인 이후 추가된 범위다(PRD Q13). 서버·데이터 계층은 연
 | I3-4 | 속도 제한 | 동일 요청 1분 5회 초과 시 제한 안내(R2) | 제한 동작 확인 |
 | I3-5 | 마감·취소 거부 | 마감 후, 취소된 회차 제출 거부(FR-13), 정원 초과는 접수(Q3) | 각 사유 안내 확인 |
 | I3-6 | 로그인 참가자 연결 | 로그인한 참가자의 이후 응답을 계정에 연결, 기존 비회원 응답은 이관하지 않음(Q11) | 다른 기기에서 수정 가능 |
+| I3-6b ✅ 완료 | 참여한 모임 회차 상세(Q12 확장) | 카드를 누르면 `/protected/joined/[eventId]`로 이동해 내가 응답한 다가오는 회차의 정보와 내 응답을 읽기 전용으로 표시. RPC `get_joined_event`(마이그레이션 `i3_get_joined_event_rpc`). 다가오는 응답 회차가 없는 카드는 이동하지 않음. 명부·타인 응답·정산·모임 설명은 비노출 유지 | 참여자만 조회(주최자·제3자·anon 0행/거부), `check-all`·`build` 통과 |
 | I3-6a | 참여한 모임 목록(Q12) | `listJoinedGroups` 실데이터 연결. 읽기 전용 RPC 추가: 본인이 소유하지 않은 모임 중 `rsvps.user_id`가 본인인 모임의 이름·다가오는 회차만 반환(`private` DEFINER 구현 + `public` INVOKER 래퍼, authenticated만 EXECUTE). 멤버 명부·타인 응답·정산 금액은 반환하지 않음. 비회원 응답 후 로그인한 참가자의 목록은 빈 상태 허용 | 로그인 상태로 응답한 모임만 표시, 소유 모임·타인 모임 비노출, 홈·대시보드·`/me` 통계 일치 |
 | I3-7 | 주최자 현황 | 응답 현황 실데이터 조회, 대리 입력·삭제 저장 | U3-7, U3-8 화면 실데이터 동작 |
 | I3-8 | 반영 시간 | 제출 후 주최자 화면 반영 3초 이내 | 측정 확인 |
@@ -401,5 +417,5 @@ Phase 2 착수 조건: Phase 1 출시 후 North Star(월간 정산 완료 회차
 - ~~비회원 접근의 서버 처리 방식(토큰 검증 후 쓰기)은 I0 설계 단계에서 확정해야 한다.~~ → I0-7에서 확정(토큰 인자 RPC, [`db-schema.md`](./guides/db-schema.md)).
 - ~~"참여한 모임" 기준과 W8의 관계~~ → Q12로 확정(로그인 상태로 응답한 모임, 읽기 전용 목록, I3-6a). ~~Q7 표현 차이~~ → PRD v0.6에서 `profiles` 테이블을 추가하는 것으로 확정(Q7 재정정). 프로필 사진 저장·열람 범위는 Q13으로 확정.
 - 프로필 사진: 계정 삭제 시 Storage 파일 정리(계정 삭제 기능 도입 시), 초대 페이지·"참여한 모임"에 사진을 노출할지는 미결정(현재는 노출하지 않음, `db-schema.md` 후속 과제).
-- I3 속도 제한은 publishable 키로 RPC를 직접 호출하면 Server Action의 제한을 우회할 수 있으므로 DB 쪽 제한(`private.rate_limits` 등)도 함께 설계해야 한다(I3-4).
+- ~~I3 속도 제한 DB 쪽 설계~~ → `private.rate_limits`로 구현(I3-4). 정산 토큰(`/s/`)의 제한은 I4-3에서 같은 방식으로 검토한다.
 - 담당자와 일정은 미정이다.

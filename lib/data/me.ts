@@ -1,4 +1,5 @@
 import { createAvatarSignedUrl } from "@/lib/data/avatars";
+import { fetchJoinedGroups } from "@/lib/data/groups";
 import { mockDelay, resolveDataSource } from "@/lib/data/source";
 import { toKstDateString } from "@/lib/format";
 import { mockMemberships, mockProfile } from "@/lib/mock/data";
@@ -81,7 +82,7 @@ export async function getMyProfile(): Promise<Profile> {
 
 // 내가 만든 모임 수 / 참여한 모임 수.
 // 실데이터: 만든 모임은 groups 건수(RLS로 본인 소유만, listGroups와 같은 기준),
-// 참여한 모임은 listJoinedGroups와 같이 I3-6a 전까지 0이다.
+// 참여한 모임은 listJoinedGroups와 같은 RPC(list_joined_groups) 건수다(홈·대시보드와 일치).
 export async function getMyStats(): Promise<MyStats> {
   const source = await resolveDataSource();
   if (source.kind === "mock") {
@@ -96,12 +97,13 @@ export async function getMyStats(): Promise<MyStats> {
   }
   if (source.kind === "none") return { hostedCount: 0, joinedCount: 0 };
 
-  const { count, error } = await source.supabase
-    .from("groups")
-    .select("id", { count: "exact", head: true });
+  const [{ count, error }, joinedGroups] = await Promise.all([
+    source.supabase.from("groups").select("id", { count: "exact", head: true }),
+    fetchJoinedGroups(source.supabase),
+  ]);
   if (error) {
     console.error("[getMyStats] 조회 실패:", error.code);
     throw new Error("데이터를 불러오지 못했어요.");
   }
-  return { hostedCount: count ?? 0, joinedCount: 0 };
+  return { hostedCount: count ?? 0, joinedCount: joinedGroups.length };
 }

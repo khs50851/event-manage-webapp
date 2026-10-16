@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import {
   EVENT_COLUMNS,
   GROUP_COLUMNS,
@@ -5,8 +7,14 @@ import {
   toGroup,
   toGroupEvent,
   toGroupMember,
+  toKstLocal,
 } from "@/lib/data/mappers";
-import { isUuid, mockDelay, resolveDataSource } from "@/lib/data/source";
+import {
+  isUuid,
+  mockDelay,
+  resolveDataSource,
+  type ServerSupabaseClient,
+} from "@/lib/data/source";
 import {
   mockEvents,
   mockGroups,
@@ -19,6 +27,8 @@ import type {
   GroupEvent,
   GroupMember,
   GroupRole,
+  JoinedEventDetail,
+  JoinedGroup,
 } from "@/lib/types/domain";
 
 // 모임·멤버·회차 조회 함수. 화면은 이 함수만 호출한다(시그니처는 UI 단계와 동일).
@@ -58,15 +68,111 @@ export async function listGroups(): Promise<Group[]> {
   return data.map(toGroup);
 }
 
-// 내가 참여한(다른 사람이 만든) 모임 목록.
-// 실데이터는 I3-6a(로그인 응답 연결 + 읽기 전용 RPC) 전까지 빈 목록이다(Q12).
-export async function listJoinedGroups(): Promise<Group[]> {
+// list_joined_groups 반환 행. 생성 타입은 left join 컬럼(next_event_*)도 non-null로 표시하므로 Zod로 다시 좁힌다.
+const joinedGroupRowSchema = z.object({
+  group_id: z.string(),
+  group_name: z.string(),
+  is_one_off: z.boolean(),
+  next_event_id: z.string().nullable(),
+  next_event_title: z.string().nullable(),
+  next_event_starts_at: z.string().nullable(),
+});
+
+// 참여한 모임 조회(실데이터 공통, 대시보드·내 정보 통계에서도 쓴다).
+// RPC가 로그인 상태로 응답한, 본인 소유가 아닌 모임만 돌려준다(Q12, 명부·타인 응답·정산 미포함).
+export async function fetchJoinedGroups(
+  supabase: ServerSupabaseClient,
+): Promise<JoinedGroup[]> {
+  const { data, error } = await supabase.rpc("list_joined_groups");
+  if (error) readFailed("listJoinedGroups", error.code);
+  const parsed = z.array(joinedGroupRowSchema).safeParse(data);
+  if (!parsed.success) readFailed("listJoinedGroups", "parse");
+
+  return parsed.data.map((row) => ({
+    id: row.group_id,
+    name: row.group_name,
+    // 모임 설명은 참여자에게 공개하지 않는다.
+    description: "",
+    isOneOff: row.is_one_off,
+    nextEvent:
+      row.next_event_id && row.next_event_title && row.next_event_starts_at
+        ? {
+            id: row.next_event_id,
+            title: row.next_event_title,
+            startsAt: toKstLocal(row.next_event_starts_at) ?? "",
+          }
+        : null,
+  }));
+}
+
+// 내가 참여한(다른 사람이 만든) 모임 목록(다음 회차 시각 순)
+export async function listJoinedGroups(): Promise<JoinedGroup[]> {
   const source = await resolveDataSource();
   if (source.kind === "mock") {
     await mockDelay();
-    return mockGroupsByRole("member");
+    return mockGroupsByRole("member").map((group) => ({
+      ...group,
+      nextEvent: null,
+    }));
   }
-  return [];
+  if (source.kind === "none") return [];
+  return fetchJoinedGroups(source.supabase);
+}
+
+const joinedEventRowSchema = z.object({
+  group_id: z.string(),
+  group_name: z.string(),
+  event_id: z.string(),
+  event_title: z.string(),
+  event_starts_at: z.string(),
+  event_location: z.string(),
+  event_description: z.string(),
+  event_capacity: z.number().nullable(),
+  event_rsvp_deadline: z.string().nullable(),
+  event_status: z.enum(["scheduled", "cancelled", "ended"]),
+  my_name: z.string(),
+  my_status: z.enum(["attending", "declined", "undecided"]),
+  my_responded_at: z.string(),
+});
+
+// 참여한 모임의 내 응답 회차 상세(읽기 전용). 응답한 적 없거나 본인 소유 모임이면 null(존재 여부 비노출).
+// 더미 데이터에는 참여자 응답이 없으므로 mock/none은 null이다.
+export async function getJoinedEvent(
+  eventId: string,
+): Promise<JoinedEventDetail | null> {
+  const source = await resolveDataSource();
+  if (source.kind !== "supabase" || !isUuid(eventId)) return null;
+
+  const { data, error } = await source.supabase.rpc("get_joined_event", {
+    p_event_id: eventId,
+  });
+  if (error) readFailed("getJoinedEvent", error.code);
+  const parsed = z.array(joinedEventRowSchema).safeParse(data);
+  if (!parsed.success) readFailed("getJoinedEvent", "parse");
+  const row = parsed.data[0];
+  if (!row) return null;
+
+  return {
+    groupId: row.group_id,
+    groupName: row.group_name,
+    event: {
+      id: row.event_id,
+      title: row.event_title,
+      startsAt: toKstLocal(row.event_starts_at) ?? "",
+      location: row.event_location,
+      description: row.event_description,
+      capacity: row.event_capacity,
+      rsvpDeadline: row.event_rsvp_deadline
+        ? toKstLocal(row.event_rsvp_deadline)
+        : null,
+      status: row.event_status,
+    },
+    myRsvp: {
+      name: row.my_name,
+      status: row.my_status,
+      respondedAt: row.my_responded_at,
+    },
+  };
 }
 
 export async function getGroup(groupId: string): Promise<Group | null> {

@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import type { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +13,12 @@ export const MESSAGES = {
   unauthenticated: "로그인이 필요해요.",
   validation: "입력값을 다시 확인해 주세요.",
 } as const;
+
+// 회차 응답이 바뀌었을 때 갱신할 화면: 대시보드(응답 미완료 카드)·회차 상세(응답 현황)·정산(응답 기반 항목),
+// 모임 상세(회차 목록). 경로가 회차·모임 id에 걸쳐 있어 /protected 아래 전체를 갱신한다.
+export function revalidateRsvpPaths() {
+  revalidatePath("/protected", "layout");
+}
 
 export function fail(
   code: ActionErrorCode,
@@ -61,8 +68,9 @@ const VALIDATION_ERROR_CODES = new Set([
   "22008",
   "22001",
 ]);
-// 대상 없음·권한 없음으로 볼 오류: RLS(with check) 위반, 부모 행 없음(FK)
-const NOT_FOUND_ERROR_CODES = new Set(["42501", "23503"]);
+// 대상 없음·권한 없음으로 볼 오류: RLS(with check) 위반, 부모 행 없음(FK),
+// 소유자 확인 RPC의 "없음/권한 없음"(P0002, 예: rotate_event_invite_token)
+const NOT_FOUND_ERROR_CODES = new Set(["42501", "23503", "P0002"]);
 
 type DbError = { code?: string } | null | undefined;
 

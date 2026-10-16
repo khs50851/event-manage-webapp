@@ -15,6 +15,7 @@ import {
   toSettlement,
   toSettlementShare,
 } from "@/lib/data/mappers";
+import { fetchJoinedGroups } from "@/lib/data/groups";
 import {
   mockDelay,
   resolveDataSource,
@@ -31,7 +32,7 @@ import {
   mockSettlements,
   mockSettlementShares,
 } from "@/lib/mock/data";
-import type { Group, GroupRole } from "@/lib/types/domain";
+import type { Group, GroupRole, JoinedGroup } from "@/lib/types/domain";
 
 // 대시보드 조회 함수. 세션이 있으면 Supabase(RLS: 본인 소유 모임 하위 데이터만), 없으면 개발 환경에서만 더미.
 // 집계는 lib/dashboard.ts의 buildDashboard가 담당하고 여기서는 원본만 모은다(집계 기준은 그쪽에서만 바꾼다).
@@ -39,7 +40,7 @@ import type { Group, GroupRole } from "@/lib/types/domain";
 export type DashboardData = DashboardSummary & {
   // 대시보드 하단 "내 모임"/"참여한 모임" 목록
   hostedGroups: Group[];
-  joinedGroups: Group[];
+  joinedGroups: JoinedGroup[];
 };
 
 export type GetDashboardOptions = {
@@ -80,7 +81,11 @@ async function getMockDashboard(
   if (options.preview === "empty") return emptyDashboard(now);
 
   const hostedGroups = mockGroupsByRole("host");
-  const joinedGroups = mockGroupsByRole("member");
+  // 더미에는 참여자 응답이 없어 다가오는 응답 회차(nextEvent)도 없다
+  const joinedGroups = mockGroupsByRole("member").map((group) => ({
+    ...group,
+    nextEvent: null,
+  }));
 
   const hostedGroupIds = new Set(hostedGroups.map((group) => group.id));
   const events = mockEvents.filter((event) =>
@@ -113,18 +118,21 @@ async function getSupabaseDashboard(
   supabase: ServerSupabaseClient,
   now: string,
 ): Promise<DashboardData> {
-  const [groupsResult, rsvpsResult, settlementsResult] = await Promise.all([
-    supabase
-      .from("groups")
-      .select(
-        `${GROUP_COLUMNS}, events(${EVENT_COLUMNS}), group_members(${MEMBER_COLUMNS})`,
-      )
-      .order("created_at", { ascending: true }),
-    supabase.from("rsvps").select(RSVP_COLUMNS),
-    supabase
-      .from("settlements")
-      .select(`${SETTLEMENT_COLUMNS}, settlement_shares(${SHARE_COLUMNS})`),
-  ]);
+  const [groupsResult, rsvpsResult, settlementsResult, joinedGroups] =
+    await Promise.all([
+      supabase
+        .from("groups")
+        .select(
+          `${GROUP_COLUMNS}, events(${EVENT_COLUMNS}), group_members(${MEMBER_COLUMNS})`,
+        )
+        .order("created_at", { ascending: true }),
+      supabase.from("rsvps").select(RSVP_COLUMNS),
+      supabase
+        .from("settlements")
+        .select(`${SETTLEMENT_COLUMNS}, settlement_shares(${SHARE_COLUMNS})`),
+      // 참여한 모임(Q12): 로그인 상태로 응답한 다른 사람의 모임. 실패하면 예외로 error.tsx에 맡긴다.
+      fetchJoinedGroups(supabase),
+    ]);
 
   const error =
     groupsResult.error ?? rsvpsResult.error ?? settlementsResult.error;
@@ -149,8 +157,7 @@ async function getSupabaseDashboard(
     now,
   });
 
-  // 참여한 모임은 I3-6a 전까지 빈 목록(Q12)
-  return { ...summary, hostedGroups, joinedGroups: [] };
+  return { ...summary, hostedGroups, joinedGroups };
 }
 
 // 로그인 주최자의 대시보드 데이터(FR-11).

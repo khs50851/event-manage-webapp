@@ -409,10 +409,39 @@ export type Database = {
         Args: { p_respondent_key?: string; p_token: string };
         Returns: Json;
       };
+      get_joined_event: {
+        Args: { p_event_id: string };
+        Returns: {
+          event_capacity: number;
+          event_description: string;
+          event_id: string;
+          event_location: string;
+          event_rsvp_deadline: string;
+          event_starts_at: string;
+          event_status: string;
+          event_title: string;
+          group_id: string;
+          group_name: string;
+          my_name: string;
+          my_responded_at: string;
+          my_status: string;
+        }[];
+      };
       get_settlement: { Args: { p_token: string }; Returns: Json };
       get_settlement_share: {
         Args: { p_share_id: string; p_token: string };
         Returns: Json;
+      };
+      list_joined_groups: {
+        Args: never;
+        Returns: {
+          group_id: string;
+          group_name: string;
+          is_one_off: boolean;
+          next_event_id: string;
+          next_event_starts_at: string;
+          next_event_title: string;
+        }[];
       };
       report_settlement_payment: {
         Args: { p_share_id: string; p_token: string };

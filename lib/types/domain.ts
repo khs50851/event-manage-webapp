@@ -193,6 +193,8 @@ export type SettlementLookup =
     };
 
 // 초대 토큰 조회 결과. 무효·만료 시 회차 정보를 담지 않는다(FR-05).
+// 공개 조회의 event.groupId는 빈 문자열이다(get_invite가 모임 id를 돌려주지 않는다).
+// myRsvp: 이 기기(비회원 쿠키 키) 또는 로그인 계정의 기존 응답. 없으면 null(Q11: 로그인 시 계정 응답만).
 export type InviteLookup =
   | { status: "invalid" }
   | { status: "expired" }
@@ -203,6 +205,7 @@ export type InviteLookup =
       event: GroupEvent;
       groupName: string;
       rsvps: Rsvp[];
+      myRsvp: Rsvp | null;
     }
   | {
       status: "open";
@@ -210,4 +213,37 @@ export type InviteLookup =
       groupName: string;
       members: PublicMember[];
       rsvps: Rsvp[];
+      myRsvp: Rsvp | null;
     };
+
+// 응답 제출(submit_rsvp) 거부 사유.
+// - invalid/expired: 토큰 없음/재발급으로 만료
+// - cancelled/ended/deadline: 취소·종료된 회차, 응답 마감 경과
+// - rate_limited: 같은 응답자 1분 5회 또는 회차 전체 1분 60회 초과(DB 측 제한)
+// - conflict: 같은 응답자의 동시 제출 경합
+// - validation: 입력값 오류(이름 1~30자, 상태, 다른 모임 멤버 등)
+// - failed: 그 밖의 저장 실패(통신·DB 오류)
+export type RsvpRejectReason =
+  | "invalid"
+  | "expired"
+  | "cancelled"
+  | "ended"
+  | "deadline"
+  | "rate_limited"
+  | "conflict"
+  | "validation"
+  | "failed";
+
+// "참여한 모임"(Q12) 항목. 로그인 상태로 응답한 다른 사람의 모임이며, 모임 설명은 공개하지 않는다(빈 문자열).
+// nextEvent: 내가 응답한 회차 중 가장 가까운 예정 회차(없으면 null)
+// 참여한 모임 상세(Q12 확장): 내가 응답한 회차 1건과 내 응답. 명부·타인 응답·정산·모임 설명은 포함하지 않는다.
+export type JoinedEventDetail = {
+  groupId: string;
+  groupName: string;
+  event: Omit<GroupEvent, "groupId">;
+  myRsvp: { name: string; status: RsvpStatus; respondedAt: string };
+};
+
+export type JoinedGroup = Group & {
+  nextEvent: { id: string; title: string; startsAt: string } | null;
+};

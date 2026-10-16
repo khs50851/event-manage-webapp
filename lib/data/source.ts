@@ -39,6 +39,13 @@ export async function resolveDataSource(): Promise<DataSource> {
     : { kind: "none" };
 }
 
+// 로그인 여부만 필요한 화면(비회원 안내 카드 표시 등)용. 더미 경로와 무관하게 실제 세션만 본다.
+export async function getIsLoggedIn(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  return Boolean(data?.claims);
+}
+
 // 더미 경로 전용 인위적 지연(Suspense 스켈레톤 확인용). 실데이터 경로에는 쓰지 않는다.
 const MOCK_DELAY_MS = 300;
 
