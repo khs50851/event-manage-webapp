@@ -18,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { nowLocalString } from "@/lib/format";
@@ -97,7 +98,11 @@ export function EventForm({
             <FormItem>
               <FormLabel>일시</FormLabel>
               <FormControl>
-                <Input type="datetime-local" {...field} />
+                <DateTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="일시 선택"
+                />
               </FormControl>
               {isPast && (
                 <p
@@ -150,7 +155,13 @@ export function EventForm({
               <FormItem>
                 <FormLabel>응답 마감 (선택)</FormLabel>
                 <FormControl>
-                  <Input type="datetime-local" {...field} />
+                  <DateTimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    max={startsAt}
+                    placeholder="마감 없음"
+                    clearable
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
