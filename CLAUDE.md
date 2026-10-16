@@ -50,19 +50,19 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 - `updateSession()`은 `supabase.auth.getClaims()` 호출 전후로 응답 객체를 다루는 순서가 매우 엄격하다(쿠키 동기화가 깨지면 사용자가 무작위로 로그아웃됨). 이 함수를 수정할 때는 파일 내 주석의 경고를 그대로 따른다.
 - 인증되지 않은 사용자가 `/`, `/login*`, `/auth*` 외의 경로에 접근하면 `/auth/login`으로 리다이렉트된다.
 - `app/protected/`는 인증이 필요한 라우트 그룹이다. 각 서버 컴포넌트는 `createClient()`(server) 후 `supabase.auth.getClaims()`로 세션을 확인하고, 없으면 `redirect("/auth/login")`을 호출한다.
-- 로그인 후 진입점은 홈(`/`)이다. 홈은 로그인 상태면 내 모임/참여한 모임 목록(`components/groups/home-groups.tsx`)과 하단 탭바를, 비로그인 상태면 히어로 + `GuestAuthNotice`를 보여준다(세션 확인을 포함한 셸 전체를 `<Suspense>` 안에서 구성, `app/page.tsx` 참고). `/protected`는 주최자 대시보드다(`app/protected/(dashboard)/page.tsx`): 7일 이내 회차·응답 미완료 회차·미입금 정산 카드와 내 모임 목록을 보여주며(집계는 `lib/dashboard.ts`, 조회는 `lib/data/dashboard.ts`), 하단 탭바의 "홈" 탭이 이곳을 가리킨다.
+- 로그인 후 진입점은 홈(`/`)이다. 홈은 로그인 상태면 내 모임/참여한 모임 목록(`components/groups/home-groups.tsx`)과 하단 탭바를, 비로그인 상태면 히어로 + `GuestAuthNotice`를 보여준다(세션 확인을 포함한 셸 전체를 `<Suspense>` 안에서 구성, `app/page.tsx` 참고). 헤더의 `AuthButton`은 제거됐고 `GuestAuthNotice`는 초대·정산 페이지에서 로그인 사용자에게는 숨긴다. "참여한 모임" 카드는 내가 응답한 다가오는 회차가 있으면 읽기 전용 상세 `/protected/joined/[eventId]`로 연결된다(Q12). `/protected`는 주최자 대시보드다(`app/protected/(dashboard)/page.tsx`): 7일 이내 회차·응답 미완료 회차·미입금 정산 카드와 내 모임 목록을 보여주며(집계는 `lib/dashboard.ts`, 조회는 `lib/data/dashboard.ts`), 하단 탭바의 "홈" 탭이 이곳을 가리킨다.
 - 로그인한 사용자가 `/auth/login`·`/auth/sign-up`에 접근하면 proxy가 `/`로 리다이렉트한다(그 외 auth 경로는 영향 없음). 이메일 확인 콜백(`app/auth/confirm/route.ts`)의 `next`는 `/`로 시작하는 상대 경로만 허용하며 기본값은 `/`이다.
 
 ### 라우트 구조
 
 - `app/auth/*` — 로그인/회원가입/비밀번호 재설정 등 인증 관련 페이지, `app/auth/confirm/route.ts`는 이메일 확인 콜백 Route Handler
 - `app/protected/*` — 인증된 사용자 전용 영역, `layout.tsx`에서 공통 네비게이션/푸터 구성
-- `next.config.ts`에서 `cacheComponents: true`가 켜져 있다 → 요청별로 달라지는 데이터(쿠키, 세션 등)를 사용하는 컴포넌트는 반드시 `<Suspense>`로 감싸야 한다(`AuthButton`, `UserDetails` 등 기존 코드의 `<Suspense>` 사용 패턴 참고).
+- `next.config.ts`에서 `cacheComponents: true`가 켜져 있다 → 요청별로 달라지는 데이터(쿠키, 세션 등)를 사용하는 컴포넌트는 반드시 `<Suspense>`로 감싸야 한다(`HomeGroups`, `UserDetails` 등 기존 코드의 `<Suspense>` 사용 패턴 참고).
 
 ### 컴포넌트 계층
 
-- `components/ui/` — shadcn/ui(`new-york` 스타일, `neutral` 베이스) 프리미티브. 새 프리미티브는 직접 작성하지 말고 `npx shadcn add <component>`로 추가한다.
-- `components/` 최상위 — `ui/` 컴포넌트를 조합한 도메인 컴포넌트(`login-form.tsx`, `auth-button.tsx` 등). 상태/이벤트가 필요한 경우만 `"use client"`.
+- `components/ui/` — shadcn/ui(`new-york` 스타일, `neutral` 베이스) 프리미티브. 새 프리미티브는 직접 작성하지 말고 `npx shadcn add <component>`로 추가한다. 예외로 `date-time-picker.tsx`는 `calendar`·`popover`(react-day-picker, date-fns)를 조합한 직접 작성 컴포넌트이며, `"YYYY-MM-DDTHH:mm"` 문자열을 값으로 쓴다(회차 일시·응답 마감 입력).
+- `components/` 최상위 — `ui/` 컴포넌트를 조합한 도메인 컴포넌트(`login-form.tsx`, `logout-button.tsx` 등). 상태/이벤트가 필요한 경우만 `"use client"`.
 - 색상은 하드코딩하지 않고 `app/globals.css`에 정의된 CSS 변수 기반 디자인 토큰(`bg-background`, `text-primary` 등)을 사용하며, 같은 파일의 `@theme inline`이 이를 Tailwind v4 색상 유틸로 매핑한다(`tailwind.config` 파일은 없다). 클래스 병합은 항상 `lib/utils.ts`의 `cn()`을 사용한다.
 
 ### 상세 가이드
@@ -94,14 +94,15 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 실제 상태는 `mcp__supabase__list_tables`/`get_advisors`로 직접 확인한다(아래는 2026-10-12 I0 완료 시점 스냅샷이므로 시간이 지나면 재확인 필요). 자세한 워크플로는 [[supabase-mcp]], 스키마 설계 결정은 `docs/guides/db-schema.md` 참고.
 
 - **현재 연결된 프로젝트**(`.mcp.json`, 2026-10-12 기준 `ecandzpftfinazfonvcl`)는 이전 프로젝트와 다른 새 프로젝트다. 기존 `accounts`/`quotes`/`quote_items`/`instruments`와 `handle_new_user()`는 이 프로젝트에 **존재하지 않는다**. 이전 프로젝트를 다시 연결하면 그쪽 객체는 수정하지 않는다.
-- **이벤트 도메인 스키마(I0 완료)**: `groups`, `group_members`, `events`, `event_invite_tokens`, `rsvps`, `settlements`, `settlement_tokens`, `settlement_shares` 8개 테이블과 사용자 프로필 `profiles`, 전부 RLS 활성. 마이그레이션 이력 9건(`list_migrations`, 마지막은 1회성 이벤트 생성 RPC `create_one_off_event_rpc`)이 기준이며 **이후 모든 DDL은 `apply_migration`으로 적용**한다.
+- **이벤트 도메인 스키마(I0 완료)**: `groups`, `group_members`, `events`, `event_invite_tokens`, `rsvps`, `settlements`, `settlement_tokens`, `settlement_shares` 8개 테이블과 사용자 프로필 `profiles`, 전부 RLS 활성. 마이그레이션 이력 12건(`list_migrations`, 마지막은 참여한 모임 회차 상세 RPC `i3_get_joined_event_rpc`, 그 앞은 참여한 모임 RPC `i3_list_joined_groups_rpc`)이 기준이며 **이후 모든 DDL은 `apply_migration`으로 적용**한다.
 - **프로필·사진**: `profiles`는 가입 트리거로 생성되며 행이 없을 수 있으므로 앱은 대체 이름 규칙을 둔다. 프로필 사진은 비공개 버킷 `avatars`(3MB, jpeg/png/webp)에 저장하고 DB에는 경로만 둔다. 상세는 `docs/guides/db-schema.md`.
 - **권한 모델**: 기본 권한(default privileges)을 회수했다. `public`에 새 테이블·함수를 만들면 필요한 롤에 GRANT를 명시해야 API에 보인다. RLS 정책은 반드시 `(select auth.uid())` 형태로 작성한다.
 - **비회원 접근**: anon은 테이블 권한이 없고, 토큰을 인자로 받는 RPC(`get_invite`, `submit_rsvp`, `get_settlement`, `get_settlement_share`, `report_settlement_payment`)만 호출한다. 구현은 비노출 `private` 스키마의 SECURITY DEFINER 함수, `public`에는 SECURITY INVOKER 래퍼만 둔다. `service_role`/secret 키는 클라이언트 번들에 넣지 않는다.
 - advisors(2026-10-12, 프로필·Storage 반영 후): security 0건, performance 0건. Leaked Password Protection은 사용하지 않기로 결정했다.
-- 후속 과제: DB 레이트리밋(I3, publishable 키로 RPC를 직접 호출하면 Server Action의 제한을 우회할 수 있음), 타인 항목 조회 방지(I4-3), "참여한 모임" 목록 RPC(I3-6a, 기준은 PRD Q12: 로그인 상태로 응답한 모임, 읽기 전용).
+- I3 반영: RSVP 속도 제한은 DB(`private.rate_limits`, 응답자 1분 5회·회차 1분 60회)에서 처리하고, 로그인 참가자는 `user_id`로만 응답을 매칭한다(Q11). 비회원 식별자는 httpOnly 쿠키 `rsvp_respondent_key`(`lib/data/respondent-key.ts`). "참여한 모임"은 RPC `list_joined_groups`, 그 회차 상세는 RPC `get_joined_event`(Q12). Google OAuth(I2)는 아직 연결되지 않았고 버튼만 있다.
+- 후속 과제: 타인 항목 조회 방지와 정산 토큰 속도 제한(I4-3).
 - `lib/supabase/database.types.ts`(Supabase 생성 타입)는 I1에서 생성해 세 클라이언트에 `Database` 제네릭으로 연결했다. 스키마를 바꾸면 `generate_typescript_types`로 수동 재생성한다.
-- **데이터 계층 규칙(I1)**: 화면은 `lib/data/*`만 호출한다. 세션이 있으면 Supabase(RLS), 세션이 없으면 개발 환경은 더미·프로덕션은 빈 결과(`lib/data/source.ts`의 `resolveDataSource`). 쓰기는 `app/actions/*`의 Server Action(`ActionResult` 계약)이며, 응답·초대 링크·정산은 I3·I4 전까지 로그인 상태에서도 더미다.
+- **데이터 계층 규칙(I1)**: 화면은 `lib/data/*`만 호출한다. 세션이 있으면 Supabase(RLS), 세션이 없으면 개발 환경은 더미·프로덕션은 빈 결과(`lib/data/source.ts`의 `resolveDataSource`). 쓰기는 `app/actions/*`의 Server Action(`ActionResult` 계약)이며, 응답·초대 링크는 I3에서 실데이터로 연결됐고(비회원 RSVP는 세션 없이도 토큰 RPC 호출, 개발 환경의 `demo-*` 토큰만 더미), 정산은 I4 전까지 더미다.
 
 ## MCP 서버 활용 지침
 
@@ -122,6 +123,14 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 - **commitlint**: `commitlint.config.mjs`, `@commitlint/config-conventional` 기반. type은 영어 conventional 규칙(`feat`, `fix`, `chore` 등)을 따르고 `subject-case` 규칙은 꺼뒀으므로 설명은 한국어로 작성한다(예: `feat: 로그인 폼에 유효성 검사 추가`).
 - **CI**: `.github/workflows/ci.yml`이 PR/main 푸시 시 lint → type-check → format:check → build를 순서대로 실행한다. 빌드에는 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` GitHub Secrets가 필요하다.
 - **에디터 연동**: `.vscode/settings.json`(저장 시 ESLint 자동 수정 + Prettier 포맷, Tailwind IntelliSense가 `cn`/`cva` 안의 클래스도 인식하도록 설정), `.vscode/extensions.json`(권장 확장: ESLint, Prettier, Tailwind CSS IntelliSense, EditorConfig), `.editorconfig`(공통 들여쓰기/개행 규칙).
+
+## 추후 개선 이슈 (`ISSUES.md`)
+
+루트의 `ISSUES.md`는 **당장 고치지 않아도 되는 낮은 우선순위 이슈**(영어 오류 메시지, 아쉬운 UI/UX 등)를 모아 두고 나중에 한꺼번에 처리하기 위한 목록이다.
+
+- 작업 중 이런 이슈를 발견하면 임의로 고치지 말고 `ISSUES.md`에 형식에 맞춰 추가한다(범위를 벗어난 수정 금지).
+- 핵심 흐름을 막는 문제(로그인·저장 실패 등)는 목록에 넣지 않고 바로 수정한다.
+- 여러 화면에 걸친 이슈는 "공통 처리 후보"로 묶어 공통 컴포넌트·헬퍼로 한 번에 해결하는 것을 우선 검토한다.
 
 ## 작업 완료 체크리스트
 

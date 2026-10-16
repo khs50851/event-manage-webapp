@@ -25,7 +25,7 @@ event-manage-webapp/
 ├── components/             # 재사용 가능한 React 컴포넌트
 │   ├── ui/                 # shadcn/ui 기반 저수준 프리미티브 컴포넌트
 │   ├── layout/             # 모바일 셸(mobile-shell, app-header, bottom-tab-bar)
-│   └── groups/ rsvp/       # 도메인 컴포넌트
+│   └── groups/ rsvp/ settlement/ me/ dashboard/  # 도메인 컴포넌트
 ├── lib/                    # 유틸리티, 외부 서비스 클라이언트
 │   └── supabase/           # Supabase 클라이언트 생성 함수 (client/server/proxy)
 ├── docs/                   # 프로젝트 문서
@@ -46,7 +46,7 @@ event-manage-webapp/
 | `@/components` | `./components` | 일반 컴포넌트 |
 | `@/components/ui` | `./components/ui` | shadcn/ui 프리미티브 |
 | `@/lib` | `./lib` | 유틸리티, 클라이언트 |
-| `@/hooks` | `./hooks` | 커스텀 훅 (아직 미생성, shadcn CLI가 사용) |
+| `@/hooks` | `./hooks` | 커스텀 훅 (`use-return-focus.ts`, shadcn CLI도 사용) |
 
 ```tsx
 // 상대 경로 대신 항상 별칭을 사용한다
@@ -63,7 +63,7 @@ import { cn } from "@/lib/utils";
 
 ### `components/`
 - **`components/ui/`**: shadcn CLI(`npx shadcn add <component>`)로 생성된 파일만 둔다. 직접 커스터마이징은 허용되지만, 구조(variant 패턴, `forwardRef` 등)는 유지한다.
-- **`components/`(최상위)**: 도메인 로직이 섞인 조합 컴포넌트(`login-form.tsx`, `auth-button.tsx` 등)를 둔다. 여러 `ui/` 컴포넌트를 조합해 기능 단위로 만든다.
+- **`components/`(최상위)**: 도메인 로직이 섞인 조합 컴포넌트(`login-form.tsx`, `logout-button.tsx` 등)를 둔다. 여러 `ui/` 컴포넌트를 조합해 기능 단위로 만든다.
 - 기능이 커지면 `components/<도메인>/` 형태로 하위 폴더를 만든다 (예: `components/groups/`).
 
 ### `lib/`

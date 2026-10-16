@@ -1,6 +1,6 @@
 # DB 스키마·권한 설계 메모 (I0)
 
-- 작성: 2026-10-12 (I0 완료 시점). 대상 프로젝트: `ecandzpftfinazfonvcl`(`.mcp.json` 기준)
+- 작성: 2026-10-12 (I0 완료 시점), 갱신: 2026-10-14 (I3 마이그레이션 10·11). 대상 프로젝트: `ecandzpftfinazfonvcl`(`.mcp.json` 기준)
 - 실제 상태는 항상 `list_tables(verbose: true)`·`list_migrations`로 다시 확인한다. 이 문서는 설계 의도와 결정 근거를 남긴다.
 
 ## 마이그레이션 이력
@@ -16,6 +16,9 @@
 | 7 | `add_profile_avatar_and_storage` | `profiles.avatar_path`, 비공개 버킷 `avatars`(3MB, jpeg/png/webp), 본인 폴더 storage 정책 3개 |
 | 8 | `avatar_host_read` | `private.can_read_avatar`, 주최자 읽기 storage 정책, RPC `get_event_respondent_avatars` |
 | 9 | `create_one_off_event_rpc` | `public.create_one_off_event(...)`: SECURITY INVOKER(RLS 적용), 모임(`is_one_off`)과 회차 1개를 한 트랜잭션에서 생성. authenticated만 실행 |
+| 10 | `i3_rsvp_rate_limit_and_q11_matching` | `private.rate_limits`·`private.check_rate_limit`, `submit_rsvp`에 속도 제한(`rate_limited`)·Q11 매칭, `get_invite`의 `my_rsvp` 매칭을 Q11과 일치 |
+| 11 | `i3_list_joined_groups_rpc` | `list_joined_groups()`(I3-6a, Q12): 로그인 상태로 응답한 다른 사람의 모임. authenticated만 실행 |
+| 12 | `i3_get_joined_event_rpc` | `get_joined_event(p_event_id)`(I3-6b, Q12 확장): 내가 로그인 상태로 응답한 다른 사람 모임의 회차 1건과 내 응답. authenticated만 실행 |
 
 ## 테이블 요약
 
@@ -48,8 +51,10 @@
 
 | RPC (public) | 실행 롤 | 동작 |
 |---|---|---|
-| `get_invite(p_token, p_respondent_key?)` | anon, authenticated | `invalid`/`expired`/`cancelled`/`closed(deadline\|ended)`/`open`. 회차·모임 이름·명부(id·이름)·공개 응답 목록(메모·식별자·계정 제외)·본인 응답(`my_rsvp`) |
-| `submit_rsvp(p_token, p_respondent_key, p_name, p_status, p_member_id?)` | anon, authenticated | 토큰 검증 → 취소·종료·마감 거부 → 입력 재검증 → 본인 응답 upsert. 정원 초과는 접수하고 `over_capacity` 반환 |
+| `get_invite(p_token, p_respondent_key?)` | anon, authenticated | `invalid`/`expired`/`cancelled`/`closed(deadline\|ended)`/`open`. 회차·모임 이름·명부(id·이름)·공개 응답 목록(메모·식별자·계정 제외)·본인 응답(`my_rsvp`, Q11 매칭) |
+| `submit_rsvp(p_token, p_respondent_key, p_name, p_status, p_member_id?)` | anon, authenticated | 토큰 검증 → 취소·종료·마감 거부 → 속도 제한 → 입력 재검증 → 본인 응답 upsert(Q11). 정원 초과는 접수하고 `over_capacity` 반환. 거부 사유: `invalid`/`expired`/`cancelled`/`ended`/`deadline`/`rate_limited`/`validation`/`conflict` |
+| `list_joined_groups()` | authenticated | 본인 소유가 아닌 모임 중 로그인 상태로 응답한 모임의 id·이름·1회성 여부와, 본인이 응답한 가장 가까운 예정 회차(id·제목·시각) |
+| `get_joined_event(p_event_id)` | authenticated | 본인이 응답했고 본인 소유가 아닌 모임의 회차 정보(제목·시각·장소·설명·정원·마감·상태)와 내 응답(이름·상태·응답 시각). 조건에 맞지 않으면 0행. 명부·타인 응답·정산·모임 설명은 반환하지 않음 |
 | `get_settlement(p_token)` | anon, authenticated | `invalid`/`expired`/`active`. 정산 요약, 회차 제목·시각만, 항목은 id·이름만, 진행률은 집계만 |
 | `get_settlement_share(p_token, p_share_id)` | anon, authenticated | 본인 항목 금액·상태. 실패 사유 비구분(null) |
 | `report_settlement_payment(p_token, p_share_id)` | anon, authenticated | `unpaid → self_reported`만. paid로는 바꾸지 않음 |
@@ -61,6 +66,26 @@
 - 초대 토큰과 정산 토큰은 별도 테이블·별도 함수로 조회하므로 서로의 권한을 대신하지 못한다(검증 완료).
 
 **토큰 이력**: 토큰을 `events`/`settlements` 컬럼이 아닌 이력 테이블(`event_invite_tokens`, `settlement_tokens`)에 둔다. 행 없음 = 무효, `revoked_at` 있음 = 만료(재발급된 이전 링크), 활성은 부모당 1개(부분 unique). 토큰 값은 DB 내부 함수만 생성하며(192비트), 클라이언트는 값을 지정할 수 없다.
+
+## I3 결정: 응답 식별·속도 제한·참여한 모임 (2026-10-14)
+
+**비회원 식별자**: `respondent_key`는 httpOnly 쿠키 `rsvp_respondent_key`(경로 `/i`, 1년)에 둔다. 발급은 응답 제출 Server Action(`app/actions/invites.ts`의 `submitRsvp`)만 하고, 초대 페이지 렌더링은 읽기만 한다(`lib/data/respondent-key.ts`). 클라이언트 스크립트는 값을 읽거나 정할 수 없다.
+
+**Q11 매칭**(`submit_rsvp`, `get_invite` 공통)
+- 로그인: `user_id = auth.uid()` 행만 본인 응답으로 본다. 새 행은 `respondent_key`를 NULL로 저장한다(쿠키 키를 계정 행에 붙이지 않는다).
+- 비로그인: `respondent_key` 일치 **그리고** `user_id is null` 행만.
+- 기존 비회원 응답은 로그인해도 계정으로 이관하지 않는다. 로그인 후 같은 회차에 다시 응답하면 별도 행이 생긴다(의도된 동작, 주최자가 정리).
+
+**속도 제한**(`submit_rsvp` 안, 토큰·회차 상태 확인 직후·입력 검증 전)
+- 저장소: `private.rate_limits(key, window_start, count)`, 고정 창. `private.check_rate_limit(key, limit, window)`가 원자적 upsert로 1 증가 후 한도 이내 여부를 돌려준다. 호출의 약 2%에서 1시간 지난 행을 지운다(`window_start` 인덱스).
+- 키: 응답자 `rsvp:{event_id}:u:{user_id}` 또는 `rsvp:{event_id}:k:{respondent_key}` **1분 5회**, 회차 전체 `rsvp-event:{event_id}` **1분 60회**(키를 바꿔 가며 보내는 경우 방어). 개인 한도에 걸린 호출은 회차 카운터를 올리지 않는다. 토큰 원문은 저장하지 않으며 회차 id 기준이라 재발급 후에도 제한이 이어진다.
+- 초과 시 `{ok:false, reason:'rate_limited'}`. DB에서 막으므로 publishable 키로 `/rest/v1/rpc/submit_rsvp`를 직접 호출해도 적용된다.
+- 권한: 테이블·함수 모두 외부 롤 권한 없음(`submit_rsvp` 정의자 권한으로만 실행).
+- 알려진 한계: 회차 전체 한도(1분 60회)를 악의적으로 소진하면 그 1분 동안 정상 응답도 `rate_limited`가 된다. 조회 RPC(`get_invite`)에는 제한이 없다(192비트 토큰이라 열거 불가, 쓰기 없음).
+
+**참여한 모임**(`list_joined_groups`, I3-6a·Q12): `private` DEFINER + `public` INVOKER 래퍼, authenticated만 EXECUTE. 본인이 응답하지 않은 회차·모임 설명·장소·명부·타인 응답·정산은 반환하지 않는다. 비회원으로 응답한 뒤 로그인한 경우(Q11 비이관)는 목록에 나오지 않는다.
+
+**검증(2026-10-14, 롤백 트랜잭션)**: 비회원 제출·수정, 같은 키 6번째 `rate_limited`, 로그인 사용자 키 변경해도 6번째 `rate_limited`, 키 회전 65회 중 5회 `rate_limited`, 창 경과 후 재허용, 정원 초과 접수(`over_capacity`), 빈 이름·다른 모임 멤버 `validation`, 식별자 없음 `validation`, 무효 `invalid`, 재발급 전 토큰 `expired`, 마감 `deadline`, 종료 `ended`, 취소 `cancelled`, 로그인 사용자가 같은 기기 키를 보내도 비회원 행을 보거나 덮지 않음(새 행 `respondent_key` NULL), 공개 응답에 식별자·메모 미포함, 참여자 `list_joined_groups` 1건·주최자 0건·anon 권한 없음, 참여자 `rsvps` 직접 조회 0행, anon `private.rate_limits` 접근 거부.
 
 ## I0-8 결정: 사용자 프로필 (2026-10-12 개정)
 
@@ -88,6 +113,6 @@
 ## 후속 단계에서 지켜야 할 것
 
 - I1: `generate_typescript_types` → `lib/supabase/database.types.ts`, RPC 반환값(jsonb)은 Zod로 파싱해 도메인 타입으로 변환. 1/N 저장 시 파생값을 `calculateSplit`과 같은 규칙으로 함께 보낸다(check 위반 방지).
-- I3: 속도 제한은 Server Action만으로는 부족하다(publishable 키로 `/rest/v1/rpc/submit_rsvp`를 직접 호출 가능). DB 측 제한(예: `private.rate_limits` + `submit_rsvp` 안 검사, 또는 `pgrst.db_pre_request`)을 함께 둔다.
+- I3: ~~속도 제한은 Server Action만으로는 부족하다~~ → `submit_rsvp` 안의 DB 측 제한으로 해결(위 "I3 결정" 참고).
 - I1: `getMyProfile`은 `profiles`가 없을 때의 대체 이름 규칙을 지킨다(위 I0-8 결정). 응답 현황 아바타는 `get_event_respondent_avatars`로 경로를 받아 서명 URL을 붙인다.
 - I4-3: `get_settlement_share`는 토큰 소지자가 항목 id를 바꿔 다른 사람의 금액·상태를 볼 수 있다(이름 선택 UI가 본래 그렇게 동작). 필요하면 본인 확인 수단을 추가한다.
