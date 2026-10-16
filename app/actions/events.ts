@@ -12,6 +12,8 @@ import {
 } from "@/lib/actions/shared";
 import {
   EVENT_COLUMNS,
+  fromKstLocal,
+  INVALID_DATETIME_MESSAGE,
   toEventWriteFields,
   toGroupEvent,
 } from "@/lib/data/mappers";
@@ -35,6 +37,8 @@ const MESSAGES = {
   createFailed: "회차를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
   updateFailed: "회차를 수정하지 못했어요. 잠시 후 다시 시도해 주세요.",
   cancelFailed: "회차를 취소하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  deadlineFailed: "응답 마감을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  deadlineAfterStart: "응답 마감은 시작 시각보다 늦을 수 없어요.",
 } as const;
 
 // 회차 목록(모임 상세), 회차 상세·정산 화면, 대시보드 카드
@@ -120,6 +124,61 @@ export async function updateEvent(
     .maybeSingle();
   if (error) {
     return dbFailure("updateEvent", error, { failed: MESSAGES.updateFailed });
+  }
+  if (!data) return fail("not_found", MESSAGES.eventNotFound);
+
+  revalidateEventPaths(data.group_id, data.id);
+  return { ok: true, data: { event: toGroupEvent(data) } };
+}
+
+// 응답 마감 시각 설정·해제(FR-13). rsvpDeadline: "YYYY-MM-DDTHH:mm"(한국 시간), 빈 문자열·null이면 마감 없음.
+// 마감은 회차 시작 시각보다 늦을 수 없다(DB check와 같은 규칙). 취소된 회차는 바꿀 수 없다.
+export async function setRsvpDeadline(
+  eventId: string,
+  rsvpDeadline: string | null,
+): Promise<ActionResult<{ event: GroupEvent }>> {
+  const supabase = await getSessionClient();
+  if (!supabase) return unauthenticated();
+  if (!isUuid(eventId)) return fail("not_found", MESSAGES.eventNotFound);
+
+  const raw = typeof rsvpDeadline === "string" ? rsvpDeadline.trim() : "";
+  const deadline = raw === "" ? null : fromKstLocal(raw);
+  if (raw !== "" && deadline === null) {
+    return validationFailed({ rsvpDeadline: INVALID_DATETIME_MESSAGE });
+  }
+
+  const { data: current, error: readError } = await supabase
+    .from("events")
+    .select("status, starts_at")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (readError) {
+    return dbFailure("setRsvpDeadline", readError, {
+      failed: MESSAGES.deadlineFailed,
+    });
+  }
+  if (!current) return fail("not_found", MESSAGES.eventNotFound);
+  if (current.status === "cancelled") {
+    return validationFailed(undefined, MESSAGES.cancelledNotEditable);
+  }
+  if (
+    deadline !== null &&
+    new Date(deadline).getTime() > new Date(current.starts_at).getTime()
+  ) {
+    return validationFailed({ rsvpDeadline: MESSAGES.deadlineAfterStart });
+  }
+
+  const { data, error } = await supabase
+    .from("events")
+    .update({ rsvp_deadline: deadline })
+    .eq("id", eventId)
+    .neq("status", "cancelled")
+    .select(EVENT_COLUMNS)
+    .maybeSingle();
+  if (error) {
+    return dbFailure("setRsvpDeadline", error, {
+      failed: MESSAGES.deadlineFailed,
+    });
   }
   if (!data) return fail("not_found", MESSAGES.eventNotFound);
 
