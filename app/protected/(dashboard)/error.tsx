@@ -14,7 +14,7 @@ export default function DashboardError({
     <RouteErrorFallback
       error={error}
       retry={retry}
-      title="대시보드를 불러오지 못했어요"
+      title="ダッシュボードを読み込めませんでした"
     />
   );
 }

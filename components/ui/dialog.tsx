@@ -84,7 +84,7 @@ function DialogContent({
             className="absolute top-2 right-2 inline-flex size-11 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon aria-hidden />
-            <span className="sr-only">닫기</span>
+            <span className="sr-only">閉じる</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>
@@ -122,7 +122,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">닫기</Button>
+          <Button variant="outline">閉じる</Button>
         </DialogPrimitive.Close>
       )}
     </div>

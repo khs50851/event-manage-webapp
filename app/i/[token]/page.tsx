@@ -31,9 +31,9 @@ function EventSummary({
         {event.location}
       </p>
       <p className="text-sm text-muted-foreground">
-        정원 {event.capacity === null ? "제한 없음" : `${event.capacity}명`}
+        定員 {event.capacity === null ? "制限なし" : `${event.capacity}名`}
         {event.rsvpDeadline &&
-          ` · 응답 마감 ${formatDateTime(event.rsvpDeadline)}`}
+          `  · 回答締切 ${formatDateTime(event.rsvpDeadline)}`}
       </p>
       {event.description && (
         <p className="text-sm text-muted-foreground">{event.description}</p>
@@ -53,28 +53,26 @@ async function InviteLoader({
   switch (invite.status) {
     case "invalid":
       return (
-        <InviteNotice
-          kind="invalid"
-          titleAs="h1"
-          title="유효하지 않은 링크예요"
-        >
-          링크 주소가 정확한지 확인하거나 주최자에게 초대 링크를 다시 요청해
-          주세요.
+        <InviteNotice kind="invalid" titleAs="h1" title="無効なリンクです">
+          リンクのアドレスが正しいか確認するか、主催者に招待リンクをもう一度依頼してください。
         </InviteNotice>
       );
     case "expired":
       return (
-        <InviteNotice kind="expired" titleAs="h1" title="만료된 링크예요">
-          주최자가 초대 링크를 새로 발급했어요. 주최자에게 새 링크를 요청해
-          주세요.
+        <InviteNotice
+          kind="expired"
+          titleAs="h1"
+          title="有効期限切れのリンクです"
+        >
+          主催者が招待リンクを再発行しました。主催者に新しいリンクを依頼してください。
         </InviteNotice>
       );
     case "cancelled":
       return (
         <div className="flex flex-col gap-6">
           <EventSummary event={invite.event} groupName={invite.groupName} />
-          <InviteNotice kind="cancelled" title="취소된 회차예요">
-            이 회차는 주최자가 취소해 응답을 받지 않아요.
+          <InviteNotice kind="cancelled" title="中止された開催回です">
+            この開催回は主催者により中止されたため、回答を受け付けていません。
           </InviteNotice>
         </div>
       );
@@ -86,13 +84,13 @@ async function InviteLoader({
             kind="closed"
             title={
               invite.reason === "ended"
-                ? "종료된 회차예요"
-                : "응답이 마감됐어요"
+                ? "終了した開催回です"
+                : "回答は締め切られました"
             }
           >
             {invite.reason === "ended"
-              ? "이미 진행된 회차라 응답을 받지 않아요."
-              : "응답 마감 시각이 지나 새 응답이나 수정을 받지 않아요. 변경이 필요하면 주최자에게 알려 주세요."}
+              ? "すでに開催された回のため、回答を受け付けていません。"
+              : "回答締切時刻を過ぎたため、新規回答や変更を受け付けていません。変更が必要な場合は主催者に連絡してください。"}
           </InviteNotice>
           <PublicRsvpList
             rsvps={invite.rsvps}

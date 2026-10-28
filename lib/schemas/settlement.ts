@@ -13,10 +13,10 @@ export const settlementSchema = z.object({
   paymentGuide: z
     .string()
     .trim()
-    .min(1, "입금 안내 문구를 입력해 주세요. (예: OO은행 123-456 홍길동)")
+    .min(1, "振込案内文を入力してください。(例:OO銀行 123-456 山田太郎)")
     .max(
       PAYMENT_GUIDE_MAX_LENGTH,
-      `입금 안내 문구는 ${PAYMENT_GUIDE_MAX_LENGTH}자 이하로 입력해 주세요.`,
+      `振込案内文は${PAYMENT_GUIDE_MAX_LENGTH}文字以内で入力してください。`,
     ),
   // 주최자 본인을 정산 인원에 포함(Q5)
   hostIncluded: z.boolean(),

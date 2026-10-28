@@ -1,6 +1,6 @@
 import { createAvatarSignedUrl } from "@/lib/data/avatars";
 import { fetchJoinedGroups } from "@/lib/data/groups";
-import { mockDelay, resolveDataSource } from "@/lib/data/source";
+import { mockDelay, readFailed, resolveDataSource } from "@/lib/data/source";
 import { toKstDateString } from "@/lib/format";
 import { mockMemberships, mockProfile } from "@/lib/mock/data";
 import type { MyStats, Profile } from "@/lib/types/domain";
@@ -19,7 +19,7 @@ function pickString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-// profiles 행이 없을 때의 대체 이름: 메타데이터 full_name → name → 이메일 앞부분 → "사용자"
+// profiles 행이 없을 때의 대체 이름: 메타데이터 full_name → name → 이메일 앞부분 → "ユーザー"
 // (가입 트리거와 같은 규칙, docs/guides/db-schema.md I0-8)
 function fallbackDisplayName(
   metadata: Record<string, unknown> | undefined,
@@ -29,7 +29,7 @@ function fallbackDisplayName(
     pickString(metadata?.full_name) ??
     pickString(metadata?.name) ??
     pickString(email?.split("@")[0]) ??
-    "사용자";
+    "ユーザー";
   return name.slice(0, DISPLAY_NAME_MAX);
 }
 
@@ -101,9 +101,6 @@ export async function getMyStats(): Promise<MyStats> {
     source.supabase.from("groups").select("id", { count: "exact", head: true }),
     fetchJoinedGroups(source.supabase),
   ]);
-  if (error) {
-    console.error("[getMyStats] 조회 실패:", error.code);
-    throw new Error("데이터를 불러오지 못했어요.");
-  }
+  if (error) readFailed("getMyStats", error.code);
   return { hostedCount: count ?? 0, joinedCount: joinedGroups.length };
 }

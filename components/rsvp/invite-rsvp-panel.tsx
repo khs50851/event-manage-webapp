@@ -32,7 +32,7 @@ import {
 import { DIRECT_INPUT, type RsvpFormValues } from "@/lib/schemas/rsvp";
 import type { PublicMember, Rsvp, RsvpRejectReason } from "@/lib/types/domain";
 
-const OVER_CAPACITY_MESSAGE = "정원이 초과됐어요. 주최자가 확인할 거예요";
+const OVER_CAPACITY_MESSAGE = "定員を超えています。主催者が確認します";
 
 type BlockedNotice = {
   kind: ComponentProps<typeof InviteNotice>["kind"];
@@ -45,11 +45,11 @@ type BlockedNotice = {
 const BLOCKING_NOTICE: Partial<
   Record<RsvpRejectReason, Omit<BlockedNotice, "message">>
 > = {
-  invalid: { kind: "invalid", title: "유효하지 않은 링크예요" },
-  expired: { kind: "expired", title: "만료된 링크예요" },
-  cancelled: { kind: "cancelled", title: "취소된 회차예요" },
-  ended: { kind: "closed", title: "종료된 회차예요" },
-  deadline: { kind: "closed", title: "응답이 마감됐어요" },
+  invalid: { kind: "invalid", title: "無効なリンクです" },
+  expired: { kind: "expired", title: "有効期限切れのリンクです" },
+  cancelled: { kind: "cancelled", title: "中止された開催回です" },
+  ended: { kind: "closed", title: "終了した開催回です" },
+  deadline: { kind: "closed", title: "回答は締め切られました" },
 };
 
 // 비회원·참가자 RSVP 영역(FR-06). 제출·수정은 submitRsvp Server Action으로 저장한다.
@@ -169,7 +169,7 @@ export function InviteRsvpPanel({
             className="min-h-11 self-start"
             onClick={() => router.refresh()}
           >
-            최신 정보 다시 보기
+            最新の情報を再読み込み
           </Button>
         </div>
       );
@@ -181,10 +181,10 @@ export function InviteRsvpPanel({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CircleCheckIcon className="size-5 text-primary" />
-              응답이 접수됐어요
+              回答を受け付けました
             </CardTitle>
             <CardDescription>
-              {myRsvp.name} 님 · {RSVP_STATUS_LABEL[myRsvp.status]} (
+              {myRsvp.name}さん · {RSVP_STATUS_LABEL[myRsvp.status]} (
               {formatDateTime(myRsvp.respondedAt)})
             </CardDescription>
           </CardHeader>
@@ -196,7 +196,7 @@ export function InviteRsvpPanel({
               </p>
             )}
             <p className="text-sm text-muted-foreground">
-              이 기기에서 다시 열면 응답을 수정할 수 있어요.
+              この端末で再度開くと、回答を編集できます。
             </p>
             <Button
               type="button"
@@ -204,7 +204,7 @@ export function InviteRsvpPanel({
               className="min-h-11"
               onClick={() => setMode("form")}
             >
-              응답 수정하기
+              回答を編集する
             </Button>
           </CardContent>
         </Card>
@@ -217,11 +217,11 @@ export function InviteRsvpPanel({
         className="flex flex-col gap-4"
       >
         <h2 id="rsvp-form-heading" className="text-lg font-semibold">
-          {myRsvp ? "내 응답 수정" : "참석 여부 응답"}
+          {myRsvp ? "自分の回答を編集" : "出欠を回答"}
         </h2>
         {myRsvp && (
           <p className="rounded-md border bg-muted p-3 text-sm">
-            이 기기에서 이미 응답했어요. 이전 응답:{" "}
+            この端末ですでに回答済みです。前回の回答:{" "}
             <strong>
               {myRsvp.name} · {RSVP_STATUS_LABEL[myRsvp.status]}
             </strong>
@@ -230,7 +230,7 @@ export function InviteRsvpPanel({
         {isFull && (
           <p className="flex items-start gap-2 text-sm text-muted-foreground">
             <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
-            정원이 찼어요. 참석으로 응답해도 접수되고 주최자가 확인해요.
+            定員に達しています。参加と回答しても受け付けられ、主催者が確認します。
           </p>
         )}
         <RsvpForm
@@ -251,7 +251,7 @@ export function InviteRsvpPanel({
                 }
               : undefined
           }
-          submitLabel={myRsvp ? "응답 수정" : "응답 제출"}
+          submitLabel={myRsvp ? "回答を編集" : "回答を送信"}
           onSubmit={handleSubmit}
         />
       </section>

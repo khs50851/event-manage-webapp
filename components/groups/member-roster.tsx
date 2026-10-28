@@ -19,17 +19,7 @@ import {
   reportActionFailure,
   upsertById,
 } from "@/components/groups/action-feedback";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmActionDialog } from "@/components/groups/confirm-action-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -82,7 +72,7 @@ export function MemberRoster({
       },
     ]);
     form.reset();
-    toast.success(`${values.name.trim()} 님을 추가했어요.`);
+    toast.success(`${values.name.trim()}さんを追加しました。`);
   }
 
   // await 동안 isSubmitting이 유지돼 버튼 비활성·진행 문구가 표시된다. 실패하면 입력값을 그대로 둔다.
@@ -93,7 +83,7 @@ export function MemberRoster({
         const saved = result.data.member;
         onChange((current) => upsertById(current, saved));
         form.reset();
-        toast.success(`${saved.name} 님을 추가했어요.`);
+        toast.success(`${saved.name}さんを追加しました。`);
         return;
       }
       if (isDevPreviewFallback(result)) {
@@ -115,7 +105,7 @@ export function MemberRoster({
   function simulateDelete() {
     if (!deleting) return;
     onChange(members.filter((member) => member.id !== deleting.id));
-    toast.success(`${deleting.name} 님을 명부에서 삭제했어요.`);
+    toast.success(`${deleting.name}さんを名簿から削除しました。`);
     setDeleting(null);
   }
 
@@ -131,7 +121,7 @@ export function MemberRoster({
         onChange((current) =>
           current.filter((member) => member.id !== target.id),
         );
-        toast.success(`${target.name} 님을 명부에서 삭제했어요.`);
+        toast.success(`${target.name}さんを名簿から削除しました。`);
         setDeleting(null);
         return;
       }
@@ -151,12 +141,12 @@ export function MemberRoster({
   return (
     <section aria-labelledby="members-heading" className="flex flex-col gap-4">
       <h2 id="members-heading" className="text-lg font-semibold">
-        멤버 명부 ({members.length}명)
+        メンバー名簿 ({members.length}名)
       </h2>
 
       {members.length === 0 ? (
         <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-          멤버를 추가해 보세요. (선택) 비회원도 이름만으로 등록할 수 있어요.
+          メンバーを追加してみましょう(任意)。非会員も名前だけで登録できます。
         </p>
       ) : (
         <ul className="divide-y rounded-md border">
@@ -178,7 +168,7 @@ export function MemberRoster({
                 variant="ghost"
                 size="icon"
                 className="size-11 shrink-0"
-                aria-label={`${member.name} 삭제`}
+                aria-label={`${member.name}を削除`}
                 onClick={() => setDeleting(member)}
               >
                 <Trash2Icon className="size-4" />
@@ -199,9 +189,9 @@ export function MemberRoster({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>이름</FormLabel>
+                <FormLabel>名前</FormLabel>
                 <FormControl>
-                  <Input placeholder="멤버 이름" {...field} />
+                  <Input placeholder="メンバー名" {...field} />
                 </FormControl>
                 {isDuplicate && (
                   <p
@@ -212,8 +202,7 @@ export function MemberRoster({
                       aria-hidden
                       className="size-4 shrink-0"
                     />
-                    같은 이름의 멤버가 이미 있어요. 동명이인이면 그대로
-                    추가하세요.
+                    同じ名前のメンバーがすでにいます。同姓同名の場合はそのまま追加してください。
                   </p>
                 )}
                 <FormMessage />
@@ -225,9 +214,9 @@ export function MemberRoster({
             name="memo"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>연락처 메모 (선택)</FormLabel>
+                <FormLabel>連絡先メモ(任意)</FormLabel>
                 <FormControl>
-                  <Input placeholder="구분용 메모" {...field} />
+                  <Input placeholder="区別用のメモ" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -238,34 +227,23 @@ export function MemberRoster({
             variant="secondary"
             disabled={form.formState.isSubmitting}
           >
-            {form.formState.isSubmitting ? "추가하는 중..." : "멤버 추가"}
+            {form.formState.isSubmitting
+              ? "追加しています..."
+              : "メンバーを追加"}
           </Button>
         </form>
       </Form>
 
-      <AlertDialog
+      <ConfirmActionDialog
         open={deleting !== null}
-        // 삭제 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
-        onOpenChange={(open) => !open && !deletePending && setDeleting(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {deleting?.name} 님을 삭제할까요?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              명부에서만 삭제돼요. 과거 회차 응답과 정산 기록은 이름 스냅샷으로
-              유지돼요.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletePending}>취소</AlertDialogCancel>
-            <AlertDialogAction disabled={deletePending} onClick={confirmDelete}>
-              {deletePending ? "삭제하는 중..." : "삭제"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={(open) => !open && setDeleting(null)}
+        pending={deletePending}
+        title={<>{deleting?.name}さんを削除しますか?</>}
+        description="名簿からのみ削除されます。過去の開催回の回答や精算記録は、名前のスナップショットとして保持されます。"
+        confirmLabel="削除"
+        pendingLabel="削除しています..."
+        onConfirm={confirmDelete}
+      />
     </section>
   );
 }

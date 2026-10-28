@@ -1,14 +1,8 @@
+import { safeNextPath } from "@/lib/auth/next-path";
 import { createClient } from "@/lib/supabase/server";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { type NextRequest } from "next/server";
-
-// open redirect 방지: 같은 사이트의 상대 경로("/"로 시작하고 "//", "/\"가 아닌 값)만 허용한다
-function safeNextPath(next: string | null): string {
-  if (!next || !next.startsWith("/")) return "/";
-  if (next.startsWith("//") || next.startsWith("/\\")) return "/";
-  return next;
-}
 
 // 에러 페이지(/auth/error)로 코드값을 넘긴다. 문구 변환은 에러 페이지가 담당한다.
 function errorRedirect(code: string): never {

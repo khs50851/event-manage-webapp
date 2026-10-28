@@ -12,14 +12,14 @@ interface StatsCardsProps {
 // 내 정보: 모임 통계 카드 2개(표시 전용 서버 컴포넌트)
 export function StatsCards({ hostedCount, joinedCount }: StatsCardsProps) {
   const items = [
-    { label: "내가 만든 모임", value: hostedCount, Icon: CalendarPlusIcon },
-    { label: "내가 참여한 모임", value: joinedCount, Icon: UsersIcon },
+    { label: "作成したグループ", value: hostedCount, Icon: CalendarPlusIcon },
+    { label: "参加中のグループ", value: joinedCount, Icon: UsersIcon },
   ];
 
   return (
     <section aria-labelledby="stats-title" className="flex flex-col gap-3">
       <h2 id="stats-title" className="text-base font-semibold">
-        모임 현황
+        グループの状況
       </h2>
       <dl className="grid grid-cols-2 gap-3">
         {items.map(({ label, value, Icon }) => (
@@ -41,7 +41,7 @@ export function StatsCards({ hostedCount, joinedCount }: StatsCardsProps) {
               >
                 {value}
               </span>
-              <span className="text-sm text-muted-foreground">개</span>
+              <span className="text-sm text-muted-foreground">件</span>
             </dd>
           </div>
         ))}

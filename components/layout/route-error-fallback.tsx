@@ -29,10 +29,10 @@ export function RouteErrorFallback({
     >
       <p className="font-semibold">{title}</p>
       <p className="text-sm text-muted-foreground">
-        잠시 후 다시 시도해 주세요.{hint && ` ${hint}`}
+        しばらくしてからもう一度お試しください。{hint && ` ${hint}`}
       </p>
       <Button type="button" className="min-h-11" onClick={() => retry()}>
-        다시 시도
+        再試行
       </Button>
     </div>
   );

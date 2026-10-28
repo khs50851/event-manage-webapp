@@ -18,18 +18,9 @@ import {
   reportActionFailure,
   upsertById,
 } from "@/components/groups/action-feedback";
+import { ConfirmActionDialog } from "@/components/groups/confirm-action-dialog";
 import { EMPTY_EVENT_VALUES, EventForm } from "@/components/groups/event-form";
 import { EventStatusBadge } from "@/components/groups/event-status-badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,6 +40,23 @@ type FormState =
   | { kind: "edit"; event: GroupEvent }
   | { kind: "duplicate"; event: GroupEvent }
   | null;
+
+type FormKind = NonNullable<FormState>["kind"];
+
+const FORM_DIALOG_TITLE: Record<FormKind, string> = {
+  create: "開催回を追加",
+  edit: "開催回を編集",
+  duplicate: "開催回を複製",
+};
+
+const SAVED_MESSAGE: Record<FormKind, string> = {
+  create: "開催回を追加しました。",
+  edit: "開催回を編集しました。",
+  duplicate: "開催回を複製しました。",
+};
+
+const CANCELLED_MESSAGE =
+  "開催回を中止しました。招待リンクには中止のお知らせが表示されます。";
 
 function toFormValues(event: GroupEvent, clearDates: boolean): EventFormValues {
   return {
@@ -101,7 +109,6 @@ export function EventList({
           event.id === targetId ? { ...event, ...fields } : event,
         ),
       );
-      toast.success("회차를 수정했어요.");
     } else {
       onChange([
         ...events,
@@ -112,12 +119,8 @@ export function EventList({
           ...fields,
         },
       ]);
-      toast.success(
-        formState?.kind === "duplicate"
-          ? "회차를 복제했어요."
-          : "회차를 추가했어요.",
-      );
     }
+    toast.success(SAVED_MESSAGE[formState?.kind ?? "create"]);
     setFormState(null);
   }
 
@@ -135,13 +138,7 @@ export function EventList({
       if (result.ok) {
         const saved = result.data.event;
         onChange((current) => upsertById(current, saved));
-        toast.success(
-          kind === "edit"
-            ? "회차를 수정했어요."
-            : kind === "duplicate"
-              ? "회차를 복제했어요."
-              : "회차를 추가했어요.",
-        );
+        toast.success(SAVED_MESSAGE[kind]);
         setFormState(null);
         return;
       }
@@ -164,7 +161,7 @@ export function EventList({
         event.id === targetId ? { ...event, status: "cancelled" } : event,
       ),
     );
-    toast.success("회차를 취소했어요. 초대 링크에는 취소 안내가 표시돼요.");
+    toast.success(CANCELLED_MESSAGE);
     setCancelling(null);
   }
 
@@ -178,7 +175,7 @@ export function EventList({
       if (result.ok) {
         const saved = result.data.event;
         onChange((current) => upsertById(current, saved));
-        toast.success("회차를 취소했어요. 초대 링크에는 취소 안내가 표시돼요.");
+        toast.success(CANCELLED_MESSAGE);
         setCancelling(null);
         return;
       }
@@ -195,12 +192,8 @@ export function EventList({
     }
   }
 
-  const dialogTitle =
-    formState?.kind === "edit"
-      ? "회차 수정"
-      : formState?.kind === "duplicate"
-        ? "회차 복제"
-        : "회차 추가";
+  // 닫히는 동안(formState === null)에도 제목이 비지 않도록 "회차 추가"로 둔다
+  const dialogTitle = FORM_DIALOG_TITLE[formState?.kind ?? "create"];
 
   const defaultValues =
     formState?.kind === "edit"
@@ -213,7 +206,7 @@ export function EventList({
     <section aria-labelledby="events-heading" className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h2 id="events-heading" className="text-lg font-semibold">
-          회차 ({events.length})
+          開催回 ({events.length})
         </h2>
         <Button
           type="button"
@@ -222,21 +215,21 @@ export function EventList({
           onClick={() => setFormState({ kind: "create" })}
         >
           <PlusIcon className="size-4" />
-          회차 추가
+          開催回を追加
         </Button>
       </div>
 
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            아직 등록된 회차가 없어요.
+            まだ登録された開催回がありません。
           </p>
           <Button
             type="button"
             variant="secondary"
             onClick={() => setFormState({ kind: "create" })}
           >
-            첫 회차 추가
+            最初の開催回を追加
           </Button>
         </div>
       ) : (
@@ -265,10 +258,10 @@ export function EventList({
                 <span className="truncate">{event.location}</span>
               </p>
               <p className="text-sm text-muted-foreground">
-                정원{" "}
-                {event.capacity === null ? "제한 없음" : `${event.capacity}명`}
+                定員{" "}
+                {event.capacity === null ? "制限なし" : `${event.capacity}名`}
                 {event.rsvpDeadline &&
-                  ` · 응답 마감 ${formatDateTime(event.rsvpDeadline)}`}
+                  `  · 回答締切 ${formatDateTime(event.rsvpDeadline)}`}
               </p>
               {event.description && (
                 <p className="text-sm text-muted-foreground">
@@ -284,7 +277,7 @@ export function EventList({
                   disabled={event.status === "cancelled"}
                   onClick={() => setFormState({ kind: "edit", event })}
                 >
-                  수정
+                  編集
                 </Button>
                 <Button
                   type="button"
@@ -294,7 +287,7 @@ export function EventList({
                   onClick={() => setFormState({ kind: "duplicate", event })}
                 >
                   <CopyIcon className="size-4" />
-                  복제
+                  複製
                 </Button>
                 {event.status === "scheduled" && (
                   <Button
@@ -306,7 +299,7 @@ export function EventList({
                     onClick={() => setCancelling(event)}
                   >
                     <XCircleIcon className="size-4" />
-                    취소
+                    中止
                   </Button>
                 )}
               </div>
@@ -324,8 +317,8 @@ export function EventList({
             <DialogTitle>{dialogTitle}</DialogTitle>
             <DialogDescription>
               {formState?.kind === "duplicate"
-                ? "날짜를 새로 입력하면 나머지 항목은 그대로 복사돼요."
-                : "일시와 장소는 꼭 입력해 주세요."}
+                ? "日付を新しく入力すると、その他の項目はそのままコピーされます。"
+                : "日時と場所は必ず入力してください。"}
             </DialogDescription>
           </DialogHeader>
           {formState && (
@@ -333,36 +326,29 @@ export function EventList({
               // 대상이 바뀔 때 폼 상태를 새로 만든다.
               key={`${formState.kind}-${"event" in formState ? formState.event.id : "new"}`}
               defaultValues={defaultValues}
-              submitLabel="저장"
+              submitLabel="保存"
               onSubmit={handleSubmit}
             />
           )}
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
+      <ConfirmActionDialog
         open={cancelling !== null}
-        // 취소 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
-        onOpenChange={(open) => !open && !cancelPending && setCancelling(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>회차를 취소할까요?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &quot;{cancelling?.title}&quot; 회차가 취소됨 상태가 되고, 초대
-              링크에는 취소 안내가 표시되며 새 응답을 받을 수 없어요.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelPending}>
-              돌아가기
-            </AlertDialogCancel>
-            <AlertDialogAction disabled={cancelPending} onClick={confirmCancel}>
-              {cancelPending ? "취소하는 중..." : "회차 취소"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={(open) => !open && setCancelling(null)}
+        pending={cancelPending}
+        title="この開催回を中止しますか?"
+        description={
+          <>
+            「{cancelling?.title}
+            」が「中止」の状態になり、招待リンクには中止のお知らせが表示され、新しい回答を受け付けられなくなります。
+          </>
+        }
+        cancelLabel="戻る"
+        confirmLabel="開催回を中止"
+        pendingLabel="中止しています..."
+        onConfirm={confirmCancel}
+      />
     </section>
   );
 }

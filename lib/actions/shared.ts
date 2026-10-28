@@ -9,9 +9,12 @@ import type { ActionErrorCode, ActionResult } from "@/lib/types/action";
 
 export type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
+// 여러 액션 파일이 같은 문구를 쓰는 공통 메시지(대상 없음 문구는 not_found 응답에 쓴다)
 export const MESSAGES = {
-  unauthenticated: "로그인이 필요해요.",
-  validation: "입력값을 다시 확인해 주세요.",
+  unauthenticated: "ログインが必要です。",
+  validation: "入力内容をもう一度確認してください。",
+  groupNotFound: "グループが見つかりません。",
+  eventNotFound: "開催回が見つかりません。",
 } as const;
 
 // 회차 응답이 바뀌었을 때 갱신할 화면: 대시보드(응답 미완료 카드)·회차 상세(응답 현황)·정산(응답 기반 항목),

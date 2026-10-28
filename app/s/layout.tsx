@@ -6,7 +6,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 
 // 정산 토큰 링크는 소지자만 열람해야 하므로 검색엔진 색인을 막는다(R1, PRD 7장).
 export const metadata: Metadata = {
-  title: "정산 조회",
+  title: "精算確認",
   robots: { index: false, follow: false },
 };
 

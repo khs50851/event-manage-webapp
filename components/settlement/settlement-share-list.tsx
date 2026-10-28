@@ -4,7 +4,7 @@ import { BellRingIcon } from "lucide-react";
 
 import { ShareStatusBadge } from "@/components/settlement/share-status-badge";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, formatWon } from "@/lib/format";
+import { formatDateTime, formatYen } from "@/lib/format";
 import { SHARE_STATUS_LABEL } from "@/lib/settlement";
 import type { SettlementShare, ShareStatus } from "@/lib/types/domain";
 import { cn } from "@/lib/utils";
@@ -28,18 +28,18 @@ const ACTION: Record<
   }
 > = {
   self_reported: {
-    text: "입금 확정",
-    ariaSuffix: "입금 완료로 확정",
+    text: "入金を確定",
+    ariaSuffix: "入金済みとして確定",
     variant: "default",
   },
   unpaid: {
-    text: "입금 확인",
-    ariaSuffix: "입금 완료로 표시",
+    text: "入金を確認",
+    ariaSuffix: "入金済みにする",
     variant: "outline",
   },
   paid: {
-    text: "되돌리기",
-    ariaSuffix: "미입금으로 되돌리기",
+    text: "元に戻す",
+    ariaSuffix: "未入金に戻す",
     variant: "ghost",
   },
 };
@@ -66,10 +66,10 @@ export function SettlementShareList({
     >
       <div className="flex items-baseline justify-between gap-2">
         <h2 id="settlement-shares-heading" className="text-lg font-semibold">
-          입금 현황
+          入金状況
         </h2>
         <span className="text-sm text-muted-foreground">
-          대상 {shares.length}명
+          対象 {shares.length}名
         </span>
       </div>
 
@@ -96,8 +96,7 @@ export function SettlementShareList({
               </h3>
               {emphasized && (
                 <p className="text-xs text-muted-foreground">
-                  참가자가 입금했다고 알렸어요. 입금 내역을 확인한 뒤 확정해
-                  주세요. 확정 전에는 입금 완료로 세지 않아요.
+                  参加者が入金したと報告しています。入金内容を確認してから確定してください。確定前は入金済みとして数えません。
                 </p>
               )}
             </div>
@@ -121,7 +120,7 @@ export function SettlementShareList({
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                         <ShareStatusBadge status={share.status} />
                         <span className="tabular-nums">
-                          {formatWon(share.amount)}
+                          {formatYen(share.amount)}
                         </span>
                         {share.statusChangedAt && (
                           <span>{formatDateTime(share.statusChangedAt)}</span>

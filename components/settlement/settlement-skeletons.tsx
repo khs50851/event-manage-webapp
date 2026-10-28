@@ -29,7 +29,7 @@ export function HostSettlementSkeleton() {
     <div
       className="flex w-full flex-col gap-6"
       aria-busy="true"
-      aria-label="정산 정보를 불러오는 중"
+      aria-label="精算情報を読み込み中"
     >
       <div className="flex flex-col gap-2">
         <Skeleton className="h-5 w-32" />
@@ -68,7 +68,7 @@ export function PublicSettlementSkeleton() {
     <div
       className="flex flex-col gap-6"
       aria-busy="true"
-      aria-label="정산 정보를 불러오는 중"
+      aria-label="精算情報を読み込み中"
     >
       <div className="flex flex-col gap-2">
         <Skeleton className="h-4 w-24" />

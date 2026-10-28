@@ -11,10 +11,10 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: {
-    default: "모여봐 - 모임 일정 관리",
-    template: "%s | 모여봐",
+    default: "あつまろ - グループ日程管理",
+    template: "%s | あつまろ",
   },
-  description: "초대 링크 하나로 참석 응답을 모으고 모임 일정을 관리하세요.",
+  description: "招待リンク1つで出欠を集めて、グループの日程を管理しましょう。",
 };
 
 export const viewport: Viewport = {
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ja" suppressHydrationWarning>
       <body className={`${geistSans.className} bg-muted antialiased`}>
         <ThemeProvider
           attribute="class"

@@ -2,7 +2,7 @@
 
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
-import { ko } from "react-day-picker/locale";
+import { ja } from "react-day-picker/locale";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -44,7 +44,7 @@ export function DateTimePicker({
   onChange,
   min,
   max,
-  placeholder = "날짜·시간 선택",
+  placeholder = "日付・時間を選択",
   clearable = false,
   className,
   id,
@@ -124,7 +124,7 @@ export function DateTimePicker({
       >
         <Calendar
           mode="single"
-          locale={ko}
+          locale={ja}
           selected={parseDate(date)}
           defaultMonth={parseDate(date)}
           onSelect={selectDay}
@@ -141,11 +141,11 @@ export function DateTimePicker({
           <div
             className="grid grid-cols-2 gap-2"
             role="group"
-            aria-label="오전/오후"
+            aria-label="午前/午後"
           >
             {[
-              { label: "오전", pm: false },
-              { label: "오후", pm: true },
+              { label: "午前", pm: false },
+              { label: "午後", pm: true },
             ].map(({ label, pm }) => (
               <Button
                 key={label}
@@ -159,7 +159,7 @@ export function DateTimePicker({
               </Button>
             ))}
           </div>
-          <div role="group" aria-label="시" className="grid grid-cols-6 gap-1">
+          <div role="group" aria-label="時" className="grid grid-cols-6 gap-1">
             {HOURS_12.map((h) => (
               <Button
                 key={h}
@@ -170,11 +170,11 @@ export function DateTimePicker({
                 className={optionClass}
                 onClick={() => pickHour(h)}
               >
-                {h}시
+                {h}時
               </Button>
             ))}
           </div>
-          <div role="group" aria-label="분" className="grid grid-cols-6 gap-1">
+          <div role="group" aria-label="分" className="grid grid-cols-6 gap-1">
             {MINUTES.map((m) => (
               <Button
                 key={m}
@@ -185,7 +185,7 @@ export function DateTimePicker({
                 className={optionClass}
                 onClick={() => pickMinute(m)}
               >
-                {pad(m)}분
+                {pad(m)}分
               </Button>
             ))}
           </div>
@@ -200,7 +200,7 @@ export function DateTimePicker({
                   setOpen(false);
                 }}
               >
-                지우기
+                クリア
               </Button>
             )}
             <Button
@@ -208,7 +208,7 @@ export function DateTimePicker({
               className="flex-1"
               onClick={() => setOpen(false)}
             >
-              확인
+              OK
             </Button>
           </div>
         </div>

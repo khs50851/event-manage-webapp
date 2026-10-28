@@ -83,9 +83,9 @@ export function EventForm({
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>회차 제목</FormLabel>
+              <FormLabel>開催回のタイトル</FormLabel>
               <FormControl>
-                <Input placeholder="예: 10월 2주차 수영" {...field} />
+                <Input placeholder="例:10月第2週 スイミング" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -96,12 +96,12 @@ export function EventForm({
           name="startsAt"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>일시</FormLabel>
+              <FormLabel>日時</FormLabel>
               <FormControl>
                 <DateTimePicker
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder="일시 선택"
+                  placeholder="日時を選択"
                 />
               </FormControl>
               {isPast && (
@@ -110,7 +110,7 @@ export function EventForm({
                   className="flex items-center gap-1 text-sm text-warning"
                 >
                   <TriangleAlertIcon aria-hidden className="size-4 shrink-0" />
-                  과거 시각이에요. 그대로 저장할 수 있어요.
+                  過去の日時です。このまま保存できます。
                 </p>
               )}
               <FormMessage />
@@ -122,9 +122,9 @@ export function EventForm({
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>장소</FormLabel>
+              <FormLabel>場所</FormLabel>
               <FormControl>
-                <Input placeholder="예: 구립 체육센터" {...field} />
+                <Input placeholder="例:区立スポーツセンター" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -136,11 +136,11 @@ export function EventForm({
             name="capacity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>정원 (선택)</FormLabel>
+                <FormLabel>定員(任意)</FormLabel>
                 <FormControl>
                   <Input
                     inputMode="numeric"
-                    placeholder="제한 없음"
+                    placeholder="制限なし"
                     {...field}
                   />
                 </FormControl>
@@ -153,13 +153,13 @@ export function EventForm({
             name="rsvpDeadline"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>응답 마감 (선택)</FormLabel>
+                <FormLabel>回答締切(任意)</FormLabel>
                 <FormControl>
                   <DateTimePicker
                     value={field.value}
                     onChange={field.onChange}
                     max={startsAt}
-                    placeholder="마감 없음"
+                    placeholder="締切なし"
                     clearable
                   />
                 </FormControl>
@@ -173,17 +173,17 @@ export function EventForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>설명 (선택)</FormLabel>
+              <FormLabel>説明(任意)</FormLabel>
               <FormControl>
                 <Textarea rows={3} {...field} />
               </FormControl>
-              <FormDescription>준비물, 예상 비용 메모 등</FormDescription>
+              <FormDescription>持ち物、想定費用のメモなど</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "저장 중..." : submitLabel}
+          {form.formState.isSubmitting ? "保存中..." : submitLabel}
         </Button>
       </form>
     </Form>

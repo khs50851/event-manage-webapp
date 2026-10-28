@@ -1,12 +1,10 @@
-import type { createClient } from "@/lib/supabase/server";
+import type { ServerSupabaseClient } from "@/lib/data/source";
 import { AVATAR_BUCKET } from "@/lib/schemas/profile";
 
 // 프로필 사진 서명 URL 헬퍼(서버 전용).
 // avatars 버킷은 비공개라 화면용 URL은 서버가 짧은 만료의 서명 URL로 만든다.
 // 서명 시 Storage RLS가 그대로 적용되므로(본인 폴더 / 주최자-응답자 관계) 권한 없는 경로는 URL이 생성되지 않는다.
 // Supabase 클라이언트는 호출자가 요청마다 새로 만든 것을 넘겨받는다(전역 보관 금지).
-
-type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 // 서명 URL 만료(초). 페이지를 오래 열어 두면 만료될 수 있으나, 재방문·새로고침 시 다시 발급된다.
 export const AVATAR_SIGNED_URL_EXPIRES_IN = 60 * 60;

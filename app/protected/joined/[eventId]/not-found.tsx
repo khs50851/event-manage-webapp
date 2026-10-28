@@ -4,10 +4,10 @@ import { NotFoundNotice } from "@/components/layout/not-found-notice";
 export default function JoinedEventNotFound() {
   return (
     <NotFoundNotice
-      title="회차를 찾을 수 없어요"
-      description="내가 응답한 회차가 아니거나 주소가 잘못됐어요."
+      title="開催回が見つかりません"
+      description="自分が回答した開催回ではないか、アドレスが間違っています。"
       href="/"
-      linkLabel="홈으로 돌아가기"
+      linkLabel="ホームに戻る"
     />
   );
 }

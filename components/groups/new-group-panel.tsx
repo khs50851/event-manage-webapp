@@ -21,8 +21,8 @@ import type { ActionResult } from "@/lib/types/action";
 type Mode = "recurring" | "one-off";
 
 const MODES: ReadonlyArray<readonly [Mode, string]> = [
-  ["recurring", "정기 모임"],
-  ["one-off", "1회성 이벤트"],
+  ["recurring", "定期グループ"],
+  ["one-off", "単発イベント"],
 ];
 
 export function NewGroupPanel() {
@@ -38,7 +38,7 @@ export function NewGroupPanel() {
 
   // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션(실제로 저장하지 않음)
   function simulateFinish() {
-    toast.success("저장됐어요. (더미: 입력값은 실제로 저장되지 않아요)");
+    toast.success("保存しました。(ダミー:入力内容は実際には保存されません)");
     resetForm();
     router.push("/protected");
   }
@@ -50,7 +50,7 @@ export function NewGroupPanel() {
     try {
       const result = await run();
       if (result.ok) {
-        toast.success("저장됐어요.");
+        toast.success("保存しました。");
         resetForm();
         router.push("/protected");
         return;
@@ -75,7 +75,7 @@ export function NewGroupPanel() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-2" role="group" aria-label="유형">
+      <div className="grid grid-cols-2 gap-2" role="group" aria-label="種類">
         {MODES.map(([value, label]) => (
           <Button
             key={value}
@@ -92,17 +92,17 @@ export function NewGroupPanel() {
       {mode === "recurring" ? (
         <GroupForm
           key={formKey}
-          submitLabel="모임 만들기"
+          submitLabel="グループを作成"
           onSubmit={submitGroup}
         />
       ) : (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">
-            멤버 등록 없이 회차 1개를 바로 만들어요.
+            メンバー登録なしで、開催回を1つすぐに作成します。
           </p>
           <EventForm
             key={formKey}
-            submitLabel="이벤트 만들기"
+            submitLabel="イベントを作成"
             onSubmit={submitOneOff}
           />
         </div>

@@ -61,9 +61,9 @@ export function GroupForm({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>모임 이름</FormLabel>
+              <FormLabel>グループ名</FormLabel>
               <FormControl>
-                <Input placeholder="예: 화요 수영반" {...field} />
+                <Input placeholder="例:火曜スイミング" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,7 +74,7 @@ export function GroupForm({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>설명 (선택)</FormLabel>
+              <FormLabel>説明(任意)</FormLabel>
               <FormControl>
                 <Textarea rows={3} {...field} />
               </FormControl>
@@ -83,7 +83,7 @@ export function GroupForm({
           )}
         />
         <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "저장 중..." : submitLabel}
+          {form.formState.isSubmitting ? "保存中..." : submitLabel}
         </Button>
       </form>
     </Form>

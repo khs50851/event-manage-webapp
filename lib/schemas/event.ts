@@ -1,26 +1,28 @@
 import { z } from "zod";
 
+import { RSVP_DEADLINE_AFTER_START_MESSAGE } from "@/lib/schemas/common";
+
 export const eventSchema = z
   .object({
     title: z
       .string()
       .trim()
-      .min(1, "회차 제목을 입력해 주세요.")
-      .max(50, "제목은 50자 이하로 입력해 주세요."),
-    startsAt: z.string().min(1, "일시를 선택해 주세요."),
+      .min(1, "開催回のタイトルを入力してください。")
+      .max(50, "タイトルは50文字以内で入力してください。"),
+    startsAt: z.string().min(1, "日時を選択してください。"),
     location: z
       .string()
       .trim()
-      .min(1, "장소를 입력해 주세요.")
-      .max(100, "장소는 100자 이하로 입력해 주세요."),
+      .min(1, "場所を入力してください。")
+      .max(100, "場所は100文字以内で入力してください。"),
     // 비워두면 정원 제한 없음. 폼 입력은 문자열로 받는다.
     capacity: z
       .string()
       .refine(
         (value) => value === "" || /^[1-9]\d{0,3}$/.test(value),
-        "정원은 1 이상의 정수로 입력해 주세요.",
+        "定員は1以上の整数で入力してください。",
       ),
-    description: z.string().max(500, "설명은 500자 이하로 입력해 주세요."),
+    description: z.string().max(500, "説明は500文字以内で入力してください。"),
     rsvpDeadline: z.string(),
   })
   .refine(
@@ -29,7 +31,7 @@ export const eventSchema = z
       values.startsAt === "" ||
       values.rsvpDeadline <= values.startsAt,
     {
-      message: "응답 마감은 시작 시각보다 늦을 수 없어요.",
+      message: RSVP_DEADLINE_AFTER_START_MESSAGE,
       path: ["rsvpDeadline"],
     },
   );

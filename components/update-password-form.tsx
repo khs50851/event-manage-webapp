@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toKoreanAuthError } from "@/lib/auth/error-message";
+import { AuthFormError } from "@/components/auth-form-error";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,7 +26,7 @@ export function UpdatePasswordForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
@@ -49,34 +50,30 @@ export function UpdatePasswordForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            <h1>새 비밀번호 설정</h1>
+            <h1>新しいパスワードの設定</h1>
           </CardTitle>
           <CardDescription>
-            새로 사용할 비밀번호를 입력해 주세요.
+            新しく使うパスワードを入力してください。
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleForgotPassword}>
+          <form onSubmit={handleUpdatePassword}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="password">새 비밀번호</Label>
+                <Label htmlFor="password">新しいパスワード</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="새 비밀번호"
+                  placeholder="新しいパスワード"
                   autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              )}
+              <AuthFormError message={error} />
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "저장 중..." : "새 비밀번호 저장"}
+                {isLoading ? "保存中..." : "新しいパスワードを保存"}
               </Button>
             </div>
           </form>

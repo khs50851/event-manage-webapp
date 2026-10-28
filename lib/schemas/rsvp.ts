@@ -1,18 +1,19 @@
 import { z } from "zod";
 
+import {
+  personNameSchema,
+  RSVP_DEADLINE_AFTER_START_MESSAGE,
+} from "@/lib/schemas/common";
+
 // 명부에서 이름을 고르지 않고 직접 입력하는 경우의 선택값
 export const DIRECT_INPUT = "direct";
 
 export const rsvpSchema = z.object({
   // 명부 멤버 id 또는 DIRECT_INPUT
   memberId: z.string(),
-  name: z
-    .string()
-    .trim()
-    .min(1, "이름을 입력해 주세요.")
-    .max(30, "이름은 30자 이하로 입력해 주세요."),
+  name: personNameSchema,
   status: z.enum(["attending", "declined", "undecided"], {
-    error: "참석 여부를 선택해 주세요.",
+    error: "出欠を選択してください。",
   }),
 });
 
@@ -25,7 +26,7 @@ export function makeRsvpDeadlineSchema(startsAt: string) {
       .string()
       .refine(
         (value) => value === "" || value <= startsAt,
-        "응답 마감은 시작 시각보다 늦을 수 없어요.",
+        RSVP_DEADLINE_AFTER_START_MESSAGE,
       ),
   });
 }

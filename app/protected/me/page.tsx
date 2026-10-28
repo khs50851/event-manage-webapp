@@ -59,7 +59,7 @@ function MyInfoSkeleton() {
     <div
       className="flex flex-1 flex-col gap-6"
       aria-busy="true"
-      aria-label="내 정보를 불러오는 중"
+      aria-label="マイページを読み込み中"
     >
       <div className="flex flex-col gap-4 rounded-md border p-4">
         <div className="flex items-center gap-4">
@@ -93,7 +93,7 @@ function MyInfoSkeleton() {
 export default function MePage() {
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
-      <h1 className="text-2xl font-bold">내 정보</h1>
+      <h1 className="text-2xl font-bold">マイページ</h1>
       <Suspense fallback={<MyInfoSkeleton />}>
         <MyInfo />
       </Suspense>

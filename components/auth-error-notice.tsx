@@ -15,14 +15,15 @@ export type AuthErrorKind = "cancelled" | "failed";
 const NOTICE_CONTENT = {
   cancelled: {
     icon: CircleX,
-    title: "로그인이 취소되었어요",
+    title: "ログインがキャンセルされました",
     description:
-      "인증 과정이 중단되었어요. 다시 시도하거나 다른 방법으로 로그인해 주세요.",
+      "認証が中断されました。もう一度お試しいただくか、別の方法でログインしてください。",
   },
   failed: {
     icon: CircleAlert,
-    title: "로그인하지 못했어요",
-    description: "인증 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.",
+    title: "ログインできませんでした",
+    description:
+      "認証中に問題が発生しました。しばらくしてからもう一度お試しください。",
   },
 } as const;
 
@@ -51,10 +52,10 @@ export function AuthErrorNotice({
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <Button asChild className="w-full">
-            <Link href="/auth/login">로그인으로 돌아가기</Link>
+            <Link href="/auth/login">ログインに戻る</Link>
           </Button>
           <Button asChild variant="ghost" className="w-full">
-            <Link href="/">홈으로</Link>
+            <Link href="/">ホームへ</Link>
           </Button>
         </CardContent>
       </Card>

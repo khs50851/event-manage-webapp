@@ -4,7 +4,12 @@ import { z } from "zod";
 import { createAvatarSignedUrls } from "@/lib/data/avatars";
 import { RSVP_COLUMNS, toRsvp } from "@/lib/data/mappers";
 import { readRespondentKey } from "@/lib/data/respondent-key";
-import { isUuid, mockDelay, resolveDataSource } from "@/lib/data/source";
+import {
+  isUuid,
+  mockDelay,
+  readFailed,
+  resolveDataSource,
+} from "@/lib/data/source";
 import { nowKstLocalString } from "@/lib/format";
 import {
   mockEvents,
@@ -23,11 +28,6 @@ import type { InviteLookup, Rsvp } from "@/lib/types/domain";
 //   세션이 없으면 개발 환경 더미(lib/data/source.ts).
 // - 비회원용(getInviteByToken): 세션이 없어도 공개 RPC(get_invite)를 호출한다. 개발 환경의 더미 토큰(demo-*)만 더미로 응답한다.
 // DB 오류는 내부 정보 없이 던져 라우트의 error.tsx(재시도)로 보낸다.
-
-function readFailed(scope: string, code: string | undefined): never {
-  console.error(`[${scope}] 조회 실패:`, code ?? "unknown");
-  throw new Error("데이터를 불러오지 못했어요.");
-}
 
 // get_event_respondent_avatars 반환 행
 const respondentAvatarRowSchema = z.object({

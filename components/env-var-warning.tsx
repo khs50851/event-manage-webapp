@@ -1,9 +1,9 @@
-import { Badge } from "./ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 export function EnvVarWarning() {
   return (
-    <Badge variant={"outline"} className="font-normal">
-      Supabase 환경 변수 필요
+    <Badge variant="outline" className="font-normal">
+      Supabase の環境変数が必要です
     </Badge>
   );
 }

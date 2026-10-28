@@ -9,16 +9,7 @@ import {
   isDevPreviewFallback,
   reportActionException,
 } from "@/components/groups/action-feedback";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmActionDialog } from "@/components/groups/confirm-action-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { EventStatus } from "@/lib/types/domain";
@@ -71,9 +62,11 @@ export function InviteLinkCard({
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("초대 링크를 복사했어요.");
+      toast.success("招待リンクをコピーしました。");
     } catch {
-      toast.error("복사하지 못했어요. 링크를 직접 선택해 복사해 주세요.");
+      toast.error(
+        "コピーできませんでした。リンクを直接選択してコピーしてください。",
+      );
     }
   }
 
@@ -83,7 +76,7 @@ export function InviteLinkCard({
     } catch (error) {
       // 사용자가 공유 시트를 닫은 경우는 오류로 안내하지 않는다.
       if (error instanceof DOMException && error.name === "AbortError") return;
-      toast.error("공유하지 못했어요. 링크 복사를 이용해 주세요.");
+      toast.error("共有できませんでした。リンクのコピーをご利用ください。");
     }
   }
 
@@ -91,7 +84,9 @@ export function InviteLinkCard({
     setToken(nextToken);
     setRotated(true);
     setConfirming(false);
-    toast.success("새 초대 링크를 발급했어요. 이전 링크는 만료돼요.");
+    toast.success(
+      "新しい招待リンクを発行しました。以前のリンクは無効になります。",
+    );
   }
 
   // 비로그인 개발 미리보기 폴백: 같은 길이의 무작위 값으로 흉내만 낸다(실제 토큰은 서버가 발급).
@@ -131,18 +126,18 @@ export function InviteLinkCard({
       className="flex flex-col gap-3 rounded-md border p-4"
     >
       <h2 id="invite-link-heading" className="font-semibold">
-        초대 링크
+        招待リンク
       </h2>
       {eventStatus === "cancelled" && (
         <p className="text-sm text-muted-foreground">
-          취소된 회차예요. 링크로 들어온 참가자에게는 취소 안내가 표시돼요.
+          中止された開催回です。リンクからアクセスした参加者には中止のお知らせが表示されます。
         </p>
       )}
 
       {token ? (
         <>
           <label htmlFor="invite-link-url" className="sr-only">
-            초대 링크 주소
+            招待リンクのアドレス
           </label>
           <Input
             id="invite-link-url"
@@ -154,7 +149,7 @@ export function InviteLinkCard({
           <div className="flex flex-wrap gap-2">
             <Button type="button" className="min-h-11" onClick={copyLink}>
               <CopyIcon className="size-4" />
-              링크 복사
+              リンクをコピー
             </Button>
             {canShare && (
               <Button
@@ -164,7 +159,7 @@ export function InviteLinkCard({
                 onClick={shareLink}
               >
                 <Share2Icon className="size-4" />
-                공유
+                共有
               </Button>
             )}
             <Button
@@ -174,43 +169,31 @@ export function InviteLinkCard({
               onClick={() => setConfirming(true)}
             >
               <RefreshCwIcon className="size-4" />
-              재발급
+              再発行
             </Button>
           </div>
           {rotated && (
             <p className="text-sm text-muted-foreground" role="status">
-              이전 링크는 만료되어 &quot;만료된 링크&quot; 안내가 표시돼요.
-              참가자에게 새 링크를 다시 공유해 주세요.
+              以前のリンクは無効になり、「有効期限切れのリンク」と表示されます。参加者に新しいリンクを再度共有してください。
             </p>
           )}
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
-          발급된 초대 링크가 없어요.
+          発行された招待リンクがありません。
         </p>
       )}
 
-      <AlertDialog
+      <ConfirmActionDialog
         open={confirming}
-        // 발급 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
-        onOpenChange={(open) => !pending && setConfirming(open)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>초대 링크를 재발급할까요?</AlertDialogTitle>
-            <AlertDialogDescription>
-              지금 링크는 즉시 만료되어 더 이상 열리지 않아요. 이미 받은 응답은
-              그대로 유지되며, 참가자에게는 새 링크를 다시 공유해야 해요.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>취소</AlertDialogCancel>
-            <AlertDialogAction disabled={pending} onClick={confirmReissue}>
-              {pending ? "발급하는 중..." : "재발급"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={setConfirming}
+        pending={pending}
+        title="招待リンクを再発行しますか?"
+        description="現在のリンクはすぐに無効になり、開けなくなります。すでに受け付けた回答はそのまま保持されますが、参加者には新しいリンクを再度共有する必要があります。"
+        confirmLabel="再発行"
+        pendingLabel="発行しています..."
+        onConfirm={confirmReissue}
+      />
     </section>
   );
 }

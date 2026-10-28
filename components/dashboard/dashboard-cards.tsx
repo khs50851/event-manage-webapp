@@ -77,7 +77,7 @@ function DashboardCard({
             >
               {count}
             </span>
-            <span className="text-sm text-muted-foreground">건</span>
+            <span className="text-sm text-muted-foreground">件</span>
           </p>
         </CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -129,8 +129,8 @@ function upcomingItem(item: UpcomingEventItem): CardItem {
     meta: metaOf(item),
     detail:
       item.capacity === null
-        ? `참석 ${item.attendingCount}명`
-        : `참석 ${item.attendingCount}/${item.capacity}명`,
+        ? `参加 ${item.attendingCount}名`
+        : `参加 ${item.attendingCount}/${item.capacity}名`,
   };
 }
 
@@ -142,24 +142,24 @@ function pendingItem(item: PendingRsvpItem): CardItem {
     meta: metaOf(item),
     detail:
       item.undecidedCount > 0
-        ? `미응답 ${item.pendingCount}명 · 미정 ${item.undecidedCount}명`
-        : `미응답 ${item.pendingCount}명`,
+        ? `未回答 ${item.pendingCount}名 · 未定 ${item.undecidedCount}名`
+        : `未回答 ${item.pendingCount}名`,
   };
 }
 
 function unpaidItem(item: UnpaidSettlementItem): CardItem {
   // 0명인 상태는 생략한다(정산이 목록에 있으면 둘 중 하나는 항상 1명 이상)
   const parts: string[] = [];
-  if (item.unpaidCount > 0) parts.push(`미입금 ${item.unpaidCount}명`);
+  if (item.unpaidCount > 0) parts.push(`未入金 ${item.unpaidCount}名`);
   if (item.selfReportedCount > 0) {
-    parts.push(`확인 필요 ${item.selfReportedCount}명`);
+    parts.push(`要確認 ${item.selfReportedCount}名`);
   }
   return {
     key: item.settlementId,
     href: `/protected/events/${item.eventId}/settlement`,
     title: item.eventTitle,
     meta: metaOf(item),
-    detail: `${parts.join(" · ")} (대상 ${item.targetCount}명)`,
+    detail: `${parts.join(" · ")} (対象 ${item.targetCount}名)`,
   };
 }
 
@@ -176,30 +176,30 @@ export function DashboardCards({
     <div className="flex flex-col gap-4">
       <DashboardCard
         id="dashboard-upcoming"
-        title={`${UPCOMING_WINDOW_DAYS}일 이내 회차`}
-        description="곧 시작하는 예정 회차예요."
+        title={`${UPCOMING_WINDOW_DAYS}日以内の開催回`}
+        description="まもなく始まる予定の開催回です。"
         icon={CalendarClockIcon}
         count={summary.upcomingEvents.length}
         items={summary.upcomingEvents.map(upcomingItem)}
-        emptyText={`${UPCOMING_WINDOW_DAYS}일 안에 예정된 회차가 없어요.`}
+        emptyText={`${UPCOMING_WINDOW_DAYS}日以内に予定されている開催回はありません。`}
       />
       <DashboardCard
         id="dashboard-pending-rsvp"
-        title="응답 미완료 회차"
-        description="명부 멤버 중 아직 응답하지 않은 사람이 있는 회차예요."
+        title="未回答者がいる開催回"
+        description="名簿のメンバーのうち、まだ回答していない人がいる開催回です。"
         icon={MailQuestionIcon}
         count={summary.pendingRsvpEvents.length}
         items={summary.pendingRsvpEvents.map(pendingItem)}
-        emptyText="응답을 기다리는 회차가 없어요."
+        emptyText="回答待ちの開催回はありません。"
       />
       <DashboardCard
         id="dashboard-unpaid"
-        title="미입금 정산"
-        description="입금 확인이 끝나지 않은 정산이에요."
+        title="未入金の精算"
+        description="入金確認が完了していない精算です。"
         icon={WalletIcon}
         count={summary.unpaidSettlements.length}
         items={summary.unpaidSettlements.map(unpaidItem)}
-        emptyText="입금을 기다리는 정산이 없어요."
+        emptyText="入金待ちの精算はありません。"
       />
     </div>
   );
@@ -215,15 +215,14 @@ export function EmptyDashboard() {
       <FolderPlusIcon aria-hidden className="size-8 text-muted-foreground" />
       <div className="flex flex-col gap-1">
         <h2 id="dashboard-empty-title" className="font-semibold">
-          첫 모임을 만들어보세요
+          最初のグループを作成しましょう
         </h2>
         <p className="text-sm text-muted-foreground">
-          모임을 만들면 다가오는 회차, 응답 현황, 정산을 여기서 한눈에 볼 수
-          있어요.
+          グループを作成すると、今後の開催回・回答状況・精算をここでまとめて確認できます。
         </p>
       </div>
       <Button asChild className="min-h-11">
-        <Link href="/protected/groups/new">모임 만들기</Link>
+        <Link href="/protected/groups/new">グループを作成</Link>
       </Button>
     </section>
   );

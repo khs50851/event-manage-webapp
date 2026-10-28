@@ -6,6 +6,7 @@ import {
   dbFailure,
   fail,
   getSessionClient,
+  MESSAGES as COMMON_MESSAGES,
   toFieldErrors,
   unauthenticated,
   validationFailed,
@@ -22,10 +23,12 @@ import type { GroupMember } from "@/lib/types/domain";
 // 동명이인은 허용한다(중복 경고는 화면에서만).
 
 const MESSAGES = {
-  groupNotFound: "모임을 찾을 수 없어요.",
-  memberNotFound: "멤버를 찾을 수 없어요.",
-  addFailed: "멤버를 추가하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  deleteFailed: "멤버를 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  groupNotFound: COMMON_MESSAGES.groupNotFound,
+  memberNotFound: "メンバーが見つかりません。",
+  addFailed:
+    "メンバーを追加できませんでした。しばらくしてからもう一度お試しください。",
+  deleteFailed:
+    "メンバーを削除できませんでした。しばらくしてからもう一度お試しください。",
 } as const;
 
 // 명부를 보여주는 모임 상세, 명부 기준으로 "응답 미완료"를 집계하는 대시보드

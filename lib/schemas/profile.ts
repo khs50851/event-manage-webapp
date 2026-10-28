@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { personNameSchema } from "@/lib/schemas/common";
+
 // 프로필 사진 업로드 규칙. 브라우저(UI)와 서버(Server Action)가 같은 값을 공유한다.
 // 실제 방어는 서버와 Storage 버킷 설정(용량·MIME 제한)이 담당하고, 브라우저 검증은 UX 보조다.
 
@@ -25,11 +27,7 @@ export const AVATAR_BUCKET = "avatars";
 export const AVATAR_OUTPUT_SIZE = 512;
 
 // 표시 이름(profiles.display_name 제약 1~30자와 동일)
-export const displayNameSchema = z
-  .string()
-  .trim()
-  .min(1, "이름을 입력해 주세요.")
-  .max(30, "이름은 30자 이하로 입력해 주세요.");
+export const displayNameSchema = personNameSchema;
 
 export const profileSchema = z.object({
   displayName: displayNameSchema,
@@ -42,9 +40,9 @@ export const avatarFileMetaSchema = z.object({
   size: z
     .number()
     .int()
-    .positive("사진 파일이 비어 있어요.")
-    .max(AVATAR_MAX_BYTES, "사진은 3MB 이하만 올릴 수 있어요."),
+    .positive("写真ファイルが空です。")
+    .max(AVATAR_MAX_BYTES, "写真は3MB以下のみアップロードできます。"),
   type: z.enum(AVATAR_ALLOWED_TYPES, {
-    error: "JPG, PNG, WebP 사진만 올릴 수 있어요.",
+    error: "JPG、PNG、WebPの写真のみアップロードできます。",
   }),
 });

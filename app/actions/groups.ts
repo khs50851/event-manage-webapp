@@ -6,6 +6,7 @@ import {
   dbFailure,
   fail,
   getSessionClient,
+  MESSAGES as COMMON_MESSAGES,
   toFieldErrors,
   unauthenticated,
   validationFailed,
@@ -24,18 +25,27 @@ import type { Group } from "@/lib/types/domain";
 // 대상이 없거나 타인 소유면 RLS로 0행이 되므로 not_found로 응답한다(존재 여부 비노출).
 
 const MESSAGES = {
-  notFound: "모임을 찾을 수 없어요.",
-  createFailed: "모임을 만들지 못했어요. 잠시 후 다시 시도해 주세요.",
-  oneOffFailed: "이벤트를 만들지 못했어요. 잠시 후 다시 시도해 주세요.",
-  updateFailed: "모임을 수정하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  deleteFailed: "모임을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  notFound: COMMON_MESSAGES.groupNotFound,
+  createFailed:
+    "グループを作成できませんでした。しばらくしてからもう一度お試しください。",
+  oneOffFailed:
+    "イベントを作成できませんでした。しばらくしてからもう一度お試しください。",
+  updateFailed:
+    "グループを編集できませんでした。しばらくしてからもう一度お試しください。",
+  deleteFailed:
+    "グループを削除できませんでした。しばらくしてからもう一度お試しください。",
 } as const;
 
-// 모임 목록·건수를 보여주는 화면(홈, 대시보드, 내 정보)과 해당 모임 상세
-function revalidateGroupPaths(groupId: string) {
+// 모임 목록·건수를 보여주는 화면(홈, 대시보드, 내 정보)
+function revalidateGroupListPaths() {
   revalidatePath("/");
   revalidatePath("/protected");
   revalidatePath("/protected/me");
+}
+
+// 모임 목록 화면과 해당 모임 상세
+function revalidateGroupPaths(groupId: string) {
+  revalidateGroupListPaths();
   revalidatePath(`/protected/groups/${groupId}`);
 }
 
@@ -158,8 +168,6 @@ export async function deleteGroup(
   // 재검증하지 않는다. 재검증하면 삭제 응답과 함께 상세가 다시 렌더링되어 이동 전에
   // "모임을 찾을 수 없어요" 화면이 잠깐 보일 수 있다. 목록·건수를 보여주는 화면만 갱신한다.
   // 삭제된 모임의 회차·정산 화면은 요청 시점 데이터라 캐시되지 않고, 다시 열면 RLS로 404가 된다.
-  revalidatePath("/");
-  revalidatePath("/protected");
-  revalidatePath("/protected/me");
+  revalidateGroupListPaths();
   return { ok: true, data: { deleted: true } };
 }

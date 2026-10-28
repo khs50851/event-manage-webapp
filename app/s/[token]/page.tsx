@@ -19,20 +19,18 @@ async function SettlementLoader({
   switch (lookup.status) {
     case "invalid":
       return (
-        <InviteNotice
-          kind="invalid"
-          titleAs="h1"
-          title="유효하지 않은 링크예요"
-        >
-          링크 주소가 정확한지 확인하거나 주최자에게 정산 링크를 다시 요청해
-          주세요.
+        <InviteNotice kind="invalid" titleAs="h1" title="無効なリンクです">
+          リンクのアドレスが正しいか確認するか、主催者に精算リンクをもう一度依頼してください。
         </InviteNotice>
       );
     case "expired":
       return (
-        <InviteNotice kind="expired" titleAs="h1" title="만료된 링크예요">
-          주최자가 정산 링크를 새로 발급했어요. 주최자에게 새 링크를 요청해
-          주세요.
+        <InviteNotice
+          kind="expired"
+          titleAs="h1"
+          title="有効期限切れのリンクです"
+        >
+          主催者が精算リンクを再発行しました。主催者に新しいリンクを依頼してください。
         </InviteNotice>
       );
     case "active": {
@@ -47,7 +45,7 @@ async function SettlementLoader({
               </p>
             )}
             <h1 className="text-2xl font-bold wrap-break-word">
-              {lookup.event.title} 정산
+              {lookup.event.title} 精算
             </h1>
             <p className="text-sm">{formatDateTime(lookup.event.startsAt)}</p>
           </header>

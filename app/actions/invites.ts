@@ -6,6 +6,7 @@ import {
   dbFailure,
   fail,
   getSessionClient,
+  MESSAGES as COMMON_MESSAGES,
   revalidateRsvpPaths,
   toFieldErrors,
   unauthenticated,
@@ -39,40 +40,43 @@ const REJECT_FEEDBACK: Record<
 > = {
   invalid: {
     code: "not_found",
-    message:
-      "유효하지 않은 링크예요. 주최자에게 초대 링크를 다시 요청해 주세요.",
+    message: "無効なリンクです。主催者に招待リンクをもう一度依頼してください。",
   },
   expired: {
     code: "not_found",
-    message: "만료된 링크예요. 주최자에게 새 링크를 요청해 주세요.",
+    message:
+      "有効期限切れのリンクです。主催者に新しいリンクを依頼してください。",
   },
   cancelled: {
     code: "validation",
-    message: "취소된 회차라 응답을 받지 않아요.",
+    message: "中止された開催回のため、回答を受け付けていません。",
   },
   ended: {
     code: "validation",
-    message: "종료된 회차라 응답을 받지 않아요.",
+    message: "終了した開催回のため、回答を受け付けていません。",
   },
   deadline: {
     code: "validation",
-    message: "응답이 마감됐어요. 변경이 필요하면 주최자에게 알려 주세요.",
+    message:
+      "回答は締め切られました。変更が必要な場合は主催者に連絡してください。",
   },
   rate_limited: {
     code: "rate_limited",
-    message: "요청이 너무 잦아요. 1분쯤 뒤에 다시 시도해 주세요.",
+    message: "リクエストが多すぎます。1分ほど後にもう一度お試しください。",
   },
   conflict: {
     code: "failed",
-    message: "다른 요청과 겹쳐 저장하지 못했어요. 다시 시도해 주세요.",
+    message:
+      "他のリクエストと重なり保存できませんでした。もう一度お試しください。",
   },
   validation: {
     code: "validation",
-    message: "입력값을 다시 확인해 주세요.",
+    message: "入力内容をもう一度確認してください。",
   },
   failed: {
     code: "failed",
-    message: "응답을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    message:
+      "回答を保存できませんでした。しばらくしてからもう一度お試しください。",
   },
 };
 
@@ -99,7 +103,7 @@ export async function submitRsvp(
     return {
       ok: false,
       code: "unauthenticated",
-      message: "개발 미리보기 링크라 저장하지 않아요.",
+      message: "開発用プレビューリンクのため、保存されません。",
       reason: "invalid",
     };
   }
@@ -111,7 +115,7 @@ export async function submitRsvp(
   const { memberId, name, status } = parsed.data;
   if (memberId !== DIRECT_INPUT && !isUuid(memberId)) {
     return reject("validation", {
-      memberId: "명부에서 이름을 다시 선택해 주세요.",
+      memberId: "名簿から名前をもう一度選択してください。",
     });
   }
 
@@ -152,15 +156,18 @@ export async function rotateInviteToken(
 ): Promise<ActionResult<{ token: string }>> {
   const supabase = await getSessionClient();
   if (!supabase) return unauthenticated();
-  if (!isUuid(eventId)) return fail("not_found", "회차를 찾을 수 없어요.");
+  if (!isUuid(eventId)) {
+    return fail("not_found", COMMON_MESSAGES.eventNotFound);
+  }
 
   const { data, error } = await supabase.rpc("rotate_event_invite_token", {
     p_event_id: eventId,
   });
   if (error || !data) {
     return dbFailure("rotateInviteToken", error, {
-      failed: "링크를 다시 만들지 못했어요. 잠시 후 다시 시도해 주세요.",
-      notFound: "회차를 찾을 수 없어요.",
+      failed:
+        "リンクを再発行できませんでした。しばらくしてからもう一度お試しください。",
+      notFound: COMMON_MESSAGES.eventNotFound,
     });
   }
 

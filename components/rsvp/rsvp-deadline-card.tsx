@@ -73,10 +73,10 @@ export function RsvpDeadlineCard({
     form.reset({ rsvpDeadline: next ?? "" });
     toast.success(
       next === null
-        ? "응답 마감을 해제했어요."
+        ? "回答締切を解除しました。"
         : nextClosed
-          ? "응답을 마감했어요. 초대 링크에서 새 응답을 받지 않아요."
-          : `응답 마감을 ${formatDateTime(next)}로 설정했어요.`,
+          ? "回答を締め切りました。招待リンクからの新しい回答は受け付けません。"
+          : `回答締切を${formatDateTime(next)}に設定しました。`,
     );
   }
 
@@ -123,27 +123,27 @@ export function RsvpDeadlineCard({
     >
       <div className="flex items-center justify-between gap-2">
         <h2 id="deadline-heading" className="font-semibold">
-          응답 마감
+          回答締切
         </h2>
         {!disabled && (
           <Badge
             variant={closed ? "secondary" : "default"}
             className={cn(closed && "bg-muted text-muted-foreground")}
           >
-            {closed ? "마감됨" : "응답 받는 중"}
+            {closed ? "締切済み" : "回答受付中"}
           </Badge>
         )}
       </div>
       <p className="text-sm" role="status">
         {disabled
           ? eventStatus === "cancelled"
-            ? "취소된 회차라 응답을 받지 않아요."
-            : "종료된 회차라 응답을 받지 않아요."
+            ? "中止された開催回のため、回答を受け付けていません。"
+            : "終了した開催回のため、回答を受け付けていません。"
           : deadline === null
-            ? "마감 시각이 없어요. 회차가 끝날 때까지 응답을 받아요."
+            ? "締切時刻はありません。開催回が終わるまで回答を受け付けます。"
             : closed
-              ? `${formatDateTime(deadline)}에 마감됐어요. 초대 링크에는 마감 안내가 표시돼요.`
-              : `${formatDateTime(deadline)}까지 응답을 받아요.`}
+              ? `${formatDateTime(deadline)}に締め切られました。招待リンクには締切のお知らせが表示されます。`
+              : `${formatDateTime(deadline)}まで回答を受け付けます。`}
       </p>
 
       {!disabled && (
@@ -160,18 +160,18 @@ export function RsvpDeadlineCard({
               name="rsvpDeadline"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>마감 시각</FormLabel>
+                  <FormLabel>締切時刻</FormLabel>
                   <FormControl>
                     <DateTimePicker
                       value={field.value}
                       onChange={field.onChange}
                       max={startsAt}
-                      placeholder="마감 없음"
+                      placeholder="締切なし"
                       clearable
                     />
                   </FormControl>
                   <FormDescription>
-                    한국 시간 기준. 비워 두고 저장하면 마감 없이 받아요.
+                    日本時間基準。空欄のまま保存すると、締切なしで受け付けます。
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -180,8 +180,8 @@ export function RsvpDeadlineCard({
             <div className="flex flex-wrap gap-2">
               <Button type="submit" className="min-h-11" disabled={busy}>
                 {form.formState.isSubmitting
-                  ? "저장하는 중..."
-                  : "마감 시각 저장"}
+                  ? "保存しています..."
+                  : "締切時刻を保存"}
               </Button>
               {!closed && (
                 <Button
@@ -191,7 +191,7 @@ export function RsvpDeadlineCard({
                   disabled={busy}
                   onClick={() => saveQuickly(nowKstLocalString())}
                 >
-                  지금 마감
+                  今すぐ締め切る
                 </Button>
               )}
               {deadline !== null && (
@@ -202,7 +202,7 @@ export function RsvpDeadlineCard({
                   disabled={busy}
                   onClick={() => saveQuickly("")}
                 >
-                  마감 해제
+                  締切を解除
                 </Button>
               )}
             </div>

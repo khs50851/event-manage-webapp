@@ -30,7 +30,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { formatWon, nowKstLocalString } from "@/lib/format";
+import { formatYen, nowKstLocalString } from "@/lib/format";
+import { createMockToken } from "@/lib/mock/token";
 import {
   buildSettlement,
   calculateSplit,
@@ -125,9 +126,10 @@ export function SettlementManager({
     setTargetKeys(draft.targetKeys);
     setTargetError(null);
     setMode("view");
+    // 새 정산의 토큰 발급 흉내(실제는 서버에서 발급, I4-2)
     if (created && !token) setToken(createMockToken());
     toast.success(
-      created ? "정산을 만들었어요." : "1인 금액을 다시 계산했어요.",
+      created ? "精算を作成しました。" : "1人あたりの金額を再計算しました。",
     );
     return true;
   }
@@ -182,14 +184,14 @@ export function SettlementManager({
       settlement.status === "completed" &&
       data.settlement.status !== "completed"
     ) {
-      toast.success("모든 대상의 입금이 확인돼 정산이 완료됐어요.");
+      toast.success("すべての対象の入金が確認され、精算が完了しました。");
     } else if (target) {
       // 항목이 다른 상태 그룹으로 옮겨 가므로 무엇이 바뀌었는지 알려 준다.
       const label = labelOfShare(target);
       toast.success(
         target.status === "paid"
-          ? `${label} 님을 미입금으로 되돌렸어요.`
-          : `${label} 님을 입금 완료로 표시했어요.`,
+          ? `${label}さんを未入金に戻しました。`
+          : `${label}さんを入金済みにしました。`,
       );
     }
   }
@@ -216,6 +218,7 @@ export function SettlementManager({
   const picker = (
     <SettlementTargetPicker
       candidates={candidates}
+      labels={labels}
       selectedKeys={targetKeys}
       onChange={handleTargetsChange}
     />
@@ -224,8 +227,8 @@ export function SettlementManager({
   return (
     <div className="flex flex-col gap-6">
       {event.status === "cancelled" && (
-        <InviteNotice kind="cancelled" title="취소된 회차예요">
-          취소 수수료처럼 나눠 낼 비용이 있을 때만 정산을 만들어 주세요.
+        <InviteNotice kind="cancelled" title="中止された開催回です">
+          キャンセル料のように割り勘する費用がある場合のみ、精算を作成してください。
         </InviteNotice>
       )}
 
@@ -240,15 +243,15 @@ export function SettlementManager({
             aria-hidden
           />
           <h2 id="settlement-empty-heading" className="font-semibold">
-            아직 정산이 없어요
+            まだ精算がありません
           </h2>
           <p className="text-sm text-muted-foreground">
             {attendingCount > 0
-              ? `총액을 입력하면 참석자 ${attendingCount}명 기준으로 1/N을 계산해요. 대상은 만들면서 바꿀 수 있어요.`
-              : "아직 참석 응답이 없어요. 정산을 만들면서 대상을 직접 골라 주세요."}
+              ? `合計金額を入力すると、参加者${attendingCount}名を基準に1/Nを計算します。対象は作成時に変更できます。`
+              : "まだ参加の回答がありません。精算を作成する際に、対象を直接選んでください。"}
           </p>
           <Button type="button" className="min-h-11 w-full" onClick={openForm}>
-            정산 만들기
+            精算を作成
           </Button>
         </section>
       )}
@@ -260,12 +263,12 @@ export function SettlementManager({
         >
           <div className="flex flex-col gap-1">
             <h2 id="settlement-form-heading" className="text-lg font-semibold">
-              {data ? "정산 수정" : "정산 만들기"}
+              {data ? "精算を編集" : "精算を作成"}
             </h2>
             <p className="text-sm text-muted-foreground">
               {data
-                ? "총액이나 대상을 바꾸면 1인 금액을 다시 계산해요."
-                : "총액과 대상을 정하면 1인 금액을 자동으로 계산해요."}
+                ? "合計金額や対象を変更すると、1人あたりの金額を再計算します。"
+                : "合計金額と対象を決めると、1人あたりの金額を自動で計算します。"}
             </p>
           </div>
           <SettlementForm
@@ -279,7 +282,7 @@ export function SettlementManager({
                   }
                 : undefined
             }
-            submitLabel={data ? "다시 계산해 저장" : "정산 만들기"}
+            submitLabel={data ? "再計算して保存" : "精算を作成"}
             onSubmit={handleFormSubmit}
             onCancel={cancelForm}
             targetPicker={picker}
@@ -297,7 +300,7 @@ export function SettlementManager({
             onClick={openForm}
           >
             <PencilIcon aria-hidden />
-            총액·입금 안내 수정
+            合計金額・振込案内を編集
           </Button>
         </div>
       )}
@@ -316,7 +319,7 @@ export function SettlementManager({
         >
           <div className="flex items-center justify-between gap-2">
             <h2 id="target-adjust-heading" className="font-semibold">
-              정산 대상 조정
+              精算対象の調整
             </h2>
             <Button
               type="button"
@@ -327,16 +330,16 @@ export function SettlementManager({
               aria-controls="target-adjust-panel"
               onClick={() => setAdjustingTargets((open) => !open)}
             >
-              {adjustingTargets ? "접기" : "대상 추가·제외"}
+              {adjustingTargets ? "閉じる" : "対象を追加・除外"}
             </Button>
           </div>
           <p className="text-sm text-muted-foreground" aria-live="polite">
-            지금 {data.settlement.headCount}명
-            {data.settlement.hostIncluded && "(주최자 포함)"} · 1인{" "}
+            現在 {data.settlement.headCount}名
+            {data.settlement.hostIncluded && "(主催者含む)"} · 1人あたり{" "}
             <span className="font-semibold text-foreground tabular-nums">
-              {formatWon(data.settlement.perPersonAmount)}
+              {formatYen(data.settlement.perPersonAmount)}
             </span>
-            . 체크를 바꾸면 1인 금액이 바로 다시 계산돼요.
+            。チェックを変更すると、1人あたりの金額がすぐに再計算されます。
           </p>
           {adjustingTargets && (
             <div id="target-adjust-panel" className="flex flex-col gap-2">
@@ -350,7 +353,7 @@ export function SettlementManager({
                     className="mt-0.5 size-4 shrink-0"
                     aria-hidden
                   />
-                  {targetError} 저장된 정산은 바뀌지 않았어요.
+                  {targetError} 保存された精算は変更されていません。
                 </p>
               )}
             </div>
@@ -431,13 +434,13 @@ function ChangeWarning({
   return (
     <>
       <AlertDialogHeader>
-        <AlertDialogTitle>입금을 마친 사람이 있어요</AlertDialogTitle>
+        <AlertDialogTitle>入金済みの人がいます</AlertDialogTitle>
         <AlertDialogDescription>
           {split.ok
             ? split.value.perPersonAmount === before
-              ? `1인 금액은 ${formatWon(before)} 그대로예요.`
-              : `1인 금액이 ${formatWon(before)}에서 ${formatWon(split.value.perPersonAmount)}으로 바뀌어요.`
-            : "바꾼 내용으로는 정산을 계산할 수 없어요."}
+              ? `1人あたりの金額は${formatYen(before)}のままです。`
+              : `1人あたりの金額が${formatYen(before)}から${formatYen(split.value.perPersonAmount)}に変わります。`
+            : "変更した内容では精算を計算できません。"}
         </AlertDialogDescription>
       </AlertDialogHeader>
 
@@ -445,20 +448,19 @@ function ChangeWarning({
         <ul className="flex flex-col gap-2 text-sm">
           {keptPaid.length > 0 && split.value.perPersonAmount !== before && (
             <li className="rounded-md bg-muted p-3">
-              이미 입금한 {keptPaid.length}명은{" "}
+              すでに入金済みの{keptPaid.length}名は{" "}
               {split.value.perPersonAmount > before
-                ? `${formatWon(split.value.perPersonAmount - before)}을 더 받아야 해요.`
-                : `${formatWon(before - split.value.perPersonAmount)}씩 돌려줘야 해요.`}
+                ? `${formatYen(split.value.perPersonAmount - before)}を追加で受け取る必要があります。`
+                : `${formatYen(before - split.value.perPersonAmount)}ずつ返金する必要があります。`}
             </li>
           )}
           <li className="rounded-md bg-muted p-3">
-            남는 대상의 입금 완료·확인 필요 상태는 그대로 유지돼요. 차액은 따로
-            안내해 주세요.
+            残る対象の「入金済み」「要確認」の状態はそのまま保持されます。差額は別途ご案内ください。
           </li>
           {removedPaid.length > 0 && (
             <li className="rounded-md border border-destructive/50 p-3 text-destructive">
-              {removedPaid.map(labelOfShare).join(", ")} 님은 이미 입금했는데
-              대상에서 빠져요. 받은 금액은 따로 돌려주세요.
+              {removedPaid.map(labelOfShare).join(", ")}
+              さんはすでに入金済みですが、対象から外れます。受け取った金額は別途返金してください。
             </li>
           )}
         </ul>
@@ -474,7 +476,7 @@ function ChangeWarning({
 
       <AlertDialogFooter>
         <AlertDialogCancel className="min-h-11">
-          {split.ok ? "취소" : "닫기"}
+          {split.ok ? "キャンセル" : "閉じる"}
         </AlertDialogCancel>
         {split.ok && (
           <AlertDialogAction
@@ -485,18 +487,10 @@ function ChangeWarning({
               onConfirm();
             }}
           >
-            다시 계산
+            再計算
           </AlertDialogAction>
         )}
       </AlertDialogFooter>
     </>
-  );
-}
-
-// 새 정산의 토큰 발급 흉내(실제는 서버에서 128비트 이상 무작위 값, I4-2)
-function createMockToken() {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
   );
 }

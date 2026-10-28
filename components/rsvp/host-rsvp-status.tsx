@@ -17,17 +17,8 @@ import {
   reportActionFailure,
   upsertById,
 } from "@/components/groups/action-feedback";
+import { ConfirmActionDialog } from "@/components/groups/confirm-action-dialog";
 import { RsvpForm, type MemberOption } from "@/components/rsvp/rsvp-form";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -109,13 +100,13 @@ export function HostRsvpStatus({
           item.id === editingId ? { ...item, ...fields } : item,
         ),
       );
-      toast.success(`${fields.name} 님의 응답을 수정했어요.`);
+      toast.success(`${fields.name}さんの回答を編集しました。`);
     } else {
       setRsvps((current) => [
         ...current,
         { id: `r-${crypto.randomUUID()}`, eventId, ...fields },
       ]);
-      toast.success(`${fields.name} 님의 응답을 추가했어요.`);
+      toast.success(`${fields.name}さんの回答を追加しました。`);
     }
     setFormState(null);
   }
@@ -140,8 +131,8 @@ export function HostRsvpStatus({
         });
         toast.success(
           editingId
-            ? `${saved.name} 님의 응답을 수정했어요.`
-            : `${saved.name} 님의 응답을 추가했어요.`,
+            ? `${saved.name}さんの回答を編集しました。`
+            : `${saved.name}さんの回答を追加しました。`,
         );
         setFormState(null);
         return;
@@ -159,7 +150,7 @@ export function HostRsvpStatus({
   // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
   function simulateDelete(target: Rsvp) {
     setRsvps((current) => current.filter((item) => item.id !== target.id));
-    toast.success(`${target.name} 님의 응답을 삭제했어요.`);
+    toast.success(`${target.name}さんの回答を削除しました。`);
     setDeleting(null);
   }
 
@@ -173,7 +164,7 @@ export function HostRsvpStatus({
       const result = await deleteRsvp(eventId, target.id);
       if (result.ok) {
         setRsvps((current) => current.filter((item) => item.id !== target.id));
-        toast.success(`${target.name} 님의 응답을 삭제했어요.`);
+        toast.success(`${target.name}さんの回答を削除しました。`);
         setDeleting(null);
         return;
       }
@@ -207,19 +198,19 @@ export function HostRsvpStatus({
   const stats = [
     {
       key: "attending",
-      label: "참석",
+      label: "参加",
       value:
         capacity === null
-          ? `${summary.attending.length}명`
+          ? `${summary.attending.length}名`
           : `${summary.attending.length}/${capacity}`,
       over: summary.overflow > 0,
     },
-    { key: "declined", label: "불참", value: `${summary.declined.length}명` },
-    { key: "undecided", label: "미정", value: `${summary.undecided.length}명` },
+    { key: "declined", label: "不参加", value: `${summary.declined.length}名` },
+    { key: "undecided", label: "未定", value: `${summary.undecided.length}名` },
     {
       key: "pending",
-      label: "미응답",
-      value: hasRoster ? `${pending.length}명` : "-",
+      label: "未回答",
+      value: hasRoster ? `${pending.length}名` : "-",
     },
   ];
 
@@ -227,7 +218,7 @@ export function HostRsvpStatus({
     <section aria-labelledby="rsvp-heading" className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h2 id="rsvp-heading" className="text-lg font-semibold">
-          응답 현황
+          回答状況
         </h2>
         <Button
           type="button"
@@ -236,7 +227,7 @@ export function HostRsvpStatus({
           onClick={() => setFormState({ kind: "create" })}
         >
           <PlusIcon className="size-4" />
-          대리 입력
+          代理入力
         </Button>
       </div>
 
@@ -253,7 +244,7 @@ export function HostRsvpStatus({
             <dd className="flex flex-wrap items-center gap-2 text-xl font-bold">
               {stat.value}
               {stat.over && (
-                <Badge variant="destructive">초과 +{summary.overflow}</Badge>
+                <Badge variant="destructive">超過 +{summary.overflow}</Badge>
               )}
             </dd>
           </div>
@@ -266,15 +257,15 @@ export function HostRsvpStatus({
           className="flex items-start gap-2 text-sm font-medium text-destructive"
         >
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
-          정원보다 {summary.overflow}명 많이 참석 응답했어요. 참석 인원을 확인해
-          주세요.
+          定員より{summary.overflow}
+          名多く参加と回答されています。参加人数を確認してください。
         </p>
       )}
 
       {rsvps.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            아직 응답이 없어요. 초대 링크를 공유해 보세요.
+            まだ回答がありません。招待リンクを共有してみましょう。
           </p>
         </div>
       ) : (
@@ -285,7 +276,7 @@ export function HostRsvpStatus({
                 {RSVP_STATUS_LABEL[status]} ({summary[status].length})
               </h3>
               {summary[status].length === 0 ? (
-                <p className="px-3 py-2 text-sm text-muted-foreground">없음</p>
+                <p className="px-3 py-2 text-sm text-muted-foreground">なし</p>
               ) : (
                 <ul className="divide-y">
                   {summary[status].map((item) => {
@@ -312,7 +303,7 @@ export function HostRsvpStatus({
                               </span>
                             )}
                             {item.source === "host" && (
-                              <Badge variant="outline">주최자 입력</Badge>
+                              <Badge variant="outline">主催者入力</Badge>
                             )}
                           </div>
                         </div>
@@ -322,7 +313,7 @@ export function HostRsvpStatus({
                             variant="ghost"
                             size="icon"
                             className="size-11"
-                            aria-label={`${item.name} 응답 수정`}
+                            aria-label={`${item.name}の回答を編集`}
                             onClick={() =>
                               setFormState({ kind: "edit", rsvp: item })
                             }
@@ -334,7 +325,7 @@ export function HostRsvpStatus({
                             variant="ghost"
                             size="icon"
                             className="size-11"
-                            aria-label={`${item.name} 응답 삭제`}
+                            aria-label={`${item.name}の回答を削除`}
                             onClick={() => setDeleting(item)}
                           >
                             <Trash2Icon className="size-4" />
@@ -353,11 +344,11 @@ export function HostRsvpStatus({
       {hasRoster && (
         <div className="rounded-md border">
           <h3 className="border-b px-3 py-2 text-sm font-semibold">
-            미응답 ({pending.length})
+            未回答 ({pending.length})
           </h3>
           {pending.length === 0 ? (
             <p className="px-3 py-2 text-sm text-muted-foreground">
-              명부의 모든 멤버가 응답했어요.
+              名簿のすべてのメンバーが回答しました。
             </p>
           ) : (
             <ul className="divide-y">
@@ -387,7 +378,7 @@ export function HostRsvpStatus({
                     className="min-h-11 shrink-0"
                     onClick={() => setFormState({ kind: "create", member })}
                   >
-                    대리 입력
+                    代理入力
                   </Button>
                 </li>
               ))}
@@ -403,11 +394,10 @@ export function HostRsvpStatus({
         <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {formState?.kind === "edit" ? "응답 수정" : "응답 대리 입력"}
+              {formState?.kind === "edit" ? "回答を編集" : "回答を代理入力"}
             </DialogTitle>
             <DialogDescription>
-              현장이나 구두로 받은 응답을 입력해요. 저장하면 출처가 &quot;주최자
-              입력&quot;으로 표시돼요.
+              その場や口頭で受けた回答を入力します。保存すると、入力元が「主催者入力」と表示されます。
             </DialogDescription>
           </DialogHeader>
           {formState && (
@@ -420,35 +410,23 @@ export function HostRsvpStatus({
               }
               memberOptions={memberOptions}
               defaultValues={defaultValues}
-              submitLabel="저장"
+              submitLabel="保存"
               onSubmit={handleSubmit}
             />
           )}
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
+      <ConfirmActionDialog
         open={deleting !== null}
-        // 삭제 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
-        onOpenChange={(open) => !open && !deletePending && setDeleting(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {deleting?.name} 님의 응답을 삭제할까요?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              응답 현황에서 사라지고, 명부 멤버라면 미응답으로 돌아가요.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletePending}>취소</AlertDialogCancel>
-            <AlertDialogAction disabled={deletePending} onClick={confirmDelete}>
-              {deletePending ? "삭제하는 중..." : "삭제"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={(open) => !open && setDeleting(null)}
+        pending={deletePending}
+        title={<>{deleting?.name}さんの回答を削除しますか?</>}
+        description="回答状況から削除され、名簿のメンバーの場合は未回答に戻ります。"
+        confirmLabel="削除"
+        pendingLabel="削除しています..."
+        onConfirm={confirmDelete}
+      />
     </section>
   );
 }

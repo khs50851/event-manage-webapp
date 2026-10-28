@@ -1,4 +1,4 @@
-import { formatDateTime, formatWon } from "@/lib/format";
+import { formatDateTime, formatYen } from "@/lib/format";
 import type {
   GroupMember,
   Rsvp,
@@ -20,14 +20,14 @@ export const PAYMENT_GUIDE_MAX_LENGTH = 300;
 
 // 입금 상태 라벨. 색상에만 의존하지 않도록 화면에는 항상 이 텍스트를 함께 표시한다.
 export const SHARE_STATUS_LABEL: Record<ShareStatus, string> = {
-  unpaid: "미입금",
-  self_reported: "확인 필요",
-  paid: "입금 완료",
+  unpaid: "未入金",
+  self_reported: "要確認",
+  paid: "入金済み",
 };
 
 export const SETTLEMENT_STATUS_LABEL: Record<Settlement["status"], string> = {
-  in_progress: "진행 중",
-  completed: "완료",
+  in_progress: "進行中",
+  completed: "完了",
 };
 
 // ─── 결과 타입과 오류 ───────────────────────────────────────────────
@@ -42,14 +42,14 @@ export type SettlementErrorCode =
   | "below_head_count";
 
 export const SETTLEMENT_ERROR_MESSAGE: Record<SettlementErrorCode, string> = {
-  empty_total: "총액을 입력해 주세요.",
-  invalid_total: "총액은 소수 없이 원 단위 정수로 입력해 주세요.",
-  non_positive_total: "총액은 1원 이상이어야 해요.",
-  total_too_large: "총액은 1억 원 이하로 입력해 주세요.",
-  no_participants: "정산 대상을 1명 이상 선택해 주세요.",
-  invalid_participants: "정산 대상 인원이 올바르지 않아요.",
+  empty_total: "合計金額を入力してください。",
+  invalid_total: "合計金額は小数なしの円単位の整数で入力してください。",
+  non_positive_total: "合計金額は1円以上にしてください。",
+  total_too_large: "合計金額は1億円以下で入力してください。",
+  no_participants: "精算対象を1人以上選択してください。",
+  invalid_participants: "精算対象の人数が正しくありません。",
   below_head_count:
-    "총액이 정산 인원보다 적어 1인 금액이 0원이 돼요. 총액이나 대상을 확인해 주세요.",
+    "合計金額が精算人数より少なく、1人あたりの金額が0円になります。合計金額か対象を確認してください。",
 };
 
 // 성공이면 value, 실패면 오류 코드와 한국어 메시지를 담는다(throw 하지 않는다).
@@ -477,11 +477,11 @@ export function buildSettlementSummaryText(
     ? `[${input.groupName}] ${input.eventTitle}`
     : input.eventTitle;
   return [
-    `${title} 정산 안내`,
-    `일시: ${formatDateTime(input.startsAt)}`,
-    `총액: ${formatWon(input.totalAmount)} / ${input.headCount}명${input.hostIncluded ? "(주최자 포함)" : ""}`,
-    `1인 금액: ${formatWon(input.perPersonAmount)}`,
-    `입금 안내: ${input.paymentGuide}`,
-    `정산 확인: ${input.url}`,
+    `${title} 精算のご案内`,
+    `日時: ${formatDateTime(input.startsAt)}`,
+    `合計: ${formatYen(input.totalAmount)} / ${input.headCount}名${input.hostIncluded ? "(主催者含む)" : ""}`,
+    `1人あたり: ${formatYen(input.perPersonAmount)}`,
+    `振込案内: ${input.paymentGuide}`,
+    `精算確認: ${input.url}`,
   ].join("\n");
 }

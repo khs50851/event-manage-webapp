@@ -14,7 +14,7 @@ export default function GroupError({
     <RouteErrorFallback
       error={error}
       retry={retry}
-      title="모임 정보를 불러오지 못했어요"
+      title="グループ情報を読み込めませんでした"
     />
   );
 }

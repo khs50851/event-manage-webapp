@@ -43,7 +43,7 @@ async function SettlementLoader({
           <ChevronLeftIcon className="size-4" />
           {event.title}
         </Link>
-        <h1 className="text-2xl font-bold">정산 관리</h1>
+        <h1 className="text-2xl font-bold">精算管理</h1>
         <p className="text-sm text-muted-foreground">
           {group?.name ? `${group.name} · ` : ""}
           {formatDateTime(event.startsAt)}

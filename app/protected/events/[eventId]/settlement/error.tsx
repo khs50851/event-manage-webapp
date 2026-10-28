@@ -14,7 +14,7 @@ export default function SettlementError({
     <RouteErrorFallback
       error={error}
       retry={retry}
-      title="정산 정보를 불러오지 못했어요"
+      title="精算情報を読み込めませんでした"
     />
   );
 }

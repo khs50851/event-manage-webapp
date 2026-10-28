@@ -1,3 +1,4 @@
+import { padTwo } from "@/lib/format";
 import { isDeadlinePassed, summarizeRsvps } from "@/lib/rsvp";
 import { summarizeShares } from "@/lib/settlement";
 import type {
@@ -24,8 +25,7 @@ export function addDaysToLocalString(value: string, days: number): string {
   const date = new Date(
     Date.UTC(+year, +month - 1, +day + days, +hour, +minute),
   );
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
+  return `${date.getUTCFullYear()}-${padTwo(date.getUTCMonth() + 1)}-${padTwo(date.getUTCDate())}T${padTwo(date.getUTCHours())}:${padTwo(date.getUTCMinutes())}`;
 }
 
 // 카드 항목 공통: 이동 링크와 표시용 회차 정보

@@ -55,7 +55,7 @@ async function EventDetailLoader({
           className="flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:underline"
         >
           <ChevronLeftIcon className="size-4" />
-          {group?.name ?? "모임"}
+          {group?.name ?? "グループ"}
         </Link>
         <div className="flex items-start justify-between gap-2">
           <h1 className="text-2xl font-bold wrap-break-word">{event.title}</h1>
@@ -68,7 +68,7 @@ async function EventDetailLoader({
         </p>
         {/* 응답 마감은 아래 "응답 마감" 영역에서 표시·변경한다 */}
         <p className="text-sm text-muted-foreground">
-          정원 {event.capacity === null ? "제한 없음" : `${event.capacity}명`}
+          定員 {event.capacity === null ? "制限なし" : `${event.capacity}名`}
         </p>
         {event.description && (
           <p className="text-sm text-muted-foreground">{event.description}</p>
@@ -101,18 +101,18 @@ async function EventDetailLoader({
         className="flex flex-col items-start gap-2 rounded-md border p-4"
       >
         <h2 id="settlement-heading" className="font-semibold">
-          정산
+          精算
         </h2>
         <p className="text-sm text-muted-foreground">
           {settlementProgress
-            ? `${settlementProgress.statusLabel} · 입금 완료 ${settlementProgress.paidCount}/${settlementProgress.targetCount}명`
-            : "아직 정산이 없어요."}
+            ? `${settlementProgress.statusLabel} · 入金済み ${settlementProgress.paidCount}/${settlementProgress.targetCount}名`
+            : "まだ精算がありません。"}
         </p>
         <Link
           href={`/protected/events/${event.id}/settlement`}
           className="flex min-h-11 items-center text-sm font-medium underline"
         >
-          {settlementProgress ? "정산 관리" : "정산 만들기"}
+          {settlementProgress ? "精算を管理" : "精算を作成"}
         </Link>
       </section>
     </div>

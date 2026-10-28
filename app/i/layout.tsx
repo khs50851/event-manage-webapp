@@ -6,7 +6,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 
 // 토큰 링크는 소지자만 열람해야 하므로 검색엔진 색인을 막는다(R1, U3-10).
 export const metadata: Metadata = {
-  title: "모임 초대",
+  title: "グループ招待",
   robots: { index: false, follow: false },
 };
 

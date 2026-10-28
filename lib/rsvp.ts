@@ -2,9 +2,9 @@ import type { GroupEvent, Rsvp, RsvpStatus } from "@/lib/types/domain";
 
 // 응답 상태 라벨. 색상에만 의존하지 않도록 화면에는 항상 이 텍스트를 함께 표시한다.
 export const RSVP_STATUS_LABEL: Record<RsvpStatus, string> = {
-  attending: "참석",
-  declined: "불참",
-  undecided: "미정",
+  attending: "参加",
+  declined: "不参加",
+  undecided: "未定",
 };
 
 export const RSVP_STATUS_ORDER: RsvpStatus[] = [
@@ -46,10 +46,10 @@ export type EventDisplayStatus =
   "scheduled" | "rsvp-closed" | "closed" | "cancelled";
 
 export const EVENT_DISPLAY_LABEL: Record<EventDisplayStatus, string> = {
-  scheduled: "예정",
-  "rsvp-closed": "응답마감",
-  closed: "마감",
-  cancelled: "취소됨",
+  scheduled: "予定",
+  "rsvp-closed": "回答締切",
+  closed: "終了",
+  cancelled: "中止",
 };
 
 // 회차 표시 상태. DB 상태에 응답 마감·시작 시각 경과를 반영한다(표시 전용, now는 "YYYY-MM-DDTHH:mm").

@@ -4,10 +4,10 @@ import { NotFoundNotice } from "@/components/layout/not-found-notice";
 export default function GroupNotFound() {
   return (
     <NotFoundNotice
-      title="모임을 찾을 수 없어요"
-      description="삭제됐거나 주소가 잘못된 모임이에요."
+      title="グループが見つかりません"
+      description="削除されたか、アドレスが間違っているグループです。"
       href="/protected"
-      linkLabel="대시보드로 돌아가기"
+      linkLabel="ダッシュボードに戻る"
     />
   );
 }

@@ -6,6 +6,7 @@ import {
   dbFailure,
   fail,
   getSessionClient,
+  MESSAGES as COMMON_MESSAGES,
   toFieldErrors,
   unauthenticated,
   validationFailed,
@@ -18,6 +19,7 @@ import {
   toGroupEvent,
 } from "@/lib/data/mappers";
 import { isUuid } from "@/lib/data/source";
+import { RSVP_DEADLINE_AFTER_START_MESSAGE } from "@/lib/schemas/common";
 import { eventSchema, type EventFormValues } from "@/lib/schemas/event";
 import type { ActionResult } from "@/lib/types/action";
 import type { GroupEvent } from "@/lib/types/domain";
@@ -30,15 +32,19 @@ import type { GroupEvent } from "@/lib/types/domain";
 // 회차를 만들면 DB 트리거가 초대 토큰을 자동 발급한다.
 
 const MESSAGES = {
-  groupNotFound: "모임을 찾을 수 없어요.",
-  eventNotFound: "회차를 찾을 수 없어요.",
-  cancelledNotEditable: "취소된 회차는 수정할 수 없어요.",
-  endedNotCancellable: "종료된 회차는 취소할 수 없어요.",
-  createFailed: "회차를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  updateFailed: "회차를 수정하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  cancelFailed: "회차를 취소하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  deadlineFailed: "응답 마감을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  deadlineAfterStart: "응답 마감은 시작 시각보다 늦을 수 없어요.",
+  groupNotFound: COMMON_MESSAGES.groupNotFound,
+  eventNotFound: COMMON_MESSAGES.eventNotFound,
+  cancelledNotEditable: "中止された開催回は編集できません。",
+  endedNotCancellable: "終了した開催回は中止できません。",
+  createFailed:
+    "開催回を保存できませんでした。しばらくしてからもう一度お試しください。",
+  updateFailed:
+    "開催回を編集できませんでした。しばらくしてからもう一度お試しください。",
+  cancelFailed:
+    "開催回を中止できませんでした。しばらくしてからもう一度お試しください。",
+  deadlineFailed:
+    "回答締切を保存できませんでした。しばらくしてからもう一度お試しください。",
+  deadlineAfterStart: RSVP_DEADLINE_AFTER_START_MESSAGE,
 } as const;
 
 // 회차 목록(모임 상세), 회차 상세·정산 화면, 대시보드 카드

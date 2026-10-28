@@ -14,8 +14,8 @@ export default function InviteError({
     <RouteErrorFallback
       error={error}
       retry={retry}
-      title="초대 정보를 불러오지 못했어요"
-      hint="문제가 계속되면 주최자에게 알려 주세요."
+      title="招待情報を読み込めませんでした"
+      hint="問題が続く場合は主催者に連絡してください。"
     />
   );
 }

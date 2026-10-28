@@ -26,12 +26,8 @@ export default function Page({
   searchParams: Promise<{ error?: string }>;
 }) {
   return (
-    <div className="flex w-full flex-1 items-center justify-center py-4">
-      <div className="w-full">
-        <Suspense>
-          <ErrorContent searchParams={searchParams} />
-        </Suspense>
-      </div>
-    </div>
+    <Suspense>
+      <ErrorContent searchParams={searchParams} />
+    </Suspense>
   );
 }

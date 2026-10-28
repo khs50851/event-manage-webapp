@@ -12,14 +12,14 @@ import Link from "next/link";
 // 화면별 안내 문구. rsvp: 홈·초대 페이지(기존 문구), settlement: 정산 조회 페이지
 const COPY = {
   rsvp: {
-    title: "로그인해서 참여하는 게 어떠세요?",
+    title: "ログインして参加しませんか?",
     description:
-      "로그인하면 다른 기기에서도 내 응답을 확인하고 수정할 수 있어요. 로그인하지 않아도 참석 응답은 그대로 할 수 있어요.",
+      "ログインすると、他の端末でも自分の回答を確認・編集できます。ログインしなくても出欠の回答はそのままできます。",
   },
   settlement: {
-    title: "정산을 모임에서 편하게 확인해 보세요",
+    title: "精算をグループで便利に確認しましょう",
     description:
-      "로그인하면 참여한 모임의 정산 금액과 내 입금 현황을 한곳에서 볼 수 있어요. 로그인하지 않아도 이 링크로 입금 표시는 그대로 할 수 있어요.",
+      "ログインすると、参加中のグループの精算金額と自分の入金状況をまとめて確認できます。ログインしなくても、このリンクから入金の報告はそのままできます。",
   },
 } as const;
 
@@ -48,10 +48,10 @@ export function GuestAuthNotice({
             variant="outline"
             className={buttonClassName}
           >
-            <Link href="/auth/login">로그인</Link>
+            <Link href="/auth/login">ログイン</Link>
           </Button>
           <Button asChild size="sm" className={buttonClassName}>
-            <Link href="/auth/sign-up">가입</Link>
+            <Link href="/auth/sign-up">新規登録</Link>
           </Button>
         </CardContent>
       </Card>

@@ -18,6 +18,7 @@ import {
 import { fetchJoinedGroups } from "@/lib/data/groups";
 import {
   mockDelay,
+  readFailed,
   resolveDataSource,
   type ServerSupabaseClient,
 } from "@/lib/data/source";
@@ -136,10 +137,7 @@ async function getSupabaseDashboard(
 
   const error =
     groupsResult.error ?? rsvpsResult.error ?? settlementsResult.error;
-  if (error) {
-    console.error("[getDashboard] 조회 실패:", error.code);
-    throw new Error("데이터를 불러오지 못했어요.");
-  }
+  if (error) readFailed("getDashboard", error.code);
 
   const groupRows = groupsResult.data ?? [];
   const settlementRows = settlementsResult.data ?? [];

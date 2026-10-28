@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export function AuthDivider({
   className,
-  children = "또는",
+  children = "または",
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   return (

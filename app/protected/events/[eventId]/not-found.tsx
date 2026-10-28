@@ -4,10 +4,10 @@ import { NotFoundNotice } from "@/components/layout/not-found-notice";
 export default function EventNotFound() {
   return (
     <NotFoundNotice
-      title="회차를 찾을 수 없어요"
-      description="삭제됐거나 주소가 잘못된 회차예요."
+      title="開催回が見つかりません"
+      description="削除されたか、アドレスが間違っている開催回です。"
       href="/protected"
-      linkLabel="대시보드로 돌아가기"
+      linkLabel="ダッシュボードに戻る"
     />
   );
 }

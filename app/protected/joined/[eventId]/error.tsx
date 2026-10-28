@@ -14,7 +14,7 @@ export default function JoinedEventError({
     <RouteErrorFallback
       error={error}
       retry={retry}
-      title="회차 정보를 불러오지 못했어요"
+      title="開催回の情報を読み込めませんでした"
     />
   );
 }

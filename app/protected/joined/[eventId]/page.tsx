@@ -33,7 +33,8 @@ async function JoinedEventLoader({
           href="/"
           className="flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:underline"
         >
-          <ChevronLeftIcon aria-hidden className="size-4" />홈
+          <ChevronLeftIcon aria-hidden className="size-4" />
+          ホーム
         </Link>
         <p className="text-sm text-muted-foreground">{detail.groupName}</p>
         <div className="flex items-start justify-between gap-2">
@@ -46,12 +47,12 @@ async function JoinedEventLoader({
           {event.location}
         </p>
         <p className="text-sm text-muted-foreground">
-          정원 {event.capacity === null ? "제한 없음" : `${event.capacity}명`}
+          定員 {event.capacity === null ? "制限なし" : `${event.capacity}名`}
         </p>
         {event.rsvpDeadline && (
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
             <CalendarClockIcon aria-hidden className="size-4 shrink-0" />
-            응답 마감 {formatDateTime(event.rsvpDeadline)}
+            回答締切 {formatDateTime(event.rsvpDeadline)}
           </p>
         )}
         {event.description && (
@@ -64,7 +65,7 @@ async function JoinedEventLoader({
         className="flex flex-col gap-2 rounded-md border p-4"
       >
         <h2 id="my-rsvp-heading" className="font-semibold">
-          내 응답
+          自分の回答
         </h2>
         <div className="flex items-center gap-2">
           <Badge
@@ -75,10 +76,10 @@ async function JoinedEventLoader({
           <span className="text-sm">{myRsvp.name}</span>
         </div>
         <p className="text-sm text-muted-foreground">
-          {formatDateTime(myRsvp.respondedAt)}에 응답했어요
+          {formatDateTime(myRsvp.respondedAt)}に回答しました
         </p>
         <p className="text-sm text-muted-foreground">
-          응답을 바꾸려면 주최자에게 받은 초대 링크로 다시 들어가 주세요.
+          回答を変更するには、主催者から受け取った招待リンクからもう一度アクセスしてください。
         </p>
       </section>
     </div>

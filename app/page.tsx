@@ -6,7 +6,7 @@ import { GuestAuthNotice } from "@/components/guest-auth-notice";
 import { AppHeader } from "@/components/layout/app-header";
 import { MobileShell } from "@/components/layout/mobile-shell";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { createClient } from "@/lib/supabase/server";
+import { getIsLoggedIn } from "@/lib/data/source";
 import { hasEnvVars } from "@/lib/utils";
 
 // 헤더는 로그인 여부와 무관하므로 폴백 셸과 실제 셸에서 같이 쓴다
@@ -29,12 +29,12 @@ function GuestHome() {
     <div className="flex flex-1 flex-col gap-6">
       <section className="flex flex-col gap-2 rounded-2xl bg-muted p-6">
         <h1 className="text-2xl leading-tight font-bold">
-          모임 일정과 참석 응답을
-          <br />한 곳에서
+          グループの日程と出欠を
+          <br />
+          1か所で
         </h1>
         <p className="text-sm text-muted-foreground">
-          초대 링크 하나로 참석 여부를 모으고, 회차별 일정을 간편하게
-          관리하세요.
+          招待リンク1つで出欠を集め、開催回ごとの日程を簡単に管理しましょう。
         </p>
       </section>
       {hasEnvVars && <GuestAuthNotice className="max-w-none" />}
@@ -48,7 +48,7 @@ function HomeBodySkeleton() {
     <div
       className="flex flex-1 flex-col gap-6"
       aria-busy="true"
-      aria-label="불러오는 중"
+      aria-label="読み込み中"
     >
       <div className="h-36 animate-pulse rounded-2xl bg-muted" />
       <div className="h-24 animate-pulse rounded-2xl bg-muted" />
@@ -59,12 +59,8 @@ function HomeBodySkeleton() {
 // 로그인 여부(세션 쿠키 = 요청별 데이터)에 따라 셸 전체를 구성한다.
 // 탭바 표시 여부와 하단 여백이 MobileShell 단위로 결정되므로 셸까지 이 컴포넌트 안에서 만든다.
 async function HomeShell() {
-  let isLoggedIn = false;
-  if (hasEnvVars) {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
-    isLoggedIn = Boolean(data?.claims);
-  }
+  // 환경 변수가 없으면 Supabase 클라이언트를 만들 수 없으므로 세션 확인을 건너뛴다
+  const isLoggedIn = hasEnvVars ? await getIsLoggedIn() : false;
 
   return (
     // 비로그인 시 탭바는 보호 경로 링크뿐이므로 숨긴다

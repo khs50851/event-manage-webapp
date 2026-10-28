@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toKoreanAuthError } from "@/lib/auth/error-message";
+import { AuthFormError } from "@/components/auth-form-error";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -52,16 +53,15 @@ export function ForgotPasswordForm({
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">
-              <h1>이메일을 확인해 주세요</h1>
+              <h1>メールをご確認ください</h1>
             </CardTitle>
             <CardDescription>
-              비밀번호 재설정 안내 메일을 보냈어요.
+              パスワード再設定のご案内メールを送信しました。
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              이메일과 비밀번호로 가입한 계정이라면 비밀번호 재설정 메일을 받을
-              수 있어요. 메일이 보이지 않으면 스팸함도 확인해 주세요.
+              メールアドレスとパスワードで登録したアカウントであれば、再設定メールが届きます。メールが見当たらない場合は迷惑メールフォルダもご確認ください。
             </p>
           </CardContent>
         </Card>
@@ -69,18 +69,17 @@ export function ForgotPasswordForm({
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">
-              <h1>비밀번호 재설정</h1>
+              <h1>パスワードの再設定</h1>
             </CardTitle>
             <CardDescription>
-              가입한 이메일을 입력하면 비밀번호를 재설정할 수 있는 링크를
-              보내드려요.
+              登録したメールアドレスを入力すると、パスワードを再設定できるリンクをお送りします。
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleForgotPassword}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">이메일</Label>
+                  <Label htmlFor="email">メールアドレス</Label>
                   <Input
                     id="email"
                     type="email"
@@ -91,22 +90,18 @@ export function ForgotPasswordForm({
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {error && (
-                  <p role="alert" className="text-sm text-destructive">
-                    {error}
-                  </p>
-                )}
+                <AuthFormError message={error} />
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "보내는 중..." : "재설정 메일 보내기"}
+                  {isLoading ? "送信中..." : "再設定メールを送信"}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
-                이미 계정이 있으신가요?{" "}
+                すでにアカウントをお持ちですか?{" "}
                 <Link
                   href="/auth/login"
                   className="inline-flex min-h-11 min-w-11 items-center justify-center underline underline-offset-4"
                 >
-                  로그인
+                  ログイン
                 </Link>
               </div>
             </form>

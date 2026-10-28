@@ -15,7 +15,7 @@ export function LogoutButton() {
 
   return (
     <Button variant="outline" className="min-h-11 w-full" onClick={logout}>
-      로그아웃
+      ログアウト
     </Button>
   );
 }

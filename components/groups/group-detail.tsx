@@ -12,19 +12,10 @@ import {
   reportActionException,
   reportActionFailure,
 } from "@/components/groups/action-feedback";
+import { ConfirmActionDialog } from "@/components/groups/confirm-action-dialog";
 import { EventList } from "@/components/groups/event-list";
 import { GroupForm } from "@/components/groups/group-form";
 import { MemberRoster } from "@/components/groups/member-roster";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,7 +78,7 @@ export function GroupDetail({
       description: values.description.trim(),
     });
     setEditing(false);
-    toast.success("모임 정보를 수정했어요.");
+    toast.success("グループ情報を編集しました。");
   }
 
   async function handleEdit(
@@ -98,7 +89,7 @@ export function GroupDetail({
       if (result.ok) {
         setGroup(result.data.group);
         setEditing(false);
-        toast.success("모임 정보를 수정했어요.");
+        toast.success("グループ情報を編集しました。");
         return;
       }
       if (isDevPreviewFallback(result)) {
@@ -114,7 +105,7 @@ export function GroupDetail({
   // 비로그인 개발 미리보기 폴백: 기존 화면 시뮬레이션
   function simulateDelete() {
     setDeleting(false);
-    toast.success("모임을 삭제했어요. (더미: 실제로 삭제되지 않아요)");
+    toast.success("グループを削除しました。(ダミー:実際には削除されません)");
     // 하단 탭바 "홈"과 같은 대시보드(/protected)로 돌아간다. 내 모임 목록도 여기에 있다
     router.push("/protected");
   }
@@ -128,7 +119,7 @@ export function GroupDetail({
       const result = await deleteGroup(group.id);
       if (result.ok) {
         setDeleting(false);
-        toast.success("모임을 삭제했어요.");
+        toast.success("グループを削除しました。");
         router.push("/protected");
         return;
       }
@@ -157,7 +148,7 @@ export function GroupDetail({
               </p>
             )}
           </div>
-          {group.isOneOff && <Badge variant="secondary">1회성</Badge>}
+          {group.isOneOff && <Badge variant="secondary">単発</Badge>}
         </div>
         <div className="flex gap-2">
           <Button
@@ -168,7 +159,7 @@ export function GroupDetail({
             onClick={() => setEditing(true)}
           >
             <PencilIcon className="size-4" />
-            수정
+            編集
           </Button>
           <Button
             type="button"
@@ -179,7 +170,7 @@ export function GroupDetail({
             onClick={() => setDeleting(true)}
           >
             <Trash2Icon className="size-4" />
-            삭제
+            削除
           </Button>
         </div>
       </header>
@@ -203,9 +194,9 @@ export function GroupDetail({
       <Dialog open={editing} onOpenChange={setEditing}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>모임 수정</DialogTitle>
+            <DialogTitle>グループを編集</DialogTitle>
             <DialogDescription>
-              이름은 1~50자로 입력해 주세요.
+              名前は1〜50文字で入力してください。
             </DialogDescription>
           </DialogHeader>
           <GroupForm
@@ -213,35 +204,22 @@ export function GroupDetail({
               name: group.name,
               description: group.description,
             }}
-            submitLabel="저장"
+            submitLabel="保存"
             onSubmit={handleEdit}
           />
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
+      <ConfirmActionDialog
         open={deleting}
-        // 삭제 처리 중에는 닫지 않는다(결과를 확인하고 재시도할 수 있게)
-        onOpenChange={(open) => !deletePending && setDeleting(open)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              &quot;{group.name}&quot; 모임을 삭제할까요?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              하위 회차 {events.length}건과 그 응답·정산이 함께 삭제되며 되돌릴
-              수 없어요.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletePending}>취소</AlertDialogCancel>
-            <AlertDialogAction disabled={deletePending} onClick={confirmDelete}>
-              {deletePending ? "삭제하는 중..." : "모두 삭제"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={setDeleting}
+        pending={deletePending}
+        title={<>「{group.name}」を削除しますか?</>}
+        description={`配下の開催回${events.length}件と、その回答・精算もまとめて削除され、元に戻せません。`}
+        confirmLabel="すべて削除"
+        pendingLabel="削除しています..."
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

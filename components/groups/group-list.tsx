@@ -6,13 +6,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Group } from "@/lib/types/domain";
 import { cn } from "@/lib/utils";
 
-interface GroupListProps {
-  groups: Group[];
+// T: 목록 항목 타입. JoinedGroup처럼 Group을 확장한 타입이면 getHref에서 확장 필드를 바로 쓸 수 있다.
+interface GroupListProps<T extends Group> {
+  groups: T[];
   // 목록이 비었을 때 보여줄 내용(안내 문구, CTA 등)
   empty: React.ReactNode;
   // 항목의 이동 경로. null이면 이동하지 않는 카드로 표시한다.
   // 기본값은 주최자용 모임 상세(/protected/groups/[id])
-  getHref?: (group: Group) => string | null;
+  getHref?: (group: T) => string | null;
 }
 
 function hostedGroupHref(group: Group) {
@@ -52,7 +53,7 @@ export function GroupSectionHeader({
           <span className="truncate">{title}</span>
           {count !== null && (
             <span className="text-base font-medium text-muted-foreground tabular-nums">
-              {count}개
+              {count}件
             </span>
           )}
         </Heading>
@@ -82,7 +83,7 @@ function GroupItemContent({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
-        {group.isOneOff && <Badge variant="secondary">1회성</Badge>}
+        {group.isOneOff && <Badge variant="secondary">単発</Badge>}
         {linked ? (
           // 상세로 이동할 수 있는 카드임을 알리는 표시
           <ChevronRightIcon
@@ -92,7 +93,7 @@ function GroupItemContent({
         ) : (
           // 이동하지 않는 카드: 역할을 글자로 표시한다(색에만 의존하지 않음)
           <Badge variant="outline" className="text-muted-foreground">
-            참여 중
+            参加中
           </Badge>
         )}
       </div>
@@ -104,11 +105,11 @@ const ITEM_CLASS =
   "flex min-h-20 items-center justify-between gap-3 rounded-md border p-4";
 
 // 모임 카드 리스트(내 모임 / 참여한 모임 공용)
-export function GroupList({
+export function GroupList<T extends Group>({
   groups,
   empty,
   getHref = hostedGroupHref,
-}: GroupListProps) {
+}: GroupListProps<T>) {
   if (groups.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-md border border-dashed p-6 text-center">

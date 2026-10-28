@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 
+import { mockDelay } from "@/lib/data/source";
 import {
   mockEvents,
   mockGroups,
@@ -15,18 +16,13 @@ import type {
 } from "@/lib/types/domain";
 
 // 정산 더미 조회 함수. 연동 단계(I4)에서 구현만 Supabase 호출로 교체하고 시그니처는 유지한다.
-// 로딩 상태(Suspense 스켈레톤) 확인용 인위적 지연.
-const MOCK_DELAY_MS = 300;
-
-function delay() {
-  return new Promise((resolve) => setTimeout(resolve, MOCK_DELAY_MS));
-}
+// 로딩 상태(Suspense 스켈레톤) 확인용 인위적 지연은 다른 조회 함수와 같은 mockDelay를 쓴다.
 
 // 주최자용: 회차의 정산, 정산 항목, 현재 유효한 정산 토큰. 정산이 없으면 settlement가 null.
 export async function getHostSettlement(
   eventId: string,
 ): Promise<HostSettlementData> {
-  await delay();
+  await mockDelay();
   const settlement =
     mockSettlements.find((item) => item.eventId === eventId) ?? null;
   if (!settlement) return { settlement: null, shares: [], activeToken: null };
@@ -51,7 +47,7 @@ export async function getSettlementByToken(
 ): Promise<SettlementLookup> {
   // 입금 상태는 요청 시점 값이어야 하므로 프리렌더에서 제외한다.
   await connection();
-  await delay();
+  await mockDelay();
 
   const record = mockSettlementTokens.find((item) => item.token === token);
   if (!record) return { status: "invalid" };
@@ -101,7 +97,7 @@ export async function getPublicSettlementShare(
   shareId: string,
 ): Promise<PublicMySettlementShare | null> {
   await connection();
-  await delay();
+  await mockDelay();
 
   const record = mockSettlementTokens.find((item) => item.token === token);
   if (!record || record.revoked) return null;

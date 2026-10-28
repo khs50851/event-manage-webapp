@@ -30,15 +30,15 @@ export function PublicRsvpList({
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="public-rsvp-heading" className="text-lg font-semibold">
-          응답 현황
+          回答状況
         </h2>
         <p className="text-sm text-muted-foreground">
-          참석 {summary.attending.length}
-          {capacity !== null && `/${capacity}`}명
+          参加 {summary.attending.length}
+          {capacity !== null && `/${capacity}`}名
           {summary.overflow > 0 && (
             <span className="font-semibold text-destructive">
               {" "}
-              (정원 초과 +{summary.overflow})
+              (定員超過 +{summary.overflow})
             </span>
           )}
         </p>
@@ -46,18 +46,18 @@ export function PublicRsvpList({
 
       {rsvps.length === 0 ? (
         <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-          아직 응답이 없어요. 첫 번째로 응답해 보세요.
+          まだ回答がありません。最初に回答してみましょう。
         </p>
       ) : (
         <dl className="flex flex-col gap-3">
           {RSVP_STATUS_ORDER.map((status) => (
             <div key={status} className="rounded-md border p-3">
               <dt className="text-sm font-semibold">
-                {RSVP_STATUS_LABEL[status]} {summary[status].length}명
+                {RSVP_STATUS_LABEL[status]} {summary[status].length}名
               </dt>
               <dd className="mt-1 text-sm">
                 {summary[status].length === 0 ? (
-                  <span className="text-muted-foreground">없음</span>
+                  <span className="text-muted-foreground">なし</span>
                 ) : (
                   <ul className="flex flex-wrap gap-x-3 gap-y-1">
                     {summary[status].map((item) => (
@@ -68,7 +68,7 @@ export function PublicRsvpList({
                         )}
                       >
                         {item.name}
-                        {item.id === myRsvpId && " (내 응답)"}
+                        {item.id === myRsvpId && " (自分の回答)"}
                       </li>
                     ))}
                   </ul>

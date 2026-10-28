@@ -73,7 +73,7 @@ function DashboardSkeleton() {
     <div
       className="flex flex-col gap-8"
       aria-busy="true"
-      aria-label="대시보드를 불러오는 중"
+      aria-label="ダッシュボードを読み込み中"
     >
       <DashboardCardsSkeleton />
       <div className="flex flex-col gap-3">
@@ -94,7 +94,7 @@ export default function DashboardPage({
 }) {
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
-      <h1 className="text-2xl font-bold">대시보드</h1>
+      <h1 className="text-2xl font-bold">ダッシュボード</h1>
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardLoader searchParams={searchParams} />
       </Suspense>

@@ -15,7 +15,7 @@ export type FormSubmitOutcome = {
 
 // 액션 호출 자체가 실패(네트워크 끊김 등)했을 때의 안내
 const NETWORK_FAILURE_MESSAGE =
-  "저장하지 못했어요. 잠시 후 다시 시도해 주세요.";
+  "保存できませんでした。しばらくしてからもう一度お試しください。";
 
 // 비로그인 개발 미리보기 폴백 여부.
 // proxy의 목업 미리보기(개발 환경 /protected/* 비로그인 열람)에서는 세션이 없어 액션이 unauthenticated를 돌려준다.

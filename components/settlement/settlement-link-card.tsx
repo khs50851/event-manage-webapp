@@ -24,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createMockToken } from "@/lib/mock/token";
 import {
   buildSettlementSummaryText,
   type SettlementSummaryTextInput,
@@ -82,21 +83,21 @@ export function SettlementLinkCard({
       setCopied(target);
       toast.success(message);
     } catch {
-      toast.error("복사하지 못했어요. 내용을 길게 눌러 직접 복사해 주세요.");
+      toast.error(
+        "コピーできませんでした。内容を長押しして直接コピーしてください。",
+      );
     }
   }
 
   function confirmReissue() {
-    // 실제 토큰은 서버에서 발급하는 128비트 이상 무작위 값. 여기서는 같은 길이로 흉내만 낸다.
-    const bytes = crypto.getRandomValues(new Uint8Array(16));
-    const nextToken = Array.from(bytes, (byte) =>
-      byte.toString(16).padStart(2, "0"),
-    ).join("");
+    // 실제 토큰은 서버에서 발급한다. 여기서는 같은 길이의 무작위 값으로 흉내만 낸다.
     setPreviousToken(token);
-    setToken(nextToken);
+    setToken(createMockToken());
     setCopied(null);
     setConfirming(false);
-    toast.success("새 정산 링크를 발급했어요. 이전 링크는 이제 열리지 않아요.");
+    toast.success(
+      "新しい精算リンクを発行しました。以前のリンクは開けなくなります。",
+    );
   }
 
   return (
@@ -111,13 +112,12 @@ export function SettlementLinkCard({
             className="flex items-center gap-2 font-semibold"
           >
             <ReceiptTextIcon className="size-4 shrink-0" aria-hidden />
-            정산 링크
+            精算リンク
           </h2>
-          <Badge variant="outline">초대 링크와 별개</Badge>
+          <Badge variant="outline">招待リンクとは別</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          참가자가 본인 금액과 입금 상태를 확인하는 링크예요. 참석 응답용 초대
-          링크와 주소가 달라요.
+          参加者が自分の金額と入金状況を確認するリンクです。出欠回答用の招待リンクとはアドレスが異なります。
         </p>
       </div>
 
@@ -125,7 +125,7 @@ export function SettlementLinkCard({
         <>
           <div className="flex flex-col gap-2">
             <label htmlFor="settlement-link-url" className="sr-only">
-              정산 링크 주소
+              精算リンクのアドレス
             </label>
             <Input
               id="settlement-link-url"
@@ -138,14 +138,16 @@ export function SettlementLinkCard({
               <Button
                 type="button"
                 className="min-h-11 flex-1"
-                onClick={() => copy("link", url, "정산 링크를 복사했어요.")}
+                onClick={() =>
+                  copy("link", url, "精算リンクをコピーしました。")
+                }
               >
                 {copied === "link" ? (
                   <CheckIcon aria-hidden />
                 ) : (
                   <CopyIcon aria-hidden />
                 )}
-                {copied === "link" ? "복사했어요" : "링크 복사"}
+                {copied === "link" ? "コピーしました" : "リンクをコピー"}
               </Button>
               <Button
                 type="button"
@@ -154,7 +156,7 @@ export function SettlementLinkCard({
                 onClick={() => setConfirming(true)}
               >
                 <RefreshCwIcon aria-hidden />
-                재발급
+                再発行
               </Button>
             </div>
           </div>
@@ -165,17 +167,17 @@ export function SettlementLinkCard({
               className="flex flex-col gap-1 rounded-md bg-muted p-3 text-sm"
             >
               <p className="break-all">
-                이전 링크(/s/{previousToken})는 만료됐어요. 그 링크로 들어오면
-                &quot;만료된 링크&quot; 안내가 보여요.
+                以前のリンク(/s/{previousToken}
+                )は無効になりました。そのリンクでアクセスすると「有効期限切れのリンク」と表示されます。
               </p>
               <p className="text-xs text-muted-foreground">
-                더미 화면이라 새 링크는 연동 단계에서 실제로 열려요.
+                ダミー画面のため、新しいリンクは連携段階で実際に開けるようになります。
               </p>
               <Link
                 href={EXPIRED_PREVIEW_PATH}
                 className="inline-flex min-h-11 items-center self-start font-medium underline underline-offset-4"
               >
-                만료 화면 미리보기
+                期限切れ画面のプレビュー
               </Link>
             </div>
           )}
@@ -183,14 +185,13 @@ export function SettlementLinkCard({
           <div className="flex flex-col gap-2 border-t pt-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold">
               <FileTextIcon className="size-4 shrink-0" aria-hidden />
-              단체 대화방 안내 문구
+              グループチャット用の案内文
             </h3>
             <p className="text-sm text-muted-foreground">
-              금액, 입금 안내, 정산 링크가 함께 담겨요. 복사해서 메신저에 붙여
-              넣으세요.
+              金額、振込案内、精算リンクがまとめて入っています。コピーしてメッセンジャーに貼り付けてください。
             </p>
             <pre
-              aria-label="안내 문구 미리보기"
+              aria-label="案内文のプレビュー"
               tabIndex={0}
               className="max-h-60 overflow-y-auto rounded-md bg-muted p-3 font-sans text-sm wrap-break-word whitespace-pre-wrap"
             >
@@ -201,7 +202,7 @@ export function SettlementLinkCard({
               variant="outline"
               className="min-h-11"
               onClick={() =>
-                copy("summary", summary, "안내 문구를 복사했어요.")
+                copy("summary", summary, "案内文をコピーしました。")
               }
             >
               {copied === "summary" ? (
@@ -209,36 +210,35 @@ export function SettlementLinkCard({
               ) : (
                 <CopyIcon aria-hidden />
               )}
-              {copied === "summary" ? "복사했어요" : "안내 문구 복사"}
+              {copied === "summary" ? "コピーしました" : "案内文をコピー"}
             </Button>
           </div>
           {/* 버튼 문구 변화를 스크린 리더에도 알린다. */}
           <p className="sr-only" aria-live="polite">
-            {copied === "link" && "정산 링크를 복사했어요."}
-            {copied === "summary" && "안내 문구를 복사했어요."}
+            {copied === "link" && "精算リンクをコピーしました。"}
+            {copied === "summary" && "案内文をコピーしました。"}
           </p>
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
-          정산 링크는 정산을 저장하면 발급돼요. (더미: 새로 만든 정산의 링크는
-          연동 단계에서 실제로 열려요)
+          精算リンクは精算を保存すると発行されます。(ダミー:新しく作った精算のリンクは連携段階で実際に開けるようになります)
         </p>
       )}
 
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>정산 링크를 재발급할까요?</AlertDialogTitle>
+            <AlertDialogTitle>精算リンクを再発行しますか?</AlertDialogTitle>
             <AlertDialogDescription>
-              지금 링크는 바로 만료되어 더 이상 열리지 않아요. 입금 상태는
-              그대로 유지되고, 참가자에게는 새 링크를 다시 공유해야 해요. 초대
-              링크에는 영향이 없어요.
+              現在のリンクはすぐに無効になり、開けなくなります。入金状況はそのまま保持されますが、参加者には新しいリンクを再度共有する必要があります。招待リンクには影響しません。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">취소</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-11">
+              キャンセル
+            </AlertDialogCancel>
             <AlertDialogAction className="min-h-11" onClick={confirmReissue}>
-              재발급
+              再発行
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

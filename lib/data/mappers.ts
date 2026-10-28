@@ -1,3 +1,4 @@
+import { padTwo } from "@/lib/format";
 import type { EventFormValues } from "@/lib/schemas/event";
 import type { Tables } from "@/lib/supabase/database.types";
 import type {
@@ -24,16 +25,12 @@ import type {
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const LOCAL_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
-function pad(value: number) {
-  return String(value).padStart(2, "0");
-}
-
 // timestamptz(ISO 8601) → "YYYY-MM-DDTHH:mm"(한국 시간). 해석할 수 없으면 null.
 export function toKstLocal(value: string): string | null {
   const time = new Date(value).getTime();
   if (Number.isNaN(time)) return null;
   const kst = new Date(time + KST_OFFSET_MS);
-  return `${kst.getUTCFullYear()}-${pad(kst.getUTCMonth() + 1)}-${pad(kst.getUTCDate())}T${pad(kst.getUTCHours())}:${pad(kst.getUTCMinutes())}`;
+  return `${kst.getUTCFullYear()}-${padTwo(kst.getUTCMonth() + 1)}-${padTwo(kst.getUTCDate())}T${padTwo(kst.getUTCHours())}:${padTwo(kst.getUTCMinutes())}`;
 }
 
 // "YYYY-MM-DDTHH:mm"(초가 붙어도 허용, 초는 버림) 한국 시간 → timestamptz로 보낼 ISO 문자열("...:00+09:00").
@@ -245,7 +242,7 @@ export type EventWriteFields = {
   rsvp_deadline: string | null;
 };
 
-export const INVALID_DATETIME_MESSAGE = "일시 형식이 올바르지 않아요.";
+export const INVALID_DATETIME_MESSAGE = "日時の形式が正しくありません。";
 
 export function toEventWriteFields(
   values: EventFormValues,

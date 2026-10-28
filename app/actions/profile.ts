@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  MESSAGES as COMMON_MESSAGES,
+  type ServerSupabaseClient,
+} from "@/lib/actions/shared";
 import { AvatarImageError, processAvatarImage } from "@/lib/avatar-image";
 import { createAvatarSignedUrl } from "@/lib/data/avatars";
 import {
@@ -24,22 +28,23 @@ export type AvatarActionResult =
 const AVATAR_PATHS_TO_REVALIDATE = ["/protected/me"];
 
 const MESSAGES = {
-  unauthenticated: "로그인이 필요해요.",
-  noFile: "올릴 사진을 선택해 주세요.",
-  tooLarge: "사진은 3MB 이하만 올릴 수 있어요.",
-  unsupported: "JPG, PNG, WebP 사진만 올릴 수 있어요.",
+  unauthenticated: COMMON_MESSAGES.unauthenticated,
+  noFile: "アップロードする写真を選択してください。",
+  tooLarge: "写真は3MB以下のみアップロードできます。",
+  unsupported: "JPG、PNG、WebPの写真のみアップロードできます。",
   tooManyPixels:
-    "사진 해상도가 너무 커요. 더 작은 사진으로 다시 시도해 주세요.",
-  invalidImage: "사진을 읽지 못했어요. 다른 사진으로 다시 시도해 주세요.",
-  uploadFailed: "사진을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  removeFailed: "사진을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    "写真の解像度が大きすぎます。より小さい写真でもう一度お試しください。",
+  invalidImage:
+    "写真を読み込めませんでした。別の写真でもう一度お試しください。",
+  uploadFailed:
+    "写真を保存できませんでした。しばらくしてからもう一度お試しください。",
+  removeFailed:
+    "写真を削除できませんでした。しばらくしてからもう一度お試しください。",
 } as const;
 
 function fail(message: string): AvatarActionResult {
   return { ok: false, message };
 }
-
-type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 // 세션 사용자 id(JWT sub). 없으면 null.
 async function getSessionUserId(

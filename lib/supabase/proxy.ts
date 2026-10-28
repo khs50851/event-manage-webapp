@@ -51,12 +51,6 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  // UI 단계(더미 데이터) 확인용: 개발 환경에서만 /protected/* 를 로그인 없이 열람한다.
-  // 프로덕션 빌드(NODE_ENV=production)에서는 항상 차단된다. 연동 단계(I2) 전에 제거한다.
-  const isMockPreview =
-    process.env.NODE_ENV !== "production" &&
-    request.nextUrl.pathname.startsWith("/protected");
-
   // 비회원 토큰 페이지: 초대(/i/[token])와 정산(/s/[token]) 두 접두사만 허용한다(PRD 5장).
   // 쿠키 처리는 건드리지 않고 리다이렉트 판단에만 쓴다(R4).
   const isGuestTokenPath =
@@ -65,7 +59,6 @@ export async function updateSession(request: NextRequest) {
 
   if (
     request.nextUrl.pathname !== "/" &&
-    !isMockPreview &&
     !isGuestTokenPath &&
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&

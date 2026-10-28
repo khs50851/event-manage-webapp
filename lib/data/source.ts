@@ -46,6 +46,13 @@ export async function getIsLoggedIn(): Promise<boolean> {
   return Boolean(data?.claims);
 }
 
+// 읽기 실패 공통 처리: 서버 로그에는 오류 코드만 남기고 화면에는 일반 메시지만 전달한다
+// (던진 오류는 라우트의 error.tsx(재시도)가 받는다).
+export function readFailed(scope: string, code: string | undefined): never {
+  console.error(`[${scope}] 조회 실패:`, code ?? "unknown");
+  throw new Error("データを読み込めませんでした。");
+}
+
 // 더미 경로 전용 인위적 지연(Suspense 스켈레톤 확인용). 실데이터 경로에는 쓰지 않는다.
 const MOCK_DELAY_MS = 300;
 

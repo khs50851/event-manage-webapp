@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatWon } from "@/lib/format";
+import { formatYen } from "@/lib/format";
 import {
   settlementSchema,
   type SettlementFormValues,
@@ -102,19 +102,19 @@ export function SettlementForm({
           name="totalAmount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>총액 (원)</FormLabel>
+              <FormLabel>合計金額(円)</FormLabel>
               <FormControl>
                 <Input
                   className="min-h-11 tabular-nums"
                   inputMode="numeric"
                   enterKeyHint="next"
-                  placeholder="예: 50000"
+                  placeholder="例:5000"
                   autoComplete="off"
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                원 단위 숫자만 입력해요. 쉼표는 넣어도 괜찮아요.
+                円単位の数字のみ入力してください。カンマを入れても構いません。
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -138,9 +138,11 @@ export function SettlementForm({
                   />
                 </FormControl>
                 <span className="flex flex-col gap-0.5">
-                  <span className="font-medium">주최자 본인도 나눠 내기</span>
+                  <span className="font-medium">
+                    主催者本人も割り勘に含める
+                  </span>
                   <span className="text-xs text-muted-foreground">
-                    체크하면 본인도 인원에 넣어 1/N을 계산해요.
+                    チェックすると、本人も人数に含めて1/Nを計算します。
                   </span>
                 </span>
               </FormLabel>
@@ -152,18 +154,20 @@ export function SettlementForm({
         <div role="status" aria-live="polite">
           {preview?.ok && (
             <div className="flex flex-col gap-1 rounded-md bg-muted p-3">
-              <p className="text-sm text-muted-foreground">1인 금액 미리보기</p>
+              <p className="text-sm text-muted-foreground">
+                1人あたりの金額プレビュー
+              </p>
               <p className="text-xl font-bold wrap-break-word tabular-nums">
-                {formatWon(preview.value.perPersonAmount)}
+                {formatYen(preview.value.perPersonAmount)}
                 <span className="ml-1 text-sm font-normal text-muted-foreground">
-                  × {preview.value.headCount}명
-                  {preview.value.hostIncluded && " (주최자 포함)"}
+                  × {preview.value.headCount}名
+                  {preview.value.hostIncluded && " (主催者含む)"}
                 </span>
               </p>
               {preview.value.hostRemainder > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  나누어떨어지지 않는 {formatWon(preview.value.hostRemainder)}은
-                  주최자가 부담해요.
+                  割り切れない{formatYen(preview.value.hostRemainder)}
+                  は主催者が負担します。
                 </p>
               )}
             </div>
@@ -179,7 +183,7 @@ export function SettlementForm({
           )}
           {!preview && (
             <p className="text-sm text-muted-foreground">
-              총액을 입력하면 1인 금액을 바로 계산해 보여드려요.
+              合計金額を入力すると、1人あたりの金額をすぐに計算して表示します。
             </p>
           )}
         </div>
@@ -189,18 +193,18 @@ export function SettlementForm({
           name="paymentGuide"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>입금 안내</FormLabel>
+              <FormLabel>振込案内</FormLabel>
               <FormControl>
                 <Textarea
                   className="min-h-20"
-                  placeholder="예: OO은행 123-456-7890 홍길동"
+                  placeholder="例:OO銀行 123-456-7890 山田太郎"
                   maxLength={PAYMENT_GUIDE_MAX_LENGTH}
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                계좌번호와 예금주를 적어 주세요. 정산 링크와 안내 문구에 그대로
-                보여요. ({field.value.length}/{PAYMENT_GUIDE_MAX_LENGTH}자)
+                口座番号と口座名義を記入してください。精算リンクと案内文にそのまま表示されます。(
+                {field.value.length}/{PAYMENT_GUIDE_MAX_LENGTH}文字)
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -215,7 +219,7 @@ export function SettlementForm({
               className="min-h-11"
               onClick={onCancel}
             >
-              취소
+              キャンセル
             </Button>
           )}
           <Button
@@ -226,7 +230,7 @@ export function SettlementForm({
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" aria-hidden />
             )}
-            {form.formState.isSubmitting ? "저장 중..." : submitLabel}
+            {form.formState.isSubmitting ? "保存中..." : submitLabel}
           </Button>
         </div>
       </form>

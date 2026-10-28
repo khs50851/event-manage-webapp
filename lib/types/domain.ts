@@ -234,8 +234,6 @@ export type RsvpRejectReason =
   | "validation"
   | "failed";
 
-// "참여한 모임"(Q12) 항목. 로그인 상태로 응답한 다른 사람의 모임이며, 모임 설명은 공개하지 않는다(빈 문자열).
-// nextEvent: 내가 응답한 회차 중 가장 가까운 예정 회차(없으면 null)
 // 참여한 모임 상세(Q12 확장): 내가 응답한 회차 1건과 내 응답. 명부·타인 응답·정산·모임 설명은 포함하지 않는다.
 export type JoinedEventDetail = {
   groupId: string;
@@ -244,6 +242,8 @@ export type JoinedEventDetail = {
   myRsvp: { name: string; status: RsvpStatus; respondedAt: string };
 };
 
+// "참여한 모임"(Q12) 항목. 로그인 상태로 응답한 다른 사람의 모임이며, 모임 설명은 공개하지 않는다(빈 문자열).
+// nextEvent: 내가 응답한 회차 중 가장 가까운 예정 회차(없으면 null)
 export type JoinedGroup = Group & {
   nextEvent: { id: string; title: string; startsAt: string } | null;
 };

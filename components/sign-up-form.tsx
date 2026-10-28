@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toKoreanAuthError } from "@/lib/auth/error-message";
 import { AuthDivider } from "@/components/auth-divider";
+import { AuthFormError } from "@/components/auth-form-error";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +38,7 @@ export function SignUpForm({
     setError(null);
 
     if (password !== repeatPassword) {
-      setError("비밀번호가 일치하지 않아요.");
+      setError("パスワードが一致しません。");
       setIsLoading(false);
       return;
     }
@@ -71,9 +72,11 @@ export function SignUpForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            <h1>회원가입</h1>
+            <h1>新規登録</h1>
           </CardTitle>
-          <CardDescription>새 계정을 만들어 주세요.</CardDescription>
+          <CardDescription>
+            新しいアカウントを作成してください。
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <GoogleSignInButton />
@@ -81,7 +84,7 @@ export function SignUpForm({
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">メールアドレス</Label>
                 <Input
                   id="email"
                   type="email"
@@ -94,7 +97,7 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">비밀번호</Label>
+                  <Label htmlFor="password">パスワード</Label>
                 </div>
                 <Input
                   id="password"
@@ -107,7 +110,7 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="repeat-password">비밀번호 확인</Label>
+                  <Label htmlFor="repeat-password">パスワード(確認)</Label>
                 </div>
                 <Input
                   id="repeat-password"
@@ -118,22 +121,18 @@ export function SignUpForm({
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
-              {error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              )}
+              <AuthFormError message={error} />
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "가입하는 중..." : "회원가입"}
+                {isLoading ? "登録中..." : "新規登録"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              이미 계정이 있으신가요?{" "}
+              すでにアカウントをお持ちですか?{" "}
               <Link
                 href="/auth/login"
                 className="inline-flex min-h-11 min-w-11 items-center justify-center underline underline-offset-4"
               >
-                로그인
+                ログイン
               </Link>
             </div>
           </form>

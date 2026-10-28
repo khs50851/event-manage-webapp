@@ -2,7 +2,7 @@ import { BellRingIcon, CircleCheckIcon, ClockIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { formatWon } from "@/lib/format";
+import { formatYen } from "@/lib/format";
 import {
   SETTLEMENT_STATUS_LABEL,
   type SettlementProgress,
@@ -40,7 +40,7 @@ export function SettlementSummaryCard({
 }) {
   const completed = summary.isCompleted;
   const StatusIcon = completed ? CircleCheckIcon : ClockIcon;
-  const progressText = `${summary.paidCount}/${summary.targetCount}명 · ${summary.paidPercent}%`;
+  const progressText = `${summary.paidCount}/${summary.targetCount}名 · ${summary.paidPercent}%`;
   const selfReportedCount = summary.selfReportedCount ?? 0;
   // 주최자 본인 몫(포함 시 1인 금액)
   const hostShare = summary.hostIncluded ? summary.perPersonAmount : 0;
@@ -60,7 +60,7 @@ export function SettlementSummaryCard({
             id="settlement-summary-heading"
             className="text-sm text-muted-foreground"
           >
-            1인 금액
+            1人あたりの金額
           </h2>
           <Badge variant={completed ? "default" : "secondary"}>
             <StatusIcon aria-hidden />
@@ -68,51 +68,50 @@ export function SettlementSummaryCard({
           </Badge>
         </div>
         <p className="text-3xl font-bold tracking-tight wrap-break-word tabular-nums">
-          {formatWon(summary.perPersonAmount)}
+          {formatYen(summary.perPersonAmount)}
         </p>
         <p className="text-sm wrap-break-word">
-          총액 {formatWon(summary.totalAmount)} · {summary.headCount}명
-          {summary.hostIncluded && " (주최자 포함)"}
+          合計 {formatYen(summary.totalAmount)} · {summary.headCount}名
+          {summary.hostIncluded && " (主催者含む)"}
         </p>
         {summary.hostRemainder > 0 && (
           <p className="text-sm text-muted-foreground">
-            나누어떨어지지 않는 {formatWon(summary.hostRemainder)}은 주최자가
-            부담해요.
+            割り切れない{formatYen(summary.hostRemainder)}は主催者が負担します。
           </p>
         )}
         {/* 주최자 부담이 없으면(본인 미포함 + 나누어떨어짐) 0원 줄은 생략한다. */}
         {host && summary.hostBurden !== undefined && summary.hostBurden > 0 && (
           <p className="text-sm text-muted-foreground">
-            주최자 부담 합계 {formatWon(summary.hostBurden)}
+            主催者負担の合計 {formatYen(summary.hostBurden)}
             {hostShare > 0 &&
               summary.hostRemainder > 0 &&
-              ` (본인 몫 ${formatWon(hostShare)} + 나머지 ${formatWon(summary.hostRemainder)})`}
+              `  (本人分 ${formatYen(hostShare)} + 端数 ${formatYen(summary.hostRemainder)})`}
           </p>
         )}
       </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2 text-sm">
-          <span className="font-medium">입금 완료</span>
+          <span className="font-medium">入金済み</span>
           <span className="font-semibold tabular-nums">{progressText}</span>
         </div>
         <Progress
           value={summary.paidPercent}
-          aria-label="완납률"
-          aria-valuetext={`${summary.targetCount}명 중 ${summary.paidCount}명 입금 완료, ${summary.paidPercent}%`}
+          aria-label="完納率"
+          aria-valuetext={`${summary.targetCount}名中${summary.paidCount}名が入金済み、${summary.paidPercent}%`}
         />
         {completed ? (
           <p className="flex items-center gap-2 text-sm font-medium">
             <CircleCheckIcon className="size-4 shrink-0" aria-hidden />
-            모든 대상의 입금이 확인됐어요.
+            すべての対象の入金が確認されました。
           </p>
         ) : (
           host &&
           selfReportedCount > 0 && (
             <p className="flex items-start gap-2 rounded-md border border-primary p-2 text-sm font-medium">
               <BellRingIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-              입금했다고 알린 사람이 {selfReportedCount}명 있어요. 입금 내역을
-              확인한 뒤 아래 목록에서 확정해 주세요.
+              入金したと報告した人が{selfReportedCount}
+              名います。入金内容を確認してから、下の一覧で確定してください。
             </p>
           )
         )}

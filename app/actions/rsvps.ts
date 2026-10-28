@@ -4,6 +4,7 @@ import {
   dbFailure,
   fail,
   getSessionClient,
+  MESSAGES as COMMON_MESSAGES,
   revalidateRsvpPaths,
   toFieldErrors,
   unauthenticated,
@@ -27,12 +28,15 @@ import type { Rsvp } from "@/lib/types/domain";
 // (같은 사람이 링크로 다시 응답하면 별도 행이 생길 수 있어 주최자가 정리한다).
 
 const MESSAGES = {
-  eventNotFound: "회차를 찾을 수 없어요.",
-  rsvpNotFound: "응답을 찾을 수 없어요.",
-  duplicateMember: "이미 응답이 있는 멤버예요. 기존 응답을 수정해 주세요.",
-  invalidMember: "명부에서 이름을 다시 선택해 주세요.",
-  saveFailed: "응답을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
-  deleteFailed: "응답을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.",
+  eventNotFound: COMMON_MESSAGES.eventNotFound,
+  rsvpNotFound: "回答が見つかりません。",
+  duplicateMember:
+    "すでに回答のあるメンバーです。既存の回答を編集してください。",
+  invalidMember: "名簿から名前をもう一度選択してください。",
+  saveFailed:
+    "回答を保存できませんでした。しばらくしてからもう一度お試しください。",
+  deleteFailed:
+    "回答を削除できませんでした。しばらくしてからもう一度お試しください。",
 } as const;
 
 // 응답 대리 입력(rsvpId 없음) 또는 기존 응답 수정(rsvpId 지정).

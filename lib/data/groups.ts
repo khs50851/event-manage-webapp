@@ -12,6 +12,7 @@ import {
 import {
   isUuid,
   mockDelay,
+  readFailed,
   resolveDataSource,
   type ServerSupabaseClient,
 } from "@/lib/data/source";
@@ -36,12 +37,6 @@ import type {
 // 세션이 없으면 개발 환경에서만 더미를 돌려준다(lib/data/source.ts).
 // 소유자가 아니거나 없는 id는 RLS로 0행이 되어 null/빈 배열이 된다(존재 여부 비노출).
 // DB 오류는 내부 정보 없이 던져 라우트의 error.tsx(재시도)로 보낸다.
-
-// 읽기 실패 공통 처리: 서버 로그에는 오류 코드만 남기고 화면에는 일반 메시지만 전달한다.
-function readFailed(scope: string, code: string | undefined): never {
-  console.error(`[${scope}] 조회 실패:`, code);
-  throw new Error("데이터를 불러오지 못했어요.");
-}
 
 // 더미: 현재 사용자가 해당 역할로 속한 모임 목록(mockMemberships 순서 유지)
 function mockGroupsByRole(role: GroupRole): Group[] {

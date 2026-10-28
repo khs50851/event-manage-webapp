@@ -18,20 +18,20 @@ interface TabItem {
 const TABS: TabItem[] = [
   {
     href: "/protected",
-    label: "홈",
+    label: "ホーム",
     icon: House,
     // 대시보드(/protected)와 홈(/)에서만 활성화한다. 하위 경로는 제외하도록 정확 일치로 비교한다
     match: (p) => p === "/" || p === "/protected",
   },
   {
     href: "/protected/groups/new",
-    label: "새 모임",
+    label: "新規グループ",
     icon: CirclePlus,
     match: (p) => p === "/protected/groups/new",
   },
   {
     href: "/protected/me",
-    label: "내 정보",
+    label: "マイページ",
     icon: User,
     match: (p) => p.startsWith("/protected/me"),
   },
@@ -43,7 +43,7 @@ export function BottomTabBar() {
 
   return (
     <nav
-      aria-label="주요 메뉴"
+      aria-label="メインメニュー"
       className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 mx-auto w-full max-w-[480px] px-4"
     >
       <ul className="pointer-events-auto flex items-stretch justify-around rounded-full border bg-background/95 p-1.5 shadow-lg backdrop-blur">

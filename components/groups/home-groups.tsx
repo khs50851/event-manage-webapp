@@ -19,7 +19,8 @@ function NewGroupButton() {
   return (
     <Button asChild className="min-h-11 shrink-0">
       <Link href="/protected/groups/new">
-        <PlusIcon aria-hidden className="size-4" />새 모임
+        <PlusIcon aria-hidden className="size-4" />
+        新規グループ
       </Link>
     </Button>
   );
@@ -39,7 +40,7 @@ function HostedHeader({
     <GroupSectionHeader
       id="hosted-title"
       as={as}
-      title="내 모임"
+      title="自分のグループ"
       count={count}
       // 모임이 없을 땐 빈 상태의 "모임 만들기"와 중복이므로 숨긴다
       action={count === 0 ? undefined : <NewGroupButton />}
@@ -49,7 +50,11 @@ function HostedHeader({
 
 function JoinedHeader({ count }: { count: number | null }) {
   return (
-    <GroupSectionHeader id="joined-title" title="참여한 모임" count={count} />
+    <GroupSectionHeader
+      id="joined-title"
+      title="参加中のグループ"
+      count={count}
+    />
   );
 }
 
@@ -74,13 +79,13 @@ export function HostedGroupsView({
               className="size-8 text-muted-foreground"
             />
             <div className="flex flex-col gap-1">
-              <p className="font-medium">아직 만든 모임이 없어요</p>
+              <p className="font-medium">まだ作成したグループがありません</p>
               <p className="text-sm text-muted-foreground">
-                모임을 만들고 초대 링크로 사람들을 불러보세요.
+                グループを作成して、招待リンクで人を呼びましょう。
               </p>
             </div>
             <Button asChild className="min-h-11">
-              <Link href="/protected/groups/new">모임 만들기</Link>
+              <Link href="/protected/groups/new">グループを作成</Link>
             </Button>
           </>
         }
@@ -91,26 +96,22 @@ export function HostedGroupsView({
 
 // 참여한 모임 목록(표시 전용). 감싸는 <section aria-labelledby="joined-title">은 호출하는 쪽이 둔다.
 export function JoinedGroupsView({ groups }: { groups: JoinedGroup[] }) {
-  // 모임 단위 참여자 화면은 없으므로, 내가 응답한 다가오는 회차가 있을 때만 그 회차 상세로 연결한다
-  const nextEventById = new Map(
-    groups.map((group) => [group.id, group.nextEvent]),
-  );
   return (
     <>
       <JoinedHeader count={groups.length} />
       <GroupList
         groups={groups}
-        getHref={(group) => {
-          const nextEvent = nextEventById.get(group.id);
-          return nextEvent ? `/protected/joined/${nextEvent.id}` : null;
-        }}
+        // 모임 단위 참여자 화면은 없으므로, 내가 응답한 다가오는 회차가 있을 때만 그 회차 상세로 연결한다
+        getHref={(group) =>
+          group.nextEvent ? `/protected/joined/${group.nextEvent.id}` : null
+        }
         empty={
           <>
             <UsersIcon aria-hidden className="size-8 text-muted-foreground" />
             <div className="flex flex-col gap-1">
-              <p className="font-medium">아직 참여한 모임이 없어요</p>
+              <p className="font-medium">まだ参加中のグループがありません</p>
               <p className="text-sm text-muted-foreground">
-                다른 사람이 만든 모임에 참여하면 여기에 표시돼요.
+                他の人が作ったグループに参加すると、ここに表示されます。
               </p>
             </div>
           </>

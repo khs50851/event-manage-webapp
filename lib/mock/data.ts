@@ -13,10 +13,10 @@ import type {
 
 // 더미 데이터. 빈 모임, 1회성 이벤트, 동명이인, 취소/종료/마감 회차, 정원 초과, 만료 토큰 같은 경계 사례를 포함한다.
 
-// 로그인한 사용자(더미). 실제 로그인 상태면 이메일만 세션 값으로 덮어쓴다.
+// 로그인한 사용자(더미). 세션이 없을 때만 쓰인다(lib/data/me.ts의 getMyProfile).
 export const mockProfile: Profile = {
   id: "u-me",
-  name: "김주최",
+  name: "山田太郎",
   email: "host@example.com",
   joinedAt: "2026-09-01",
   avatarUrl: null,
@@ -25,38 +25,38 @@ export const mockProfile: Profile = {
 export const mockGroups: Group[] = [
   {
     id: "g-swim",
-    name: "화요 수영반",
-    description: "매주 화요일 저녁 수영 모임",
+    name: "火曜スイミング",
+    description: "毎週火曜の夜のスイミングの集まり",
     isOneOff: false,
   },
   {
     id: "g-futsal",
-    name: "금요 풋살",
+    name: "金曜フットサル",
     description: "",
     isOneOff: false,
   },
   {
     id: "g-oneoff",
-    name: "연말 송년회",
+    name: "忘年会",
     description: "",
     isOneOff: true,
   },
   {
     id: "g-empty",
-    name: "새 모임",
-    description: "회차와 멤버가 없는 빈 모임",
+    name: "新しいグループ",
+    description: "開催回もメンバーもいない空のグループ",
     isOneOff: false,
   },
   // 아래 두 모임은 다른 사람이 만들고 내가 참여만 한 모임이다(mockMemberships 참고)
   {
     id: "g-hiking",
-    name: "주말 등산 모임",
-    description: "격주 토요일 오전 근교 산행",
+    name: "週末ハイキング",
+    description: "隔週土曜の午前に近郊の山へ",
     isOneOff: false,
   },
   {
     id: "g-book",
-    name: "월간 독서 모임",
+    name: "月例読書会",
     description: "",
     isOneOff: false,
   },
@@ -73,35 +73,35 @@ export const mockMemberships: GroupMembership[] = [
 ];
 
 export const mockMembers: GroupMember[] = [
-  { id: "m-1", groupId: "g-swim", name: "김민수", memo: "" },
-  { id: "m-2", groupId: "g-swim", name: "이서연", memo: "총무" },
-  { id: "m-3", groupId: "g-swim", name: "박지훈", memo: "" },
+  { id: "m-1", groupId: "g-swim", name: "佐藤健", memo: "" },
+  { id: "m-2", groupId: "g-swim", name: "鈴木さくら", memo: "幹事" },
+  { id: "m-3", groupId: "g-swim", name: "高橋翔", memo: "" },
   // 동명이인 경계 사례
-  { id: "m-4", groupId: "g-swim", name: "김민수", memo: "수영 초보" },
-  { id: "m-5", groupId: "g-swim", name: "최유진", memo: "" },
-  { id: "m-6", groupId: "g-futsal", name: "정우성", memo: "" },
-  { id: "m-7", groupId: "g-futsal", name: "한지민", memo: "골키퍼" },
-  { id: "m-8", groupId: "g-futsal", name: "오세훈", memo: "" },
+  { id: "m-4", groupId: "g-swim", name: "佐藤健", memo: "水泳初心者" },
+  { id: "m-5", groupId: "g-swim", name: "伊藤ゆい", memo: "" },
+  { id: "m-6", groupId: "g-futsal", name: "渡辺大輔", memo: "" },
+  { id: "m-7", groupId: "g-futsal", name: "小林美咲", memo: "ゴールキーパー" },
+  { id: "m-8", groupId: "g-futsal", name: "加藤拓也", memo: "" },
 ];
 
 export const mockEvents: GroupEvent[] = [
   {
     id: "e-swim-1",
     groupId: "g-swim",
-    title: "10월 2주차 수영",
+    title: "10月第2週 スイミング",
     startsAt: "2026-10-13T19:00",
-    location: "구립 체육센터 수영장",
+    location: "区立スポーツセンター プール",
     capacity: 12,
-    description: "수영모, 수경 지참",
+    description: "水泳帽とゴーグルを持参",
     rsvpDeadline: "2026-10-13T12:00",
     status: "scheduled",
   },
   {
     id: "e-swim-2",
     groupId: "g-swim",
-    title: "10월 3주차 수영",
+    title: "10月第3週 スイミング",
     startsAt: "2026-10-20T19:00",
-    location: "구립 체육센터 수영장",
+    location: "区立スポーツセンター プール",
     capacity: null,
     description: "",
     rsvpDeadline: null,
@@ -110,9 +110,9 @@ export const mockEvents: GroupEvent[] = [
   {
     id: "e-swim-3",
     groupId: "g-swim",
-    title: "10월 1주차 수영",
+    title: "10月第1週 スイミング",
     startsAt: "2026-10-06T19:00",
-    location: "구립 체육센터 수영장",
+    location: "区立スポーツセンター プール",
     capacity: 12,
     description: "",
     rsvpDeadline: null,
@@ -121,20 +121,20 @@ export const mockEvents: GroupEvent[] = [
   {
     id: "e-swim-4",
     groupId: "g-swim",
-    title: "10월 4주차 수영",
+    title: "10月第4週 スイミング",
     startsAt: "2026-10-27T19:00",
-    location: "구립 체육센터 수영장",
+    location: "区立スポーツセンター プール",
     capacity: 12,
-    description: "센터 휴관으로 취소",
+    description: "センター休館のため中止",
     rsvpDeadline: null,
     status: "cancelled",
   },
   {
     id: "e-futsal-1",
     groupId: "g-futsal",
-    title: "금요 풋살 정기전",
+    title: "金曜フットサル 定期戦",
     startsAt: "2026-10-16T20:00",
-    location: "OO 풋살파크 2구장",
+    location: "OOフットサルパーク 2コート",
     capacity: 10,
     description: "",
     rsvpDeadline: "2026-10-15T18:00",
@@ -143,12 +143,12 @@ export const mockEvents: GroupEvent[] = [
   {
     id: "e-futsal-2",
     groupId: "g-futsal",
-    title: "금요 풋살 친선전",
+    title: "金曜フットサル 親善試合",
     startsAt: "2026-10-23T20:00",
-    location: "OO 풋살파크 1구장",
+    location: "OOフットサルパーク 1コート",
     capacity: 10,
     // 응답 마감이 지난 예정 회차(마감 경계 사례)
-    description: "상대 팀과 인원 확정 완료",
+    description: "相手チームと人数確定済み",
     rsvpDeadline: "2026-10-10T18:00",
     status: "scheduled",
   },
@@ -156,9 +156,9 @@ export const mockEvents: GroupEvent[] = [
     // 정산 전원 완료 경계 사례용 종료 회차
     id: "e-futsal-3",
     groupId: "g-futsal",
-    title: "금요 풋살 9월 정기전",
+    title: "金曜フットサル 9月定期戦",
     startsAt: "2026-09-25T20:00",
-    location: "OO 풋살파크 2구장",
+    location: "OOフットサルパーク 2コート",
     capacity: 10,
     description: "",
     rsvpDeadline: null,
@@ -167,9 +167,9 @@ export const mockEvents: GroupEvent[] = [
   {
     id: "e-oneoff-1",
     groupId: "g-oneoff",
-    title: "연말 송년회",
+    title: "忘年会",
     startsAt: "2026-12-20T18:30",
-    location: "강남역 근처 식당",
+    location: "渋谷駅近くのレストラン",
     capacity: 20,
     description: "",
     rsvpDeadline: "2026-12-15T23:59",
@@ -211,40 +211,40 @@ function rsvp(
 
 // 응답 더미. e-futsal-1은 정원(10) 초과, e-swim-2는 응답 0건 경계 사례다.
 export const mockRsvps: Rsvp[] = [
-  rsvp("r-1", "e-swim-1", "김민수", "attending", { memberId: "m-1" }),
-  rsvp("r-2", "e-swim-1", "이서연", "attending", { memberId: "m-2" }),
-  rsvp("r-3", "e-swim-1", "박지훈", "declined", {
+  rsvp("r-1", "e-swim-1", "佐藤健", "attending", { memberId: "m-1" }),
+  rsvp("r-2", "e-swim-1", "鈴木さくら", "attending", { memberId: "m-2" }),
+  rsvp("r-3", "e-swim-1", "高橋翔", "declined", {
     memberId: "m-3",
     source: "host",
   }),
-  rsvp("r-4", "e-swim-1", "강하늘", "attending"),
-  rsvp("r-5", "e-swim-1", "윤아름", "undecided"),
-  rsvp("r-6", "e-swim-3", "김민수", "attending", { memberId: "m-1" }),
-  rsvp("r-7", "e-swim-3", "최유진", "attending", { memberId: "m-5" }),
-  rsvp("r-8", "e-futsal-1", "정우성", "attending", { memberId: "m-6" }),
-  rsvp("r-9", "e-futsal-1", "한지민", "attending", { memberId: "m-7" }),
+  rsvp("r-4", "e-swim-1", "中村空", "attending"),
+  rsvp("r-5", "e-swim-1", "吉田あおい", "undecided"),
+  rsvp("r-6", "e-swim-3", "佐藤健", "attending", { memberId: "m-1" }),
+  rsvp("r-7", "e-swim-3", "伊藤ゆい", "attending", { memberId: "m-5" }),
+  rsvp("r-8", "e-futsal-1", "渡辺大輔", "attending", { memberId: "m-6" }),
+  rsvp("r-9", "e-futsal-1", "小林美咲", "attending", { memberId: "m-7" }),
   ...[
-    "강동원",
-    "송강",
-    "이도현",
-    "박보검",
-    "차은우",
-    "남주혁",
-    "김선호",
-    "서강준",
-    "안효섭",
+    "松本蓮",
+    "井上颯",
+    "木村陽翔",
+    "林大和",
+    "清水湊",
+    "山口悠真",
+    "斎藤陸",
+    "森啓太",
+    "池田航",
   ].map((name, index) =>
     rsvp(`r-futsal-${index}`, "e-futsal-1", name, "attending"),
   ),
-  rsvp("r-10", "e-futsal-1", "유연석", "declined"),
-  rsvp("r-11", "e-futsal-2", "정우성", "attending", { memberId: "m-6" }),
-  rsvp("r-12", "e-futsal-2", "한지민", "declined", { memberId: "m-7" }),
-  rsvp("r-13", "e-oneoff-1", "박서준", "attending"),
-  rsvp("r-14", "e-oneoff-1", "김지원", "undecided"),
-  rsvp("r-15", "e-futsal-3", "정우성", "attending", { memberId: "m-6" }),
-  rsvp("r-16", "e-futsal-3", "한지민", "attending", { memberId: "m-7" }),
-  rsvp("r-17", "e-futsal-3", "오세훈", "attending", { memberId: "m-8" }),
-  rsvp("r-18", "e-futsal-3", "강동원", "attending"),
+  rsvp("r-10", "e-futsal-1", "橋本隼人", "declined"),
+  rsvp("r-11", "e-futsal-2", "渡辺大輔", "attending", { memberId: "m-6" }),
+  rsvp("r-12", "e-futsal-2", "小林美咲", "declined", { memberId: "m-7" }),
+  rsvp("r-13", "e-oneoff-1", "阿部隼", "attending"),
+  rsvp("r-14", "e-oneoff-1", "石川美優", "undecided"),
+  rsvp("r-15", "e-futsal-3", "渡辺大輔", "attending", { memberId: "m-6" }),
+  rsvp("r-16", "e-futsal-3", "小林美咲", "attending", { memberId: "m-7" }),
+  rsvp("r-17", "e-futsal-3", "加藤拓也", "attending", { memberId: "m-8" }),
+  rsvp("r-18", "e-futsal-3", "松本蓮", "attending"),
 ];
 
 // ─── 정산 더미 ──────────────────────────────────────────────────────
@@ -311,7 +311,8 @@ const settlementFixtures = [
   settlementFixture("st-swim-3", "e-swim-3", {
     totalAmount: 25_000,
     hostIncluded: true,
-    paymentGuide: "카카오뱅크 3333-01-1234567 김주최 (레인 대여비)",
+    paymentGuide:
+      "三菱UFJ銀行 渋谷支店 普通 1234567 ヤマダタロウ(レーン使用料)",
     createdAt: "2026-10-07T09:00",
     shares: [
       { rsvpId: "r-6", status: "paid", statusChangedAt: "2026-10-07T12:30" },
@@ -327,7 +328,7 @@ const settlementFixtures = [
     totalAmount: 110_000,
     hostIncluded: false,
     paymentGuide:
-      "토스뱅크 1000-1234-5678 김주최\n구장 대여비 선입금 부탁드려요.",
+      "三井住友銀行 新宿支店 普通 7654321 ヤマダタロウ\nコート代の事前振込をお願いします。",
     createdAt: "2026-10-10T10:00",
     shares: [
       { rsvpId: "r-8", status: "paid", statusChangedAt: "2026-10-10T11:00" },
@@ -346,7 +347,7 @@ const settlementFixtures = [
   settlementFixture("st-futsal-3", "e-futsal-3", {
     totalAmount: 80_000,
     hostIncluded: true,
-    paymentGuide: "토스뱅크 1000-1234-5678 김주최",
+    paymentGuide: "三井住友銀行 新宿支店 普通 7654321 ヤマダタロウ",
     createdAt: "2026-09-26T09:00",
     shares: ["r-15", "r-16", "r-17", "r-18"].map((rsvpId) => ({
       rsvpId,

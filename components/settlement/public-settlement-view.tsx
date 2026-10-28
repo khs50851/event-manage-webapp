@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatWon, nowKstLocalString } from "@/lib/format";
+import { formatYen, nowKstLocalString } from "@/lib/format";
 import { labelDuplicateNames } from "@/lib/rsvp";
 import { markSelfReported } from "@/lib/settlement";
 import type {
@@ -45,9 +45,9 @@ import type {
 
 // 본인 상태별 버튼 문구. "입금했어요"는 미입금일 때만 누를 수 있다(FR-12).
 const MY_ACTION_LABEL: Record<ShareStatus, string> = {
-  unpaid: "입금했어요",
-  self_reported: "주최자 확인을 기다리고 있어요",
-  paid: "입금이 확인됐어요",
+  unpaid: "入金しました",
+  self_reported: "主催者の確認待ちです",
+  paid: "入金が確認されました",
 };
 
 // 비회원 정산 조회(U4-7, U4-8). 이름 선택 목록에는 id·이름만 있고,
@@ -143,16 +143,18 @@ export function PublicSettlementView({
       [myShare.id]: markSelfReported(myShare, nowKstLocalString()),
     }));
     setConfirming(false);
-    toast.success("입금했다고 알렸어요. 주최자가 확인하면 완료돼요.");
+    toast.success("入金を報告しました。主催者が確認すると完了します。");
   }
 
   async function copyGuide() {
     try {
       await navigator.clipboard.writeText(settlement.paymentGuide);
       setGuideCopied(true);
-      toast.success("입금 안내를 복사했어요.");
+      toast.success("振込案内をコピーしました。");
     } catch {
-      toast.error("복사하지 못했어요. 내용을 길게 눌러 직접 복사해 주세요.");
+      toast.error(
+        "コピーできませんでした。内容を長押しして直接コピーしてください。",
+      );
     }
   }
 
@@ -174,7 +176,7 @@ export function PublicSettlementView({
         className="flex flex-col gap-3 rounded-md border p-4"
       >
         <h2 id="payment-guide-heading" className="font-semibold">
-          입금 안내
+          振込案内
         </h2>
         <p className="wrap-break-word whitespace-pre-line">
           {settlement.paymentGuide}
@@ -186,7 +188,7 @@ export function PublicSettlementView({
           onClick={copyGuide}
         >
           {guideCopied ? <CheckIcon aria-hidden /> : <CopyIcon aria-hidden />}
-          {guideCopied ? "복사했어요" : "입금 안내 복사"}
+          {guideCopied ? "コピーしました" : "振込案内をコピー"}
         </Button>
       </section>
 
@@ -196,19 +198,18 @@ export function PublicSettlementView({
       >
         <div className="flex flex-col gap-1">
           <h2 id="my-share-heading" className="text-lg font-semibold">
-            내 입금 상태
+            自分の入金状況
           </h2>
           <p className="text-sm text-muted-foreground">
-            이름을 고르면 내 금액과 입금 상태만 보여요. 다른 사람의 입금 여부는
-            보이지 않아요.
+            名前を選ぶと、自分の金額と入金状況だけが表示されます。他の人の入金状況は表示されません。
           </p>
         </div>
         <Select value={myShareId} onValueChange={selectShare}>
           <SelectTrigger
             className="min-h-11 w-full text-base"
-            aria-label="내 이름 선택"
+            aria-label="自分の名前を選択"
           >
-            <SelectValue placeholder="내 이름 선택" />
+            <SelectValue placeholder="自分の名前を選択" />
           </SelectTrigger>
           <SelectContent>
             {labeled.map((share) => (
@@ -229,7 +230,7 @@ export function PublicSettlementView({
             aria-busy={isPending}
             className="flex flex-col gap-3 rounded-md border-2 border-primary p-4"
           >
-            <span className="sr-only">내 입금 상태를 불러오고 있어요</span>
+            <span className="sr-only">自分の入金状況を読み込んでいます</span>
             <div className="flex items-center justify-between gap-2">
               <Skeleton className="h-5 w-24" />
               <Skeleton className="h-5 w-16 rounded-full" />
@@ -245,7 +246,7 @@ export function PublicSettlementView({
             className="flex flex-col gap-3 rounded-md border border-destructive p-4"
           >
             <p className="text-sm text-destructive">
-              내 입금 상태를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
+              自分の入金状況を読み込めませんでした。しばらくしてからもう一度お試しください。
             </p>
             <Button
               type="button"
@@ -254,7 +255,7 @@ export function PublicSettlementView({
               onClick={() => loadMyShare(myShareId)}
             >
               <RotateCwIcon aria-hidden />
-              다시 시도
+              再試行
             </Button>
           </div>
         )}
@@ -267,12 +268,12 @@ export function PublicSettlementView({
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="min-w-0 font-semibold wrap-break-word">
-                {mySelection.label} 님
+                {mySelection.label}さん
               </p>
               <ShareStatusBadge status={myShare.status} />
             </div>
             <p className="text-2xl font-bold wrap-break-word tabular-nums">
-              {formatWon(myShare.amount)}
+              {formatYen(myShare.amount)}
             </p>
             <Button
               type="button"
@@ -287,15 +288,13 @@ export function PublicSettlementView({
             </Button>
             {myShare.status === "unpaid" && (
               <p className="text-sm text-muted-foreground">
-                입금을 마쳤다면 눌러 주세요. 주최자에게 &quot;확인 필요&quot;로
-                알려져요.
+                入金を済ませたらタップしてください。主催者に「要確認」として通知されます。
               </p>
             )}
             {myShare.status === "self_reported" && (
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-                주최자가 입금 내역을 확인하기 전까지는 &quot;확인 필요&quot;로
-                보여요. 확인되면 &quot;입금 완료&quot;로 바뀌어요.
+                主催者が入金内容を確認するまでは「要確認」と表示されます。確認されると「入金済み」に変わります。
               </p>
             )}
           </div>
@@ -305,17 +304,18 @@ export function PublicSettlementView({
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>입금했다고 알릴까요?</AlertDialogTitle>
+            <AlertDialogTitle>入金したことを報告しますか?</AlertDialogTitle>
             <AlertDialogDescription>
-              {mySelection?.label} 님 {myShare && formatWon(myShare.amount)}{" "}
-              입금을 주최자에게 알려요. 주최자가 확인하기 전까지는 &quot;확인
-              필요&quot;로 보여요.
+              {mySelection?.label}さん {myShare && formatYen(myShare.amount)}{" "}
+              の入金を主催者に報告します。主催者が確認するまでは「要確認」と表示されます。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">취소</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-11">
+              キャンセル
+            </AlertDialogCancel>
             <AlertDialogAction className="min-h-11" onClick={reportPaid}>
-              입금했어요
+              入金しました
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

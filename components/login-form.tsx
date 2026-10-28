@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toKoreanAuthError } from "@/lib/auth/error-message";
 import { AuthDivider } from "@/components/auth-divider";
+import { AuthFormError } from "@/components/auth-form-error";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,10 +57,10 @@ export function LoginForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            <h1>로그인</h1>
+            <h1>ログイン</h1>
           </CardTitle>
           <CardDescription>
-            이메일과 비밀번호를 입력해 로그인해 주세요.
+            メールアドレスとパスワードを入力してログインしてください。
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -68,7 +69,7 @@ export function LoginForm({
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">メールアドレス</Label>
                 <Input
                   id="email"
                   type="email"
@@ -81,12 +82,12 @@ export function LoginForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">비밀번호</Label>
+                  <Label htmlFor="password">パスワード</Label>
                   <Link
                     href="/auth/forgot-password"
                     className="ml-auto inline-flex min-h-11 items-center text-sm underline-offset-4 hover:underline"
                   >
-                    비밀번호를 잊으셨나요?
+                    パスワードをお忘れですか?
                   </Link>
                 </div>
                 <Input
@@ -98,22 +99,18 @@ export function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              )}
+              <AuthFormError message={error} />
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "로그인 중..." : "로그인"}
+                {isLoading ? "ログイン中..." : "ログイン"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              계정이 없으신가요?{" "}
+              アカウントをお持ちでないですか?{" "}
               <Link
                 href="/auth/sign-up"
                 className="inline-flex min-h-11 items-center underline underline-offset-4"
               >
-                회원가입
+                新規登録
               </Link>
             </div>
           </form>

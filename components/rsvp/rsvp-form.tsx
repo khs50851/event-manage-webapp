@@ -40,7 +40,7 @@ const RSVP_FIELDS = [
   "status",
 ] as const satisfies ReadonlyArray<keyof RsvpFormValues>;
 
-export const EMPTY_RSVP_VALUES: Partial<RsvpFormValues> = {
+const EMPTY_RSVP_VALUES: Partial<RsvpFormValues> = {
   memberId: "",
   name: "",
   status: undefined,
@@ -110,7 +110,7 @@ export function RsvpForm({
             name="memberId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>이름</FormLabel>
+                <FormLabel>名前</FormLabel>
                 <Select value={field.value} onValueChange={handleMemberChange}>
                   <FormControl>
                     <SelectTrigger
@@ -120,7 +120,7 @@ export function RsvpForm({
                         !!form.formState.errors.memberId
                       }
                     >
-                      <SelectValue placeholder="명부에서 이름 선택" />
+                      <SelectValue placeholder="名簿から名前を選択" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -130,14 +130,14 @@ export function RsvpForm({
                       </SelectItem>
                     ))}
                     <SelectItem value={DIRECT_INPUT}>
-                      목록에 없어요 (직접 입력)
+                      リストにない(直接入力)
                     </SelectItem>
                   </SelectContent>
                 </Select>
                 {/* 이름 입력란이 숨겨진 상태의 이름 오류는 선택 상자 아래에 보여준다 */}
                 {!showNameInput && nameError && (
                   <p className="text-sm font-medium text-destructive">
-                    이름을 선택하거나 &quot;직접 입력&quot;을 골라 주세요.
+                    名前を選択するか、「直接入力」を選んでください。
                   </p>
                 )}
                 {/* 서버 검증 오류(이미 응답한 멤버 등) */}
@@ -153,11 +153,11 @@ export function RsvpForm({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{hasRoster ? "직접 입력할 이름" : "이름"}</FormLabel>
+                <FormLabel>{hasRoster ? "直接入力する名前" : "名前"}</FormLabel>
                 <FormControl>
                   <Input
                     className="min-h-11"
-                    placeholder="이름 (30자 이내)"
+                    placeholder="名前(30文字以内)"
                     autoComplete="name"
                     maxLength={30}
                     {...field}
@@ -174,12 +174,12 @@ export function RsvpForm({
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>참석 여부</FormLabel>
+              <FormLabel>出欠</FormLabel>
               <FormControl>
                 <RadioGroup
                   value={field.value ?? ""}
                   onValueChange={field.onChange}
-                  aria-label="참석 여부"
+                  aria-label="出欠"
                   className="grid grid-cols-3 gap-2"
                 >
                   {RSVP_STATUS_ORDER.map((status) => (
@@ -203,7 +203,7 @@ export function RsvpForm({
           className="min-h-11"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "제출 중..." : submitLabel}
+          {form.formState.isSubmitting ? "送信中..." : submitLabel}
         </Button>
       </form>
     </Form>

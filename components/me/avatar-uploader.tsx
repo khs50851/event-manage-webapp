@@ -103,11 +103,11 @@ export function AvatarUploader({
     if (!file) return;
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("JPG, PNG, WebP 사진만 올릴 수 있어요.");
+      toast.error("JPG、PNG、WebPの写真のみアップロードできます。");
       return;
     }
     if (file.size > AVATAR_MAX_ORIGINAL_BYTES) {
-      toast.error("사진 용량이 너무 커요(20MB 이하).");
+      toast.error("写真の容量が大きすぎます(20MB以下)。");
       return;
     }
 
@@ -122,12 +122,12 @@ export function AvatarUploader({
         return;
       }
       await applyAvatarUrl(result.avatarUrl);
-      toast.success("프로필 사진을 바꿨어요.");
+      toast.success("プロフィール写真を変更しました。");
     } catch (error) {
       toast.error(
         error instanceof ImageResizeError
           ? error.message
-          : "사진을 올리지 못했어요. 잠시 후 다시 시도해 주세요.",
+          : "写真をアップロードできませんでした。しばらくしてからもう一度お試しください。",
       );
     } finally {
       finish();
@@ -143,9 +143,11 @@ export function AvatarUploader({
         return;
       }
       await applyAvatarUrl(result.avatarUrl);
-      toast.success("프로필 사진을 삭제했어요.");
+      toast.success("プロフィール写真を削除しました。");
     } catch {
-      toast.error("사진을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      toast.error(
+        "写真を削除できませんでした。しばらくしてからもう一度お試しください。",
+      );
     } finally {
       finish();
     }
@@ -163,7 +165,7 @@ export function AvatarUploader({
           ref={inputRef}
           type="file"
           accept={AVATAR_ALLOWED_TYPES.join(",")}
-          aria-label="프로필 사진 파일 선택"
+          aria-label="プロフィール写真のファイルを選択"
           // 버튼으로만 여는 숨김 입력이므로 탭 이동 대상에서 뺀다
           tabIndex={-1}
           className="sr-only"
@@ -185,7 +187,7 @@ export function AvatarUploader({
             ) : (
               <CameraIcon aria-hidden />
             )}
-            {pending === "upload" ? "올리는 중이에요" : "사진 변경"}
+            {pending === "upload" ? "アップロード中です" : "写真を変更"}
           </Button>
           {avatarUrl && (
             <Button
@@ -200,19 +202,19 @@ export function AvatarUploader({
               ) : (
                 <Trash2Icon aria-hidden />
               )}
-              {pending === "remove" ? "삭제하는 중이에요" : "사진 삭제"}
+              {pending === "remove" ? "削除中です" : "写真を削除"}
             </Button>
           )}
         </div>
         <p id={hintId} className="text-xs text-muted-foreground">
-          JPG·PNG·WebP, 큰 사진은 자동으로 줄여서 올려요.
+          JPG・PNG・WebP。大きい写真は自動的に縮小してアップロードします。
         </p>
         {/* 진행 상태를 스크린 리더에 알린다(완료·실패는 토스트가 알린다) */}
         <p role="status" className="sr-only">
           {pending === "upload"
-            ? "사진을 올리는 중이에요."
+            ? "写真をアップロード中です。"
             : pending === "remove"
-              ? "사진을 삭제하는 중이에요."
+              ? "写真を削除中です。"
               : ""}
         </p>
       </div>
@@ -220,14 +222,14 @@ export function AvatarUploader({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>프로필 사진을 삭제할까요?</AlertDialogTitle>
+            <AlertDialogTitle>プロフィール写真を削除しますか?</AlertDialogTitle>
             <AlertDialogDescription>
-              사진 대신 이름 첫 글자가 표시돼요.
+              写真の代わりに名前の最初の文字が表示されます。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemove}>삭제</AlertDialogAction>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemove}>削除</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

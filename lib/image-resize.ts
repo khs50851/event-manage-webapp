@@ -61,7 +61,7 @@ async function decodeImage(file: Blob): Promise<DecodedImage> {
   } catch {
     URL.revokeObjectURL(url);
     throw new ImageResizeError(
-      "사진을 읽지 못했어요. 다른 사진을 골라 주세요.",
+      "写真を読み込めませんでした。別の写真を選んでください。",
       "decode",
     );
   }
@@ -103,7 +103,7 @@ export async function resizeImage(
     const context = canvas.getContext("2d");
     if (!context) {
       throw new ImageResizeError(
-        "사진을 변환하지 못했어요. 다른 브라우저에서 다시 시도해 주세요.",
+        "写真を変換できませんでした。別のブラウザでもう一度お試しください。",
         "encode",
       );
     }
@@ -122,14 +122,14 @@ export async function resizeImage(
       const blob = await canvasToBlob(canvas, type, q);
       if (!blob) {
         throw new ImageResizeError(
-          "사진을 변환하지 못했어요. 다른 사진을 골라 주세요.",
+          "写真を変換できませんでした。別の写真を選んでください。",
           "encode",
         );
       }
       if (blob.size <= maxBytes) return blob;
     }
     throw new ImageResizeError(
-      "사진을 충분히 줄이지 못했어요. 다른 사진을 골라 주세요.",
+      "写真を十分に小さくできませんでした。別の写真を選んでください。",
       "too-large",
     );
   } finally {

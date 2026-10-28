@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 // 이름의 첫 글자(이모지 등 서로게이트 문자도 한 글자로 취급)
-export function getInitial(name: string): string {
+function getInitial(name: string): string {
   const first = Array.from(name.trim())[0];
   return first ? first.toUpperCase() : "?";
 }

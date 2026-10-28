@@ -24,7 +24,7 @@ export function AppHeader({ right, minimal = false }: AppHeaderProps) {
         className="flex min-h-11 items-center gap-2 font-bold tracking-tight"
       >
         <CalendarCheck className="size-5" aria-hidden />
-        <span className={cn(minimal ? "text-base" : "text-lg")}>모여봐</span>
+        <span className={cn(minimal ? "text-base" : "text-lg")}>あつまろ</span>
       </Link>
       {right && <div className="flex items-center gap-1">{right}</div>}
     </header>

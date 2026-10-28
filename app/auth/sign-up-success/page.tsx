@@ -8,25 +8,20 @@ import {
 
 export default function Page() {
   return (
-    <div className="flex w-full flex-1 items-center justify-center py-4">
-      <div className="w-full">
-        <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                <h1>가입해 주셔서 감사해요!</h1>
-              </CardTitle>
-              <CardDescription>이메일을 확인해 주세요</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                회원가입이 완료되었어요. 로그인하기 전에 메일함에서 인증 링크를
-                눌러 계정을 확인해 주세요.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+    <div className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">
+            <h1>ご登録ありがとうございます!</h1>
+          </CardTitle>
+          <CardDescription>メールをご確認ください</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            新規登録が完了しました。ログインする前に、受信トレイの認証リンクをタップしてアカウントを確認してください。
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

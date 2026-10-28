@@ -19,14 +19,14 @@ export function ProfileCard({
   avatarUrl,
 }: ProfileCardProps) {
   return (
-    <section aria-label="프로필" className="rounded-md border p-4">
+    <section aria-label="プロフィール" className="rounded-md border p-4">
       <AvatarUploader name={name} avatarUrl={avatarUrl}>
         <p className="truncate text-lg font-semibold">{name}</p>
         <p className="truncate text-sm text-muted-foreground" title={email}>
           {email}
         </p>
         <p className="text-xs text-muted-foreground">
-          가입일 {formatDate(joinedAt)}
+          登録日 {formatDate(joinedAt)}
         </p>
       </AvatarUploader>
     </section>
